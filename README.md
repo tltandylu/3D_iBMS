@@ -6,6 +6,20 @@
 
 ---
 
+## 畫面截圖
+
+| 主畫面（側邊欄展開） | 側邊欄收合 |
+|---|---|
+| ![主畫面](docs/screenshots/01_main.png) | ![側邊欄收合](docs/screenshots/02_sidebar_collapsed.png) |
+
+| AI 助理面板 | Navbar KPI 列 |
+|---|---|
+| ![AI 助理](docs/screenshots/03_ai_assistant.png) | ![Navbar KPI](docs/screenshots/04_navbar_kpi.png) |
+
+![側邊欄功能選單](docs/screenshots/05_sidebar_nav.png)
+
+---
+
 ## 功能概覽
 
 ### 佈局
