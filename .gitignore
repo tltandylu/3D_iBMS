@@ -19,3 +19,8 @@ yarn-error.log*
 
 # Claude Code 工作階段檔案
 .claude/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
