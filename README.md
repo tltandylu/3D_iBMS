@@ -8,15 +8,21 @@
 
 ## 畫面截圖
 
-| 主畫面（側邊欄展開） | 側邊欄收合 |
+| 登入頁面 | 主畫面（Admin，側邊欄展開） |
 |---|---|
-| ![主畫面](docs/screenshots/01_main.png) | ![側邊欄收合](docs/screenshots/02_sidebar_collapsed.png) |
+| ![登入頁面](docs/screenshots/00_login.png) | ![主畫面](docs/screenshots/01_main.png) |
 
-| AI 助理面板 | Navbar KPI 列 |
+| 側邊欄收合 | AI 助理面板 |
 |---|---|
-| ![AI 助理](docs/screenshots/03_ai_assistant.png) | ![Navbar KPI](docs/screenshots/04_navbar_kpi.png) |
+| ![側邊欄收合](docs/screenshots/02_sidebar_collapsed.png) | ![AI 助理](docs/screenshots/03_ai_assistant.png) |
 
-![側邊欄功能選單](docs/screenshots/05_sidebar_nav.png)
+| Navbar KPI 列 | 使用者選單 |
+|---|---|
+| ![Navbar KPI](docs/screenshots/04_navbar_kpi.png) | ![使用者選單](docs/screenshots/06_user_menu.png) |
+
+| 側邊欄（Admin — 全部解鎖） | 側邊欄（Viewer — 部分鎖定） |
+|---|---|
+| ![側邊欄 Admin](docs/screenshots/05_sidebar_admin.png) | ![側邊欄 Viewer](docs/screenshots/07_sidebar_viewer.png) |
 
 ---
 
@@ -75,6 +81,18 @@
 - **維護日曆**：月曆視圖，工單排程視覺化
 - **需量卸載**：AI 卸載計畫面板（需後端連線）
 - **規則引擎**：自訂告警規則，支援 AND/OR 條件
+
+### 驗證 & 存取控制（Phase 7）
+| 角色 | 說明 | 可存取功能數 |
+|------|------|------|
+| **系統管理員** | 完整存取所有功能 | 17 / 17 |
+| **設備操作員** | 操作管理功能，無稽核日誌與系統設定 | 15 / 17 |
+| **資料檢視者** | 唯讀模式，受限於監控與分析 | 11 / 17 |
+
+- **登入頁面**：表單登入 + DEMO 快速登入三個角色
+- **Session 持久化**：localStorage（8 小時 TTL）
+- **RBAC**：Sidebar 項目依角色自動上鎖（🔒），無法點擊
+- **使用者選單**：Navbar 右側顯示目前使用者，支援登出
 
 ### 系統
 - **儀表板個人化**：KPI 顯示項目開關、左右面板切換
@@ -150,6 +168,7 @@ start.bat
 │   │   ├── charts/                # ECharts 圖表元件
 │   │   └── ui/                    # 功能 Overlay 元件（20+）
 │   ├── hooks/
+│   │   ├── useAuth.ts             # 驗證 & RBAC（角色權限）
 │   │   ├── useBackendWS.ts        # WebSocket 資料連線
 │   │   ├── useSystemSettings.ts   # 系統設定持久化
 │   │   ├── useAlertRules.ts       # 規則引擎
