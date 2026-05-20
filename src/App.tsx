@@ -24,6 +24,7 @@ import { AlertRuleEditor } from './components/ui/AlertRuleEditor'
 import { MaintenanceCalendar } from './components/ui/MaintenanceCalendar'
 import { AuditLog } from './components/ui/AuditLog'
 import { DashboardCustomizer } from './components/ui/DashboardCustomizer'
+import { AIAssistant } from './components/ui/AIAssistant'
 import { OEEDashboard } from './components/ui/OEEDashboard'
 import { DeviceTrendCompare } from './components/ui/DeviceTrendCompare'
 import { EquipmentPassport } from './components/ui/EquipmentPassport'
@@ -83,6 +84,7 @@ export default function App() {
   const [showHeatmap,   setShowHeatmap]   = useState(false)
   const [passportDevice, setPassportDevice] = useState<Device | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
+  const [showAI,      setShowAI]      = useState(false)
   const webhookSentRef = useRef<Map<string, number>>(new Map())
   const [apiKeyConfigured, setApiKeyConfigured] = useState(() => !!getStoredApiKey())
   const [aiRootCauses, setAiRootCauses] = useState<Map<string, string>>(new Map())
@@ -292,6 +294,37 @@ export default function App() {
       open={sidebarOpen}
       onOpenChange={setSidebarOpen}
       navActions={
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, minWidth: 0 }}>
+        {/* AI 助理入口按鈕 */}
+        <button
+          onClick={() => setShowAI(v => !v)}
+          title="AI 運維助理"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 5,
+            padding: '5px 12px',
+            background: showAI ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.07)',
+            border: `1px solid ${showAI ? 'rgba(16,185,129,0.55)' : 'rgba(16,185,129,0.22)'}`,
+            borderRadius: 6,
+            color: '#10b981',
+            fontSize: 11, fontWeight: 600,
+            cursor: 'pointer',
+            flexShrink: 0,
+            letterSpacing: '0.03em',
+            transition: 'background 0.2s, border-color 0.2s',
+            marginRight: 8,
+          }}
+        >
+          <span style={{ fontSize: 15 }}>🤖</span>
+          <span>AI 助理</span>
+          {criticalCount > 0 && (
+            <span style={{
+              width: 6, height: 6, borderRadius: '50%',
+              background: '#ef4444', boxShadow: '0 0 5px #ef4444',
+              display: 'inline-block', animation: 'navBlink 1s infinite',
+            }} />
+          )}
+        </button>
+
         <NavbarKPI
           kpi={kpi}
           contractCapacityKw={settings.energy.contractCapacityKw}
@@ -303,6 +336,7 @@ export default function App() {
           dashSettings={settings.dashboard}
           backendConnected={backendConnected}
         />
+        </div>
       }
       sidebarContent={
         <SidebarNav
@@ -598,6 +632,59 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* AI 運維助理面板 */}
+      <AnimatePresence>
+        {showAI && (
+          <motion.div
+            key="ai-panel"
+            initial={{ x: 360 }}
+            animate={{ x: 0 }}
+            exit={{ x: 360 }}
+            transition={{ type: 'tween', duration: 0.28, ease: 'easeInOut' }}
+            style={{
+              position: 'fixed',
+              top: 64, right: 0, bottom: 40,
+              width: 360,
+              background: 'rgba(4,10,22,0.98)',
+              borderLeft: '1px solid rgba(16,185,129,0.18)',
+              zIndex: 400,
+              display: 'flex', flexDirection: 'column',
+              boxShadow: '-8px 0 32px rgba(0,0,0,0.5)',
+            }}
+          >
+            {/* 面板標頭 */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '10px 14px', flexShrink: 0,
+              background: 'rgba(16,185,129,0.05)',
+              borderBottom: '1px solid rgba(16,185,129,0.1)',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 18 }}>🤖</span>
+                <div>
+                  <div style={{ color: '#10b981', fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>AI 運維助理</div>
+                  <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9 }}>Claude · 即時系統感知</div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAI(false)}
+                style={{
+                  width: 26, height: 26,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 4,
+                  color: 'rgba(255,255,255,0.4)',
+                  fontSize: 12, cursor: 'pointer',
+                }}
+              >✕</button>
+            </div>
+            {/* 聊天主體 */}
+            <AIAssistant devices={devices} alerts={enrichedAlerts} kpi={kpi} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 即時事件 Toast */}
       <EventToast message={lastEvent} />
