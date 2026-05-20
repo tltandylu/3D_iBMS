@@ -330,7 +330,7 @@ function SceneContent({
       {sceneSettings.showPulseRings && <PulseRings />}
 
       {/* 地面 */}
-      <GroundGrid />
+      <GroundGrid groundColor={skySettings?.groundColor} />
 
       {/* 建築物（IFC 已載入時以真實幾何取代盒狀模型）*/}
       {BUILDINGS.map(b => {

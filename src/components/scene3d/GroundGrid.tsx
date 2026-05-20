@@ -1,13 +1,15 @@
-export function GroundGrid() {
+export function GroundGrid({ groundColor }: { groundColor?: string }) {
+  const planeColor = groundColor ?? '#050f20'
+
   return (
     <>
-      {/* 深海軍藍地面板 */}
+      {/* 地面板 — 顏色由 skySettings.groundColor 控制 */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.5, 0]} receiveShadow>
         <planeGeometry args={[300, 300]} />
-        <meshStandardMaterial color="#050f20" roughness={0.95} metalness={0.05} />
+        <meshStandardMaterial color={planeColor} roughness={0.95} metalness={0.05} />
       </mesh>
 
-      {/* 深藍科技網格線 */}
+      {/* 科技網格線 */}
       <gridHelper
         args={[140, 70, '#0f2d50', '#091e38']}
         position={[0, -0.49, 0]}

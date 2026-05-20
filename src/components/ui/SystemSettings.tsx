@@ -75,10 +75,10 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
 function GroupLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      color: 'rgba(6,182,212,0.7)', fontSize: 9, fontWeight: 700,
-      letterSpacing: '0.12em', textTransform: 'uppercase',
-      marginTop: 18, marginBottom: 2, paddingBottom: 4,
-      borderBottom: '1px solid rgba(6,182,212,0.15)',
+      color: '#22d3ee', fontSize: 10, fontWeight: 700,
+      letterSpacing: '0.1em', textTransform: 'uppercase',
+      marginTop: 18, marginBottom: 2, paddingBottom: 5,
+      borderBottom: '1px solid rgba(6,182,212,0.3)',
     }}>
       {children}
     </div>
@@ -96,9 +96,9 @@ function RadioGroup<T extends string>({
           onClick={() => onChange(o.value)}
           style={{
             padding: '3px 10px', fontSize: 11, cursor: 'pointer', borderRadius: 4,
-            background: value === o.value ? 'rgba(6,182,212,0.2)' : 'rgba(255,255,255,0.05)',
-            border: `1px solid ${value === o.value ? 'rgba(6,182,212,0.5)' : 'rgba(255,255,255,0.12)'}`,
-            color: value === o.value ? '#67e8f9' : 'rgba(255,255,255,0.5)',
+            background: value === o.value ? 'rgba(6,182,212,0.22)' : 'rgba(255,255,255,0.06)',
+            border: `1px solid ${value === o.value ? 'rgba(6,182,212,0.6)' : 'rgba(255,255,255,0.2)'}`,
+            color: value === o.value ? '#67e8f9' : '#c8d5e8',
             transition: 'all 0.15s',
           }}
         >
@@ -261,9 +261,9 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
                 onClick={() => toggleSeverity(sev)}
                 style={{
                   padding: '3px 8px', fontSize: 10, cursor: 'pointer', borderRadius: 3,
-                  background: active ? `${col}22` : 'transparent',
-                  border: `1px solid ${active ? col + '55' : 'rgba(255,255,255,0.1)'}`,
-                  color: active ? col : 'rgba(255,255,255,0.3)',
+                  background: active ? `${col}28` : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${active ? col + '70' : 'rgba(255,255,255,0.2)'}`,
+                  color: active ? col : '#c8d5e8',
                   transition: 'all 0.15s',
                 }}
               >
@@ -612,8 +612,8 @@ function ColorPicker({ label, value, onChange }: { label: string; value: string;
         onChange={e => onChange(e.target.value)}
         style={{ width: 28, height: 22, cursor: 'pointer', border: 'none', padding: 0, borderRadius: 3, background: 'none' }}
       />
-      <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10, fontFamily: 'monospace' }}>{value}</span>
-      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 10 }}>{label}</span>
+      <span style={{ color: '#a5f3fc', fontSize: 10, fontFamily: 'monospace' }}>{value}</span>
+      <span style={{ color: '#c8d5e8', fontSize: 10 }}>{label}</span>
     </div>
   )
 }
@@ -637,7 +637,7 @@ function SkyPage({ s, update }: { s: SkySettings; update: (p: Partial<SkySetting
                 ? `linear-gradient(135deg, ${p.colors.top}, ${p.colors.horizon})`
                 : 'rgba(255,255,255,0.05)',
               border: `1px solid ${s.preset === p.id ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)'}`,
-              color: s.preset === p.id ? '#fff' : 'rgba(255,255,255,0.5)',
+              color: s.preset === p.id ? '#fff' : '#c8d5e8',
               display: 'flex', alignItems: 'center', gap: 5,
               fontWeight: s.preset === p.id ? 700 : 400,
               transition: 'all 0.15s',
@@ -918,7 +918,7 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
                   borderLeftWidth: 2,
                   borderLeftStyle: 'solid',
                   borderLeftColor: activeTab === tab.id ? '#06b6d4' : 'transparent',
-                  color: activeTab === tab.id ? '#67e8f9' : 'rgba(255,255,255,0.45)',
+                  color: activeTab === tab.id ? '#67e8f9' : '#c8d5e8',
                   fontSize: 12, cursor: 'pointer', textAlign: 'left', width: '100%',
                   transition: 'all 0.15s',
                 }}
