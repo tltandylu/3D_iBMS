@@ -33,6 +33,9 @@ import { useSystemSettings } from './hooks/useSystemSettings'
 import type { DashboardSettings } from './hooks/useSystemSettings'
 import { useBackendWS } from './hooks/useBackendWS'
 import { useAlertRules } from './hooks/useAlertRules'
+import { useAuth } from './hooks/useAuth'
+import type { Feature, DemoUser } from './hooks/useAuth'
+import { LoginPage } from './components/ui/LoginPage'
 import { getStoredModel } from './components/ui/ClaudeSettings'
 import { DEVICES } from './data/mockData'
 import type { Alert, Device, IFCBuildingGeom, BIMModelEntry, KPIData } from './types'
@@ -64,6 +67,7 @@ export default function App() {
   } = useBackendWS()
   const { settings, update: updateSettings, reset: resetSettings } = useSystemSettings()
   const { rules, addRule, updateRule, deleteRule, toggleRule, syntheticAlerts } = useAlertRules(devices)
+  const { user, login, loginAs, logout, can } = useAuth()
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const [showKG, setShowKG] = useState(false)
   const [showBIM, setShowBIM] = useState(false)
@@ -290,7 +294,12 @@ export default function App() {
   }, [])
 
   return (
-    <AppShell
+    <>
+    <AnimatePresence>
+      {!user && <LoginPage key="login" onLogin={login} onLoginAs={loginAs} />}
+    </AnimatePresence>
+
+    {user && <AppShell
       open={sidebarOpen}
       onOpenChange={setSidebarOpen}
       navActions={
@@ -336,6 +345,7 @@ export default function App() {
           dashSettings={settings.dashboard}
           backendConnected={backendConnected}
         />
+        <UserMenu user={user} onLogout={logout} />
         </div>
       }
       sidebarContent={
@@ -344,6 +354,7 @@ export default function App() {
           enabledRulesCount={enabledRulesCount}
           bimLoaded={bimModels.some(m => m.loadState === 'loaded')}
           apiKeyConfigured={apiKeyConfigured}
+          can={can}
           onSearch={() => setShowSearch(true)}
           onInventory={() => setShowDeviceInventory(true)}
           onAlerts={() => setShowAlertCenter(true)}
@@ -691,7 +702,8 @@ export default function App() {
 
       {/* 背景光效 */}
       <BackgroundEffects />
-    </AppShell>
+    </AppShell>}
+    </>
   )
 }
 
@@ -901,37 +913,114 @@ function NavDivider() {
   return <div style={{ width: 1, height: 36, background: 'rgba(255,255,255,0.08)', flexShrink: 0 }} />
 }
 
+// ── User Menu ────────────────────────────────────────────────
+const ROLE_LABEL_MAP: Record<string, string> = { admin: '管理員', operator: '操作員', viewer: '檢視者' }
+const ROLE_COLOR_MAP: Record<string, string> = { admin: '#ef4444', operator: '#f59e0b', viewer: '#10b981' }
+
+function UserMenu({ user, onLogout }: { user: DemoUser; onLogout: () => void }) {
+  const [open, setOpen] = useState(false)
+  const rc = ROLE_COLOR_MAP[user.role]
+  return (
+    <div style={{ position: 'relative', flexShrink: 0, marginLeft: 8 }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 7,
+          padding: '4px 10px 4px 5px',
+          background: open ? 'rgba(255,255,255,0.09)' : 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: 20, cursor: 'pointer', transition: 'background 0.2s',
+        }}
+      >
+        <div style={{
+          width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+          background: `${rc}25`, border: `1.5px solid ${rc}55`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: rc, fontSize: 11, fontWeight: 700,
+        }}>{user.name[0]}</div>
+        <div style={{ textAlign: 'left' }}>
+          <div style={{ color: '#e2e8f0', fontSize: 11, fontWeight: 600, lineHeight: 1.2 }}>{user.name}</div>
+          <div style={{ color: rc, fontSize: 9, fontWeight: 700, letterSpacing: '0.04em' }}>{ROLE_LABEL_MAP[user.role]}</div>
+        </div>
+        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      <AnimatePresence>
+        {open && (
+          <motion.div key="ud"
+            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15 }}
+            style={{
+              position: 'absolute', top: 'calc(100% + 6px)', right: 0, minWidth: 190,
+              background: 'rgba(6,12,26,0.98)', border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 9, boxShadow: '0 8px 32px rgba(0,0,0,0.55)',
+              overflow: 'hidden', zIndex: 500,
+            }}
+          >
+            <div style={{ padding: '10px 14px 9px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600 }}>{user.name}</div>
+              <div style={{ color: 'rgba(255,255,255,0.42)', fontSize: 10, marginTop: 2 }}>{user.email}</div>
+              <span style={{
+                display: 'inline-block', marginTop: 6,
+                padding: '2px 8px', borderRadius: 10, fontSize: 9.5, fontWeight: 700,
+                background: `${rc}18`, color: rc, border: `1px solid ${rc}35`,
+              }}>{ROLE_LABEL_MAP[user.role]}</span>
+            </div>
+            <button
+              onClick={() => { setOpen(false); onLogout() }}
+              style={{
+                width: '100%', padding: '9px 14px', display: 'flex', alignItems: 'center', gap: 8,
+                background: 'transparent', border: 'none', cursor: 'pointer',
+                color: '#f87171', fontSize: 12, textAlign: 'left', transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.09)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+            >
+              <span>⎋</span><span>登出系統</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {open && <div style={{ position: 'fixed', inset: 0, zIndex: 499 }} onClick={() => setOpen(false)} />}
+    </div>
+  )
+}
+
 // ── 側邊欄單一項目 ────────────────────────────────────────
 interface SidebarItemDef {
   icon: string; label: string; hint?: string; color: string
   onClick: () => void
   badge?: number; badgeColor?: string
   dot?: boolean; dotColor?: string
+  disabled?: boolean
 }
-function SidebarItem({ icon, label, hint, color, onClick, badge, badgeColor, dot, dotColor }: SidebarItemDef) {
+function SidebarItem({ icon, label, hint, color, onClick, badge, badgeColor, dot, dotColor, disabled }: SidebarItemDef) {
   const [hov, setHov] = useState(false)
   return (
     <div
-      onClick={onClick}
-      onMouseEnter={() => setHov(true)}
+      onClick={disabled ? undefined : onClick}
+      onMouseEnter={() => { if (!disabled) setHov(true) }}
       onMouseLeave={() => setHov(false)}
+      title={disabled ? '您的帳號權限不足，無法存取此功能' : undefined}
       style={{
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '8px 16px',
-        cursor: 'pointer',
+        cursor: disabled ? 'not-allowed' : 'pointer',
         background: hov ? `${color}18` : 'transparent',
         borderLeft: `2px solid ${hov ? color : 'transparent'}`,
-        color: hov ? color : '#dde3ed',
+        color: disabled ? 'rgba(255,255,255,0.25)' : hov ? color : '#dde3ed',
         fontSize: 12.5,
         fontWeight: hov ? 600 : 400,
+        opacity: disabled ? 0.5 : 1,
         transition: 'background 0.15s, color 0.15s, border-color 0.15s, font-weight 0.1s',
         userSelect: 'none',
       }}
     >
       <span style={{ fontSize: 15, flexShrink: 0, width: 18, textAlign: 'center' }}>{icon}</span>
       <span style={{ flex: 1, letterSpacing: '0.01em' }}>{label}</span>
-      {hint && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{hint}</span>}
-      {badge !== undefined && badge > 0 && (
+      {disabled && <span style={{ fontSize: 10, opacity: 0.7 }}>🔒</span>}
+      {!disabled && hint && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{hint}</span>}
+      {!disabled && badge !== undefined && badge > 0 && (
         <span style={{
           padding: '1px 5px', borderRadius: 8, fontSize: 9, fontWeight: 700,
           background: `${badgeColor ?? color}25`,
@@ -939,7 +1028,7 @@ function SidebarItem({ icon, label, hint, color, onClick, badge, badgeColor, dot
           border: `1px solid ${badgeColor ?? color}40`,
         }}>{badge}</span>
       )}
-      {dot && !badge && (
+      {!disabled && dot && !badge && (
         <span style={{
           width: 5, height: 5, borderRadius: '50%',
           background: dotColor ?? color,
@@ -955,6 +1044,7 @@ function SidebarItem({ icon, label, hint, color, onClick, badge, badgeColor, dot
 interface SidebarNavProps {
   criticalCount: number; enabledRulesCount: number
   bimLoaded: boolean; apiKeyConfigured: boolean
+  can: (f: Feature) => boolean
   onSearch: () => void; onInventory: () => void; onAlerts: () => void; onRules: () => void
   onBIM: () => void; onBIMManager: () => void; onKG: () => void; onHeatmap: () => void
   onOEE: () => void; onTrend: () => void; onEnergy: () => void
@@ -962,7 +1052,7 @@ interface SidebarNavProps {
   onCustomizer: () => void; onAuditLog: () => void; onSettings: () => void
 }
 function SidebarNav({
-  criticalCount, enabledRulesCount, bimLoaded, apiKeyConfigured,
+  criticalCount, enabledRulesCount, bimLoaded, apiKeyConfigured, can,
   onSearch, onInventory, onAlerts, onRules,
   onBIM, onBIMManager, onKG, onHeatmap,
   onOEE, onTrend, onEnergy,
@@ -982,39 +1072,39 @@ function SidebarNav({
 
       {/* ── 監控 ── */}
       <div style={groupLabelStyle}>📡 監控</div>
-      <SidebarItem icon="🔍" label="搜尋設備"  hint="⌘K" color="#06b6d4" onClick={onSearch} />
-      <SidebarItem icon="📋" label="設備清單"         color="#38bdf8" onClick={onInventory} />
+      <SidebarItem icon="🔍" label="搜尋設備"  hint="⌘K" color="#06b6d4" onClick={onSearch}    disabled={!can('search')} />
+      <SidebarItem icon="📋" label="設備清單"         color="#38bdf8" onClick={onInventory} disabled={!can('inventory')} />
       <SidebarItem icon="🔔" label="告警中心"         color="#ef4444" onClick={onAlerts}
-        badge={criticalCount} badgeColor="#ef4444" />
+        badge={criticalCount} badgeColor="#ef4444"                                       disabled={!can('alerts')} />
       <SidebarItem icon="🎯" label="規則引擎"         color="#f59e0b" onClick={onRules}
-        badge={enabledRulesCount} badgeColor="#f59e0b" />
+        badge={enabledRulesCount} badgeColor="#f59e0b"                                   disabled={!can('rules')} />
 
       {/* ── 空間視覺 ── */}
       <div style={groupLabelStyle}>🏛 空間視覺</div>
-      <SidebarItem icon="🏗" label="BIM 視圖"         color="#67e8f9" onClick={onBIM} />
+      <SidebarItem icon="🏗" label="BIM 視圖"         color="#67e8f9" onClick={onBIM}        disabled={!can('bim')} />
       <SidebarItem icon="📐" label="模型管理"         color="#6ee7b7" onClick={onBIMManager}
-        dot={bimLoaded} dotColor="#10b981" />
-      <SidebarItem icon="🕸" label="KG 瀏覽器"        color="#a78bfa" onClick={onKG} />
-      <SidebarItem icon="🗺" label="樓層熱力圖"       color="#fbbf24" onClick={onHeatmap} />
+        dot={bimLoaded} dotColor="#10b981"                                                disabled={!can('bimManager')} />
+      <SidebarItem icon="🕸" label="KG 瀏覽器"        color="#a78bfa" onClick={onKG}         disabled={!can('kg')} />
+      <SidebarItem icon="🗺" label="樓層熱力圖"       color="#fbbf24" onClick={onHeatmap}    disabled={!can('heatmap')} />
 
       {/* ── 數據分析 ── */}
       <div style={groupLabelStyle}>📊 數據分析</div>
-      <SidebarItem icon="📊" label="OEE 效率"         color="#10b981" onClick={onOEE} />
-      <SidebarItem icon="📈" label="趨勢比較"         color="#818cf8" onClick={onTrend} />
-      <SidebarItem icon="⚡" label="能源報表"         color="#fbbf24" onClick={onEnergy} />
+      <SidebarItem icon="📊" label="OEE 效率"         color="#10b981" onClick={onOEE}        disabled={!can('oee')} />
+      <SidebarItem icon="📈" label="趨勢比較"         color="#818cf8" onClick={onTrend}      disabled={!can('trend')} />
+      <SidebarItem icon="⚡" label="能源報表"         color="#fbbf24" onClick={onEnergy}     disabled={!can('energy')} />
 
       {/* ── 維運管理 ── */}
       <div style={groupLabelStyle}>🔧 維運管理</div>
-      <SidebarItem icon="🔧" label="工單中心"         color="#fb923c" onClick={onWorkOrders} />
-      <SidebarItem icon="💡" label="需量卸載"         color="#f59e0b" onClick={onDemand} />
-      <SidebarItem icon="📅" label="維護日曆"         color="#818cf8" onClick={onCalendar} />
+      <SidebarItem icon="🔧" label="工單中心"         color="#fb923c" onClick={onWorkOrders} disabled={!can('workOrders')} />
+      <SidebarItem icon="💡" label="需量卸載"         color="#f59e0b" onClick={onDemand}     disabled={!can('demand')} />
+      <SidebarItem icon="📅" label="維護日曆"         color="#818cf8" onClick={onCalendar}   disabled={!can('calendar')} />
 
       {/* ── 系統 ── */}
       <div style={groupLabelStyle}>⚙ 系統</div>
-      <SidebarItem icon="🎨" label="儀表板個人化"     color="#818cf8" onClick={onCustomizer} />
-      <SidebarItem icon="📜" label="稽核日誌"         color="#06b6d4" onClick={onAuditLog} />
+      <SidebarItem icon="🎨" label="儀表板個人化"     color="#818cf8" onClick={onCustomizer} disabled={!can('customizer')} />
+      <SidebarItem icon="📜" label="稽核日誌"         color="#06b6d4" onClick={onAuditLog}   disabled={!can('auditLog')} />
       <SidebarItem icon="⚙" label="系統設定"         color="#94a3b8" onClick={onSettings}
-        dot={apiKeyConfigured} dotColor="#10b981" />
+        dot={apiKeyConfigured} dotColor="#10b981"                                         disabled={!can('settings')} />
     </nav>
   )
 }
