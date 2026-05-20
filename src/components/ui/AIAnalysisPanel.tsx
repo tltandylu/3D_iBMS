@@ -9,13 +9,19 @@ interface Props {
   alerts: Alert[]
 }
 
-// ── 預測資料產生 ──────────────────────────────────────────────
+// ── 預測資料產生（確定性 seed，避免每次渲染跳動）────────────────
+function seededRng(seed: number) {
+  let s = seed | 0
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff }
+}
+
 function generateForecast(lastDemand: number) {
   const now = new Date()
+  const rng = seededRng(Math.floor(lastDemand) * 31 + 7)
   let v = lastDemand
   return Array.from({ length: 8 }, (_, i) => {
     const t = new Date(now.getTime() + (i + 1) * 15 * 60000)
-    v = Math.max(400, v - 5 + (Math.random() - 0.5) * 28)
+    v = Math.max(400, v - 5 + (rng() - 0.5) * 28)
     const margin = 48 + i * 10
     return {
       time: t.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),

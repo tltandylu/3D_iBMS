@@ -16,6 +16,28 @@ const OP_LABELS: Record<string, string>  = { device_control: '設備控制', ale
 const OP_COLORS: Record<string, string>  = { device_control: '#06b6d4', alert_acknowledge: '#f59e0b', workorder_update: '#10b981' }
 const CMD_LABELS: Record<string, string> = { restart: '重啟設備', emergency_stop: '緊急停機', acknowledge: '確認告警' }
 
+// ── 前端 Demo 資料（後端離線時顯示）────────────────────────────
+function buildMockEntries(): AuditEntry[] {
+  const t = (offsetMin: number) => new Date(Date.now() - offsetMin * 60000).toISOString()
+  return [
+    { id: 'm01', timestamp: t(1),   operation: 'device_control',    actor: '系統管理員', device_id: 'ahu-a3f-01', device_name: 'AHU-A-3F-01',  command: 'restart',        result: 'success', message: '空調機組重啟成功，功率恢復正常' },
+    { id: 'm02', timestamp: t(4),   operation: 'alert_acknowledge', actor: '設備操作員', device_id: 'ups-a2f-01', device_name: 'UPS-A-2F-01',  command: 'acknowledge',    result: 'success', message: 'UPS 電池溫度告警確認，排定 PM 工單' },
+    { id: 'm03', timestamp: t(9),   operation: 'workorder_update',  actor: '設備操作員', device_id: 'crac-c1f-01',device_name: 'CRAC-C-1F-01', command: '',               result: 'success', message: 'WO-2026-001234 狀態：處理中 → 完成' },
+    { id: 'm04', timestamp: t(14),  operation: 'device_control',    actor: '系統管理員', device_id: 'ct-b1f-01',  device_name: 'CT-B-1F-01',   command: 'emergency_stop', result: 'success', message: '冷卻塔緊急停機：高壓保護觸發' },
+    { id: 'm05', timestamp: t(22),  operation: 'alert_acknowledge', actor: '資料檢視者', device_id: 'mcc-a1f-01', device_name: 'MCC-A-1F-01',  command: 'acknowledge',    result: 'success', message: 'MCC 過載告警確認，已通知維護班' },
+    { id: 'm06', timestamp: t(31),  operation: 'workorder_update',  actor: '設備操作員', device_id: 'ahu-b2f-02', device_name: 'AHU-B-2F-02',  command: '',               result: 'success', message: 'WO-2026-001230 指派：陳大維，預估 3h' },
+    { id: 'm07', timestamp: t(45),  operation: 'device_control',    actor: '系統管理員', device_id: 'ups-c1f-01', device_name: 'UPS-C-1F-01',  command: 'restart',        result: 'failed',  message: '重啟指令逾時，設備無回應（Timeout 30s）' },
+    { id: 'm08', timestamp: t(58),  operation: 'alert_acknowledge', actor: '系統管理員', device_id: 'ahu-a3f-01', device_name: 'AHU-A-3F-01',  command: 'acknowledge',    result: 'success', message: 'CRITICAL 告警確認：高壓壓縮機保護' },
+    { id: 'm09', timestamp: t(72),  operation: 'workorder_update',  actor: '設備操作員', device_id: 'pm-b3f-01',  device_name: 'PM-B-3F-01',   command: '',               result: 'success', message: 'WO-2026-001225 完工核簽，耗時 2.5h' },
+    { id: 'm10', timestamp: t(88),  operation: 'device_control',    actor: '系統管理員', device_id: 'fcus-a2f-03',device_name: 'FCU-A-2F-03',  command: 'restart',        result: 'success', message: 'FCU 重啟，風機馬達電流恢復正常值' },
+    { id: 'm11', timestamp: t(104), operation: 'alert_acknowledge', actor: '設備操作員', device_id: 'ct-b1f-01',  device_name: 'CT-B-1F-01',   command: 'acknowledge',    result: 'success', message: 'WARNING 告警確認：散熱效率低於 85%' },
+    { id: 'm12', timestamp: t(130), operation: 'workorder_update',  actor: '設備操作員', device_id: 'ahu-c1f-01', device_name: 'AHU-C-1F-01',  command: '',               result: 'success', message: 'WO-2026-001218 建立：濾網阻塞 PM' },
+    { id: 'm13', timestamp: t(155), operation: 'device_control',    actor: '系統管理員', device_id: 'crac-c1f-01',device_name: 'CRAC-C-1F-01', command: 'emergency_stop', result: 'success', message: '精密空調緊急停機：RUL 超期預防性停機' },
+    { id: 'm14', timestamp: t(180), operation: 'alert_acknowledge', actor: '系統管理員', device_id: 'mcc-b1f-01', device_name: 'MCC-B-1F-01',  command: 'acknowledge',    result: 'success', message: 'ALARM 確認：電容器溫升異常 +12°C' },
+    { id: 'm15', timestamp: t(210), operation: 'workorder_update',  actor: '設備操作員', device_id: 'ups-a2f-01', device_name: 'UPS-A-2F-01',  command: '',               result: 'failed',  message: 'WO-2026-001210 狀態更新失敗：簽核人員未登入' },
+  ]
+}
+
 interface Props {
   restBase: string
   onClose:  () => void
@@ -24,25 +46,30 @@ interface Props {
 export function AuditLog({ restBase, onClose }: Props) {
   const [entries, setEntries]     = useState<AuditEntry[]>([])
   const [loading, setLoading]     = useState(true)
-  const [error, setError]         = useState<string | null>(null)
+  const [isMock, setIsMock]       = useState(false)
   const [filterOp, setFilterOp]   = useState<string>('all')
   const [countdown, setCountdown] = useState(30)
 
   const load = useCallback(() => {
-    setLoading(true); setError(null)
+    setLoading(true)
     const url = filterOp !== 'all'
       ? `${restBase}/api/audit?limit=100&operation=${filterOp}`
       : `${restBase}/api/audit?limit=100`
     fetch(url)
       .then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json() })
-      .then((data: AuditEntry[]) => { setEntries(data); setLoading(false); setCountdown(30) })
-      .catch(() => { setError('無法取得稽核紀錄，請確認後端已啟動'); setLoading(false) })
+      .then((data: AuditEntry[]) => { setEntries(data); setIsMock(false); setLoading(false); setCountdown(30) })
+      .catch(() => {
+        const mock = buildMockEntries()
+        const filtered = filterOp !== 'all' ? mock.filter(e => e.operation === filterOp) : mock
+        setEntries(filtered); setIsMock(true); setLoading(false)
+      })
   }, [restBase, filterOp])
 
   useEffect(() => { load() }, [load])
 
-  // 自動刷新倒計時
+  // 自動刷新倒計時（後端模式才計時）
   useEffect(() => {
+    if (isMock) return
     const id = setInterval(() => {
       setCountdown(c => {
         if (c <= 1) { load(); return 30 }
@@ -50,7 +77,7 @@ export function AuditLog({ restBase, onClose }: Props) {
       })
     }, 1000)
     return () => clearInterval(id)
-  }, [load])
+  }, [load, isMock])
 
   const opCounts = entries.reduce<Record<string, number>>((acc, e) => {
     acc[e.operation] = (acc[e.operation] ?? 0) + 1
@@ -63,7 +90,14 @@ export function AuditLog({ restBase, onClose }: Props) {
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(6,182,212,0.05)', borderBottom: '1px solid rgba(6,182,212,0.18)' }}>
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
-          <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>操作稽核日誌</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>操作稽核日誌</span>
+            {isMock && (
+              <span style={{ padding: '1px 7px', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 3, color: '#f59e0b', fontSize: 9, fontWeight: 600 }}>
+                SIM 模式
+              </span>
+            )}
+          </div>
           <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>OPERATION AUDIT LOG</div>
         </div>
 
@@ -79,7 +113,7 @@ export function AuditLog({ restBase, onClose }: Props) {
 
         {/* 刷新狀態 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{countdown}s 後刷新</span>
+          {!isMock && <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{countdown}s 後刷新</span>}
           <button onClick={load} style={{ padding: '3px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 3, color: 'rgba(255,255,255,0.5)', fontSize: 10, cursor: 'pointer' }}>↻ 刷新</button>
           <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
         </div>
@@ -106,10 +140,7 @@ export function AuditLog({ restBase, onClose }: Props) {
         {loading && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>載入中…</div>
         )}
-        {error && !loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#ef4444', fontSize: 12 }}>{error}</div>
-        )}
-        {!loading && !error && (
+        {!loading && (
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>

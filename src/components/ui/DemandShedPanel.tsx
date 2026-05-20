@@ -18,22 +18,35 @@ interface ShedPlan {
   candidates: ShedCandidate[]
 }
 
+const MOCK_PLAN: ShedPlan = {
+  status: 'warning',
+  message: '需量達契約警戒線 87.5%，建議依序卸載以下 HVAC 設備',
+  current_ratio_pct: 87.5,
+  estimated_reduction_kw: 142,
+  new_ratio_pct: 72.3,
+  candidates: [
+    { device_id: 'ahu-a3f-01', asset_code: 'AHU-A-3F-01', name: '3F 空調機組 A',  estimated_reduction_kw: 52, priority: 1 },
+    { device_id: 'ahu-b2f-02', asset_code: 'AHU-B-2F-02', name: '2F 空調機組 B',  estimated_reduction_kw: 48, priority: 2 },
+    { device_id: 'crac-c1f-01',asset_code: 'CRAC-C-1F-01',name: 'C棟精密空調',    estimated_reduction_kw: 42, priority: 3 },
+  ],
+}
+
 interface Props {
   restBase: string
   onClose: () => void
 }
 
 export function DemandShedPanel({ restBase, onClose }: Props) {
-  const [plan, setPlan] = useState<ShedPlan | null>(null)
+  const [plan, setPlan]     = useState<ShedPlan | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isMock, setIsMock]   = useState(false)
 
   useEffect(() => {
     setLoading(true)
     fetch(`${restBase}/api/ems/demand-shed-plan`)
       .then(r => r.json())
-      .then((data: ShedPlan) => { setPlan(data); setLoading(false) })
-      .catch(() => { setError('無法取得卸載計畫'); setLoading(false) })
+      .then((data: ShedPlan) => { setPlan(data); setIsMock(false); setLoading(false) })
+      .catch(() => { setPlan(MOCK_PLAN); setIsMock(true); setLoading(false) })
   }, [restBase])
 
   const statusColor = plan?.status === 'critical' ? '#ef4444' : plan?.status === 'warning' ? '#f59e0b' : '#10b981'
@@ -76,7 +89,12 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <div style={{ width: 3, height: 16, background: statusColor, borderRadius: 2 }} />
               <div>
-                <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700 }}>AI 需量卸載建議</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700 }}>AI 需量卸載建議</span>
+                  {isMock && (
+                    <span style={{ padding: '1px 6px', background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 3, color: '#f59e0b', fontSize: 9, fontWeight: 600 }}>SIM</span>
+                  )}
+                </div>
                 <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEMAND SHED PLAN</div>
               </div>
               <button onClick={onClose} style={{
@@ -91,11 +109,6 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
             {loading && (
               <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
                 分析中…
-              </div>
-            )}
-            {error && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: '#ef4444', fontSize: 12 }}>
-                {error}
               </div>
             )}
             {plan && !loading && (

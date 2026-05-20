@@ -19,12 +19,64 @@ const MOCK_RESPONSES: Record<string, string> = {
     '🔧 AHU-A-3F-01 今日記錄：\n• 1 筆 EM 工單進行中（WO-2026-001234）\n• 派工：陳大維，預估 3 小時\n• 本月累計 3 次，費用 NT$ 12,500',
 }
 
+// 關鍵字模糊比對回應庫
+const KEYWORD_RESPONSES: Array<{ keys: string[]; answer: string }> = [
+  {
+    keys: ['能源', '用電', '電費', '今日', '今天', 'kwh', 'mwh'],
+    answer: '⚡ 今日能源概況（截至當前）：\n• 即時需量：874 kW（契約 87.5%）\n• 今日累計：8.42 MWh\n• 電費試算：NT$ 29,470\n• 尖峰時段 09:00–22:00，目前處於尖峰',
+  },
+  {
+    keys: ['工單', '維修', '保養', 'wo', 'workorder'],
+    answer: '🔧 工單摘要（本日）：\n• 待指派：3 筆（其中 1 筆 URGENT）\n• 進行中：7 筆（平均已耗 2.1h）\n• 今日完工：5 筆，累計工時 14.5h\n\n最高優先：WO-2026-001234（AHU-A-3F-01）',
+  },
+  {
+    keys: ['告警', 'alert', 'critical', 'alarm', '警報', '嚴重'],
+    answer: '🔔 告警概況：\n• CRITICAL：2 筆（AHU-A-3F-01、CRAC-C-1F-01）\n• ALARM：4 筆（待確認）\n• WARNING：8 筆\n\n建議優先處理 AHU-A-3F-01 高壓壓縮機告警。',
+  },
+  {
+    keys: ['設備', '狀態', '離線', '異常', '正常', 'device'],
+    answer: '📋 設備狀態總覽（共 24 台）：\n• 正常運行：18 台（75%）\n• 警示中：4 台\n• 嚴重故障：1 台（AHU-A-3F-01）\n• 通訊離線：1 台（CRAC-C-1F-01）',
+  },
+  {
+    keys: ['bim', 'ifc', '模型', '建築', '樓層', '樓'],
+    answer: '🏗 BIM 模型資訊：\n• A棟：已載入（3,245 個構件）\n• B棟：已載入（2,180 個構件）\n• C棟機房：未載入\n\n進入「BIM 視圖」可點擊構件定位設備。',
+  },
+  {
+    keys: ['rul', '壽命', '剩餘', '預測', '老化'],
+    answer: '⏱ 設備壽命預測（RUL）：\n• 超期（緊急）：CRAC-C-1F-01\n• < 90 天：AHU-A-3F-01（剩 45天）\n• < 180 天：UPS-A-2F-01（剩 130天）\n\n建議本月排定精密空調汰換計畫。',
+  },
+  {
+    keys: ['oee', '效率', '可用率', '稼動', '生產'],
+    answer: '📊 OEE 效率（本週平均）：\n• 可用率（Availability）：91.2%\n• 性能效率（Performance）：88.7%\n• 品質率（Quality）：98.4%\n• 綜合 OEE：79.6%\n\n瓶頸：AHU 系統可用率偏低（83.5%）',
+  },
+  {
+    keys: ['空調', 'ahu', 'fcu', '冷卻', '冷水', '冰水'],
+    answer: '❄ 空調系統摘要：\n• AHU 運行中：6/8 台（2 台異常）\n• FCU 正常：全數 12 台\n• 冷卻水塔 CT：1 台警示（散熱效率 79%）\n• 平均供回水溫差：7.2°C（設計值 8°C）',
+  },
+  {
+    keys: ['ups', '電源', '電力', '不斷電', 'mcc', '配電'],
+    answer: '⚡ 電力系統狀態：\n• UPS-A 電池健康度：82%（警示）\n• UPS-B 正常運行\n• MCC-A/B 均正常\n• 主變壓器負載率：68.3%（正常）',
+  },
+  {
+    keys: ['維護', '日曆', '排程', '計畫', '下週', '本月'],
+    answer: '📅 近期維護排程：\n• 今日：PM AHU-A-3F-01 濾網更換（14:00）\n• 明日：CT-B-1F-01 散熱片清潔\n• 本週五：UPS-A-2F-01 電池容量測試\n• 下月初：CRAC-C-1F-01 汰換預排',
+  },
+]
+
+function fuzzyMockResponse(question: string): string {
+  const q = question.toLowerCase()
+  for (const { keys, answer } of KEYWORD_RESPONSES) {
+    if (keys.some(k => q.includes(k))) return answer
+  }
+  return `🤖 已收到查詢「${question}」。\n\n此為 Demo 模式。前往「系統設定 → Claude 設定」輸入 Anthropic API Key 後，將連接 Claude AI 進行真實的跨模組分析。`
+}
+
 import { getStoredApiKey, getStoredModel } from './ClaudeSettings'
 import { getSystemSettings } from '../../hooks/useSystemSettings'
 
 async function callClaudeNL(question: string): Promise<string> {
   const apiKey = getStoredApiKey()
-  if (!apiKey) return MOCK_RESPONSES[question] ?? `🤖 已收到查詢「${question}」。\n\n此為 Demo 模式，點擊「⚙ 系統設定 → AI助理」輸入 Anthropic API Key 後將連接 Claude AI 進行 NL2Cypher 跨模組分析。`
+  if (!apiKey) return MOCK_RESPONSES[question] ?? fuzzyMockResponse(question)
 
   const { maxTokens, systemPrompt } = getSystemSettings().ai
 

@@ -621,27 +621,11 @@ export default function App() {
       )}
 
       {/* AI 需量卸載建議面板 */}
-      {showDemandPanel && backendConnected && (
+      {showDemandPanel && (
         <DemandShedPanel
-          restBase={`http://localhost:8000`}
+          restBase="http://localhost:8000"
           onClose={() => setShowDemandPanel(false)}
         />
-      )}
-      {showDemandPanel && !backendConnected && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 700,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }} onClick={() => setShowDemandPanel(false)}>
-          <div onClick={e => e.stopPropagation()} style={{
-            padding: '20px 28px', background: 'rgba(7,15,30,0.98)',
-            border: '1px solid rgba(245,158,11,0.3)', borderRadius: 10,
-            color: '#f59e0b', fontSize: 12,
-          }}>
-            ⚠ 後端未連線，無法取得需量卸載計畫
-            <br /><span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>請啟動後端伺服器後再試。</span>
-            <br /><button onClick={() => setShowDemandPanel(false)} style={{ marginTop: 12, cursor: 'pointer', padding: '4px 14px', background: 'none', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)', borderRadius: 4, fontSize: 10 }}>關閉</button>
-          </div>
-        </div>
       )}
 
       {/* AI 運維助理面板 */}
