@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import type { WorkOrder, Device } from '../../types'
 
 const WO_TYPE_COLORS = { PM: '#818cf8', CM: '#f97316', EM: '#ef4444' }
@@ -123,17 +123,17 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
         <div style={{ width: 3, height: 18, background: '#818cf8', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>維護排程日曆</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>MAINTENANCE CALENDAR</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>MAINTENANCE CALENDAR</div>
         </div>
         {/* 圖例 */}
         <div style={{ marginLeft: 24, display: 'flex', gap: 10 }}>
           {[{ color: '#818cf8', label: 'PM 預防保養' }, { color: '#f97316', label: 'CM 矯正維修' }, { color: '#ef4444', label: 'EM 緊急搶修' }, { color: '#f59e0b', label: 'RUL 預測到期' }].map(l => (
-            <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>
+            <span key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: l.color, display: 'inline-block' }} />{l.label}
             </span>
           ))}
         </div>
-        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>
 
       {/* 主體：日曆 + 側欄 */}
@@ -149,7 +149,7 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
             <button onClick={nextMonth} style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4, color: 'rgba(255,255,255,0.6)', fontSize: 12, cursor: 'pointer' }}>›</button>
             <button onClick={() => { setYear(today.getFullYear()); setMonth(today.getMonth()); setSelected(todayStr) }}
               style={{ padding: '4px 10px', background: 'rgba(6,182,212,0.1)', border: '1px solid rgba(6,182,212,0.25)', borderRadius: 4, color: '#06b6d4', fontSize: 10, cursor: 'pointer' }}>今天</button>
-            <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 10, color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>
               <span style={{ color: '#818cf8' }}>{workOrders.length} 工單</span>
               <span style={{ color: '#f59e0b' }}>{devices.filter(d => d.rulDays > 0 && d.rulDays <= 365).length} RUL預測</span>
             </div>
@@ -193,7 +193,7 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
                         </div>
                       ))}
                       {evs.length > 3 && (
-                        <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.3)', paddingLeft: 4 }}>+{evs.length - 3} 更多</div>
+                        <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.7)', paddingLeft: 4 }}>+{evs.length - 3} 更多</div>
                       )}
                     </>
                   )}
@@ -208,20 +208,20 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
 
           {/* 選中日期 */}
           <div style={{ padding: '14px 14px 10px', borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0 }}>
-            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 8 }}>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 8 }}>
               {selected ? selected : '—'}
             </div>
             {selectedEvents.length === 0
-              ? <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>無排程事件</div>
+              ? <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>無排程事件</div>
               : selectedEvents.map((ev, i) => <EventRow key={i} ev={ev} />)
             }
           </div>
 
           {/* 即將到來 */}
           <div style={{ flex: 1, overflow: 'auto', padding: '10px 14px' }}>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 8 }}>近 14 天事件</div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 8 }}>近 14 天事件</div>
             {upcoming.length === 0
-              ? <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>暫無排程事件</div>
+              ? <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>暫無排程事件</div>
               : upcoming.map(({ date, events: evs }) => (
                   <div key={date} style={{ marginBottom: 10 }}>
                     <div style={{ color: date === todayStr ? '#10b981' : 'rgba(255,255,255,0.4)', fontSize: 9, fontWeight: 600, marginBottom: 4 }}>
@@ -242,7 +242,7 @@ function EventRow({ ev, compact }: { ev: CalEvent; compact?: boolean }) {
   return (
     <div style={{ padding: compact ? '3px 7px' : '5px 8px', marginBottom: compact ? 3 : 5, background: `${ev.color}10`, borderLeft: `2px solid ${ev.color}`, borderRadius: 3 }}>
       <div style={{ color: ev.color, fontSize: compact ? 9.5 : 10, fontWeight: 600 }}>{ev.label}</div>
-      {ev.sub && <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5 }}>{ev.sub}</div>}
+      {ev.sub && <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5 }}>{ev.sub}</div>}
     </div>
   )
 }

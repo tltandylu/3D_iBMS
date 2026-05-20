@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const EXAMPLE_QUERIES = [
@@ -109,7 +109,7 @@ export function NLQueryBar() {
             )}
             <button
               onClick={() => { setExpanded(false); setResponse(null) }}
-              style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 12, cursor: 'pointer' }}
+              style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer' }}
             >✕</button>
           </motion.div>
         )}
@@ -157,7 +157,7 @@ export function NLQueryBar() {
             <button key={q} onClick={() => handleQuery(q)} style={{
               padding: '2px 8px', background: 'rgba(15,23,42,0.7)',
               border: '1px solid rgba(255,255,255,0.1)', borderRadius: 3,
-              color: 'rgba(255,255,255,0.4)', fontSize: 9, cursor: 'pointer',
+              color: 'rgba(255,255,255,0.8)', fontSize: 9, cursor: 'pointer',
               backdropFilter: 'blur(8px)',
             }}>{q}</button>
           ))}

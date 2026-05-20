@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 
 interface AuditEntry {
   id:          string
@@ -64,7 +64,7 @@ export function AuditLog({ restBase, onClose }: Props) {
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>操作稽核日誌</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>OPERATION AUDIT LOG</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>OPERATION AUDIT LOG</div>
         </div>
 
         {/* 操作類型篩選 */}
@@ -79,9 +79,9 @@ export function AuditLog({ restBase, onClose }: Props) {
 
         {/* 刷新狀態 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
-          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>{countdown}s 後刷新</span>
+          <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{countdown}s 後刷新</span>
           <button onClick={load} style={{ padding: '3px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 3, color: 'rgba(255,255,255,0.5)', fontSize: 10, cursor: 'pointer' }}>↻ 刷新</button>
-          <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+          <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
         </div>
       </div>
 
@@ -96,7 +96,7 @@ export function AuditLog({ restBase, onClose }: Props) {
         ].map(s => (
           <div key={s.label} style={{ padding: '4px 12px', background: `${s.color}0e`, border: `1px solid ${s.color}25`, borderRadius: 4, textAlign: 'center' }}>
             <div style={{ color: s.color, fontSize: 16, fontWeight: 700 }}>{s.value}</div>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5 }}>{s.label}</div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5 }}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -104,7 +104,7 @@ export function AuditLog({ restBase, onClose }: Props) {
       {/* 表格 */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {loading && (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>載入中…</div>
+          <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>載入中…</div>
         )}
         {error && !loading && (
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#ef4444', fontSize: 12 }}>{error}</div>
@@ -114,20 +114,20 @@ export function AuditLog({ restBase, onClose }: Props) {
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                 {['時間', '操作類型', '設備', '指令', '結果', '詳情'].map(h => (
-                  <th key={h} style={{ padding: '8px 16px', textAlign: 'left', color: 'rgba(255,255,255,0.3)', fontSize: 9, letterSpacing: '0.06em', fontWeight: 600 }}>{h}</th>
+                  <th key={h} style={{ padding: '8px 16px', textAlign: 'left', color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: '0.06em', fontWeight: 600 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {entries.length === 0 && (
-                <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>無稽核紀錄</td></tr>
+                <tr><td colSpan={6} style={{ padding: '32px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>無稽核紀錄</td></tr>
               )}
               {entries.map((entry, i) => {
                 const opColor = OP_COLORS[entry.operation] ?? '#6b7280'
                 const isOdd   = i % 2 === 1
                 return (
                   <tr key={entry.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', background: isOdd ? 'rgba(255,255,255,0.015)' : 'transparent' }}>
-                    <td style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', fontSize: 10 }}>
+                    <td style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.78)', fontFamily: 'monospace', fontSize: 10 }}>
                       {new Date(entry.timestamp).toLocaleString('zh-TW', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </td>
                     <td style={{ padding: '8px 16px' }}>
@@ -137,7 +137,7 @@ export function AuditLog({ restBase, onClose }: Props) {
                     </td>
                     <td style={{ padding: '8px 16px' }}>
                       <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>{entry.device_name || '—'}</div>
-                      {entry.device_id && <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>{entry.device_id}</div>}
+                      {entry.device_id && <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{entry.device_id}</div>}
                     </td>
                     <td style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>
                       {CMD_LABELS[entry.command] ?? (entry.command || '—')}
@@ -147,7 +147,7 @@ export function AuditLog({ restBase, onClose }: Props) {
                         {entry.result === 'success' ? '✓ 成功' : '✕ 失敗'}
                       </span>
                     </td>
-                    <td style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.4)', fontSize: 10, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '8px 16px', color: 'rgba(255,255,255,0.8)', fontSize: 10, maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {entry.message}
                     </td>
                   </tr>

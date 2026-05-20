@@ -1,4 +1,4 @@
-import ReactECharts from 'echarts-for-react'
+﻿import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
 import type { EnergyTrend } from '../../types'
 
@@ -38,7 +38,7 @@ export function EnergyTrendChart({ data, contractDemand }: Props) {
       data: times,
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
       axisLabel: {
-        color: 'rgba(255,255,255,0.3)', fontSize: 9,
+        color: 'rgba(255,255,255,0.7)', fontSize: 9,
         interval: 11,
         rotate: 0
       },
@@ -49,7 +49,7 @@ export function EnergyTrendChart({ data, contractDemand }: Props) {
       min: 'dataMin',
       axisLine: { show: false },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
-      axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 }
+      axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 }
     },
     series: [
       {

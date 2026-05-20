@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { Alert } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
@@ -89,7 +89,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
       type: 'pie', radius: ['45%', '72%'], center: ['50%', '50%'],
       data: sevCounts,
       label: { show: true, color: 'rgba(255,255,255,0.55)', fontSize: 9, formatter: '{b}\n{c}' },
-      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.6)' } },
     }],
   }), [sevCounts])
 
@@ -118,12 +118,12 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
     },
     legend: {
       data: ['嚴重', '告警', '警示', '資訊'],
-      textStyle: { color: 'rgba(255,255,255,0.35)', fontSize: 9 },
+      textStyle: { color: 'rgba(255,255,255,0.75)', fontSize: 9 },
       top: 0, right: 4,
     },
     grid: { top: 24, right: 8, bottom: 16, left: 52 },
     xAxis: {
-      type: 'value', axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 },
+      type: 'value', axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
     },
     yAxis: {
@@ -150,7 +150,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
         <div style={{ width: 3, height: 18, background: '#ef4444', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>告警管理中心</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>ALERT MANAGEMENT CENTER</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>ALERT MANAGEMENT CENTER</div>
         </div>
 
         {/* KPI */}
@@ -170,7 +170,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
                 color: s.color, fontSize: 18, fontWeight: 700, lineHeight: 1,
                 animation: s.blink ? 'acBlink 1s infinite' : 'none',
               }}>{s.value}</div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, marginTop: 1 }}>{s.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8, marginTop: 1 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -188,7 +188,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
           marginLeft: stats.open > 0 ? 0 : 'auto',
           padding: '5px 14px', background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5,
-          color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+          color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
         }}>✕ 關閉</button>
       </div>
 
@@ -226,7 +226,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
               <option value="all">全部棟別</option>
               {BUILDINGS.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
             </select>
-            <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, marginLeft: 'auto' }}>
+            <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, marginLeft: 'auto' }}>
               {filtered.length} 筆
             </span>
           </div>
@@ -234,7 +234,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
           {/* 告警卡片 */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 5 }}>
             {filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
                 無符合條件的告警
               </div>
             ) : filtered.map(alert => (
@@ -281,7 +281,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
                 <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, fontWeight: 600 }}>{a.assetName}</span>
               </div>
               <div style={{ color: '#a78bfa', fontSize: 8, fontWeight: 700, marginBottom: 2 }}>AI 建議行動</div>
-              <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9, lineHeight: 1.5 }}>{a.aiActionSuggestion}</div>
+              <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: 9, lineHeight: 1.5 }}>{a.aiActionSuggestion}</div>
             </div>
           ))}
         </div>
@@ -311,24 +311,24 @@ function AlertCard({ alert, expanded, onToggle, onAck }: {
             {SEV_LABELS[alert.severity] ?? alert.severity}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: 600, flex: 1 }}>{alert.title}</span>
-          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, flexShrink: 0 }}>{fmtAgo(alert.occurredAt)}</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, flexShrink: 0 }}>{fmtAgo(alert.occurredAt)}</span>
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>📍 {alert.assetName}</span>
-          <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>📍 {alert.assetName}</span>
+          <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>
             {BUILDINGS.find(b => b.id === alert.buildingId)?.name ?? alert.buildingId} · {alert.floor > 0 ? `${alert.floor}F` : `B${Math.abs(alert.floor)}F`}
           </span>
           <span style={{ marginLeft: 'auto', padding: '1px 6px', borderRadius: 3, fontSize: 8, background: `${statCol}18`, color: statCol, border: `1px solid ${statCol}30` }}>
             {STAT_LABELS[alert.status] ?? alert.status}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>{expanded ? '▲' : '▼'}</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9 }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
 
       {/* 展開詳情 */}
       {expanded && (
         <div style={{ padding: '0 12px 10px', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-          <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, lineHeight: 1.6, paddingTop: 8, marginBottom: 8 }}>
+          <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10, lineHeight: 1.6, paddingTop: 8, marginBottom: 8 }}>
             {alert.description}
           </div>
           {alert.aiRootCause && (
@@ -390,7 +390,7 @@ function WeekTrend({ alerts }: { alerts: Array<Alert & { status: Alert['status']
               <div style={{ height: h - critH, background: 'rgba(245,158,11,0.5)' }} />
               {d.critical > 0 && <div style={{ height: critH, background: 'rgba(239,68,68,0.7)' }} />}
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 7 }}>{d.label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 7 }}>{d.label}</span>
           </div>
         )
       })}
@@ -400,7 +400,7 @@ function WeekTrend({ alerts }: { alerts: Array<Alert & { status: Alert['status']
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.1em', marginBottom: 8 }}>
+    <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.1em', marginBottom: 8 }}>
       {String(children).toUpperCase()}
     </div>
   )

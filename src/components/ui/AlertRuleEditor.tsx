@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+﻿import { useState, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Device } from '../../types'
 import type { AlertRule, RuleMetric, RuleOperator } from '../../hooks/useAlertRules'
@@ -64,13 +64,13 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
         <div style={{ width: 3, height: 18, background: '#f59e0b', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>告警規則引擎</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>ALERT RULE ENGINE</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>ALERT RULE ENGINE</div>
         </div>
         <div style={{ marginLeft: 20, display: 'flex', gap: 8 }}>
           <Badge color="#10b981" label={`${rules.filter(r => r.enabled).length} 啟用`} />
           <Badge color="#6b7280" label={`${rules.filter(r => !r.enabled).length} 停用`} />
         </div>
-        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>
 
       {/* 主體：左側列表 + 右側編輯 */}
@@ -79,12 +79,12 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
         {/* 左側：規則列表 */}
         <div style={{ width: 340, background: 'rgba(7,13,24,0.96)', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{ padding: '12px 14px 8px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, flex: 1 }}>規則列表 ({rules.length})</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, flex: 1 }}>規則列表 ({rules.length})</span>
             <button onClick={startNew} style={{ padding: '4px 10px', background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 4, color: '#10b981', fontSize: 10, cursor: 'pointer', fontWeight: 600 }}>+ 新增規則</button>
           </div>
           <div style={{ flex: 1, overflow: 'auto', padding: '8px' }}>
             {rules.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>尚無規則</div>
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>尚無規則</div>
             )}
             {rules.map(rule => (
               <RuleCard
@@ -111,7 +111,7 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
         {/* 右側：編輯/預覽 */}
         <div style={{ flex: 1, background: 'rgba(7,13,24,0.96)', display: 'flex', flexDirection: 'column' }}>
           {editingId === null ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'rgba(255,255,255,0.15)' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'rgba(255,255,255,0.55)' }}>
               <div style={{ fontSize: 36 }}>⚡</div>
               <div style={{ fontSize: 12 }}>選擇規則編輯，或點擊「+ 新增規則」</div>
             </div>
@@ -189,7 +189,7 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
 
               {/* 即時預覽 */}
               <div style={{ marginBottom: 20, padding: '12px 14px', background: matchingDevices.length > 0 ? 'rgba(239,68,68,0.07)' : 'rgba(16,185,129,0.07)', border: `1px solid ${matchingDevices.length > 0 ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.2)'}`, borderRadius: 6 }}>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 6 }}>即時預覽（目前符合此條件的設備）</div>
+                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 6 }}>即時預覽（目前符合此條件的設備）</div>
                 {matchingDevices.length === 0
                   ? <div style={{ color: '#10b981', fontSize: 11 }}>✓ 目前無設備觸發此規則</div>
                   : <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
@@ -204,7 +204,7 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
 
               {/* 操作按鈕 */}
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={cancelEdit} style={{ padding: '7px 18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>取消</button>
+                <button onClick={cancelEdit} style={{ padding: '7px 18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>取消</button>
                 <button onClick={submit} disabled={!form.name.trim()} style={{ padding: '7px 24px', background: form.name.trim() ? 'rgba(16,185,129,0.18)' : 'rgba(255,255,255,0.04)', border: `1px solid ${form.name.trim() ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.1)'}`, borderRadius: 5, color: form.name.trim() ? '#10b981' : 'rgba(255,255,255,0.2)', fontSize: 11, fontWeight: 700, cursor: form.name.trim() ? 'pointer' : 'not-allowed' }}>
                   {editingId === 'new' ? '✓ 建立規則' : '✓ 儲存變更'}
                 </button>
@@ -241,7 +241,7 @@ function RuleCard({ rule, isEditing, confirmDelete, matchCount, onEdit, onToggle
           <span style={{ padding: '1px 6px', background: `${sColor}25`, border: `1px solid ${sColor}50`, borderRadius: 3, color: sColor, fontSize: 9, fontWeight: 700 }}>{matchCount} 觸發</span>
         )}
       </div>
-      <div style={{ marginTop: 5, color: 'rgba(255,255,255,0.3)', fontSize: 9, display: 'flex', gap: 8, alignItems: 'center' }}>
+      <div style={{ marginTop: 5, color: 'rgba(255,255,255,0.7)', fontSize: 9, display: 'flex', gap: 8, alignItems: 'center' }}>
         <span>{METRIC_LABELS[rule.metric]} {rule.operator} {rule.threshold}</span>
         <span>·</span>
         <span style={{ color: sColor }}>{rule.severity}</span>
@@ -266,7 +266,7 @@ function SmallBtn({ children, onClick, color }: { children: ReactNode; onClick: 
 }
 
 function FLabel({ children }: { children: ReactNode }) {
-  return <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>{String(children).toUpperCase()}</div>
+  return <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>{String(children).toUpperCase()}</div>
 }
 
 function Badge({ color, label }: { color: string; label: string }) {

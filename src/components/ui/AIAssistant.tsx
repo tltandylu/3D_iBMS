@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+﻿import { useState, useRef, useEffect, useCallback } from 'react'
 import type { Device, Alert, KPIData } from '../../types'
 
 interface Message {
@@ -157,7 +157,7 @@ export function AIAssistant({ devices, alerts, kpi }: Props) {
       <div style={{ padding: '6px 12px 4px', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
           <div style={{ width: 2, height: 10, background: '#10b981', borderRadius: 1 }} />
-          <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
             AI 全平台助理
           </span>
           {(() => {
@@ -203,7 +203,7 @@ export function AIAssistant({ devices, alerts, kpi }: Props) {
               )}
               {m.content}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8, marginTop: 2, paddingInline: 4 }}>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, marginTop: 2, paddingInline: 4 }}>
               {m.ts}
             </div>
           </div>

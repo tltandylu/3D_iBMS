@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+﻿import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AppShell } from './components/layout/AppShell'
 import { LeftPanel } from './components/layout/LeftPanel'
@@ -627,7 +627,7 @@ export default function App() {
             color: '#f59e0b', fontSize: 12,
           }}>
             ⚠ 後端未連線，無法取得需量卸載計畫
-            <br /><span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>請啟動後端伺服器後再試。</span>
+            <br /><span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>請啟動後端伺服器後再試。</span>
             <br /><button onClick={() => setShowDemandPanel(false)} style={{ marginTop: 12, cursor: 'pointer', padding: '4px 14px', background: 'none', border: '1px solid rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.5)', borderRadius: 4, fontSize: 10 }}>關閉</button>
           </div>
         </div>
@@ -664,7 +664,7 @@ export default function App() {
                 <span style={{ fontSize: 18 }}>🤖</span>
                 <div>
                   <div style={{ color: '#10b981', fontSize: 12, fontWeight: 700, lineHeight: 1.3 }}>AI 運維助理</div>
-                  <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9 }}>Claude · 即時系統感知</div>
+                  <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9 }}>Claude · 即時系統感知</div>
                 </div>
               </div>
               <button
@@ -675,7 +675,7 @@ export default function App() {
                   background: 'rgba(255,255,255,0.05)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: 4,
-                  color: 'rgba(255,255,255,0.4)',
+                  color: 'rgba(255,255,255,0.8)',
                   fontSize: 12, cursor: 'pointer',
                 }}
               >✕</button>
@@ -790,7 +790,7 @@ function NavbarKPI({
 function NavSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 1, padding: '0 8px', flexShrink: 0 }}>
-      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1 }}>
+      <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1 }}>
         {label}
       </div>
       <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -814,7 +814,7 @@ function NavChip({ value, label, color, blink }: { value: number; label: string;
         animation: blink && value > 0 ? 'navBlink 1s infinite' : 'none',
       }} />
       <span style={{ color, fontSize: 12, fontWeight: 700 }}>{value}</span>
-      <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>{label}</span>
     </div>
   )
 }
@@ -823,7 +823,7 @@ function NavStat({ value, label, color }: { value: string; label: string; color:
   return (
     <div>
       <div style={{ color, fontSize: 12, fontWeight: 700, lineHeight: 1, letterSpacing: '0.02em' }}>{value}</div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, marginTop: 1 }}>{label}</div>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8, marginTop: 1 }}>{label}</div>
     </div>
   )
 }
@@ -846,7 +846,7 @@ function NavPeak({ start, end }: { start: number; end: number }) {
         }} />
         <span style={{ color, fontSize: 12, fontWeight: 700, lineHeight: 1 }}>{isPeak ? '尖峰' : '離峰'}</span>
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8, marginTop: 1 }}>
+      <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8, marginTop: 1 }}>
         {`${String(start).padStart(2,'0')}–${String(end).padStart(2,'0')}h`}
       </div>
     </div>
@@ -863,7 +863,7 @@ function NavDemand({ ratio, demand, contract, color, warningPct = 80, onClick }:
       title={`需量 ${demand.toFixed(0)} / 契約 ${contract.toFixed(0)} kW · 警戒 ${warningPct}%${onClick ? ' · 點擊查看 AI 建議' : ''}`}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-        <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8 }}>需量</span>
+        <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8 }}>需量</span>
         <span style={{ color, fontSize: 10, fontWeight: 700 }}>{ratio.toFixed(1)}%</span>
       </div>
       <div style={{ height: 4, background: 'rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden', position: 'relative' }}>
@@ -890,7 +890,7 @@ function NavClock() {
       <div style={{ color: '#06b6d4', fontSize: 14, fontWeight: 300, letterSpacing: '0.05em' }}>
         {time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8, textAlign: 'right', marginTop: 1 }}>
+      <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8, textAlign: 'right', marginTop: 1 }}>
         {time.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })}
       </div>
     </div>
@@ -919,17 +919,18 @@ function SidebarItem({ icon, label, hint, color, onClick, badge, badgeColor, dot
         display: 'flex', alignItems: 'center', gap: 10,
         padding: '8px 16px',
         cursor: 'pointer',
-        background: hov ? `${color}12` : 'transparent',
+        background: hov ? `${color}18` : 'transparent',
         borderLeft: `2px solid ${hov ? color : 'transparent'}`,
-        color: hov ? color : 'rgba(255,255,255,0.55)',
-        fontSize: 12,
-        transition: 'background 0.15s, color 0.15s, border-color 0.15s',
+        color: hov ? color : '#dde3ed',
+        fontSize: 12.5,
+        fontWeight: hov ? 600 : 400,
+        transition: 'background 0.15s, color 0.15s, border-color 0.15s, font-weight 0.1s',
         userSelect: 'none',
       }}
     >
-      <span style={{ fontSize: 14, flexShrink: 0, width: 18, textAlign: 'center' }}>{icon}</span>
-      <span style={{ flex: 1 }}>{label}</span>
-      {hint && <span style={{ fontSize: 9, opacity: 0.3 }}>{hint}</span>}
+      <span style={{ fontSize: 15, flexShrink: 0, width: 18, textAlign: 'center' }}>{icon}</span>
+      <span style={{ flex: 1, letterSpacing: '0.01em' }}>{label}</span>
+      {hint && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.5)', fontWeight: 400 }}>{hint}</span>}
       {badge !== undefined && badge > 0 && (
         <span style={{
           padding: '1px 5px', borderRadius: 8, fontSize: 9, fontWeight: 700,
@@ -969,10 +970,12 @@ function SidebarNav({
   onCustomizer, onAuditLog, onSettings,
 }: SidebarNavProps) {
   const groupLabelStyle: React.CSSProperties = {
-    padding: '14px 16px 4px',
-    fontSize: 9, fontWeight: 700, letterSpacing: '0.14em',
-    color: 'rgba(255,255,255,0.22)',
-    textTransform: 'uppercase',
+    padding: '18px 14px 8px 13px',
+    fontSize: 14, fontWeight: 700, letterSpacing: '0.03em',
+    color: '#f1f5f9',
+    borderLeft: '3px solid rgba(6,182,212,0.55)',
+    background: 'rgba(255,255,255,0.04)',
+    marginTop: 4, marginBottom: 2,
   }
   return (
     <nav style={{ flex: 1, overflowY: 'auto', padding: '4px 0 12px' }}>

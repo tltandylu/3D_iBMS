@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+﻿import { useState, useMemo, useEffect } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { Device } from '../../types'
 
@@ -105,13 +105,13 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
     grid: { top: 36, right: 12, bottom: 28, left: 56 },
     xAxis: {
       type: 'category', data: xLabels,
-      axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 8, interval: Math.floor(rangeOpt.points / 6) },
+      axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8, interval: Math.floor(rangeOpt.points / 6) },
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
     },
     yAxis: {
       type: 'value', name: metricOpt.unit,
-      nameTextStyle: { color: 'rgba(255,255,255,0.35)', fontSize: 9 },
-      axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 8 },
+      nameTextStyle: { color: 'rgba(255,255,255,0.75)', fontSize: 9 },
+      axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8 },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
     },
     series: selectedDevices.map((dev, i) => ({
@@ -139,7 +139,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>設備歷史趨勢比較</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEVICE TREND COMPARISON</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEVICE TREND COMPARISON</div>
         </div>
         {/* Metric */}
         <div style={{ display: 'flex', gap: 4, marginLeft: 20 }}>
@@ -167,7 +167,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
             </button>
           ))}
         </div>
-        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>
 
       {/* Body */}
@@ -178,7 +178,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
             <input value={search} onChange={e => setSearch(e.target.value)}
               placeholder="搜尋設備…"
               style={{ width: '100%', padding: '5px 10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 4, color: '#e2e8f0', fontSize: 10, outline: 'none', boxSizing: 'border-box' }} />
-            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, marginTop: 6 }}>
+            <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9, marginTop: 6 }}>
               已選 {selected.size} / 5 台（點擊切換）
             </div>
           </div>
@@ -202,7 +202,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
                   <div style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0, opacity: isSelected ? 1 : 0.3 }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: isSelected ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)', fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{dev.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>{dev.category} · {dev.status}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{dev.category} · {dev.status}</div>
                   </div>
                 </div>
               )
@@ -213,7 +213,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
         {/* Chart */}
         <div style={{ flex: 1, padding: '12px 16px', display: 'flex', flexDirection: 'column' }}>
           {selected.size === 0 ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 13 }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
               請在左側選擇要比較的設備（最多 5 台）
             </div>
           ) : (

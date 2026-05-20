@@ -1,4 +1,4 @@
-import ReactECharts from 'echarts-for-react'
+﻿import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
 
 interface Props {
@@ -46,7 +46,7 @@ export function DemandGauge({ value, max, label = '需量使用率' }: Props) {
         anchor: { show: false },
         title: {
           offsetCenter: [0, '20%'],
-          color: 'rgba(255,255,255,0.4)',
+          color: 'rgba(255,255,255,0.8)',
           fontSize: 9,
           fontWeight: 'normal'
         },

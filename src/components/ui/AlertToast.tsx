@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Alert } from '../../types'
 
@@ -91,7 +91,7 @@ export function AlertToast({ alerts, onAcknowledge }: Props) {
                     onClick={() => dismiss(toast.id)}
                     style={{
                       marginLeft: 'auto', background: 'none', border: 'none',
-                      color: 'rgba(255,255,255,0.22)', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1,
+                      color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: 12, padding: 0, lineHeight: 1,
                     }}
                   >✕</button>
                 </div>
@@ -101,7 +101,7 @@ export function AlertToast({ alerts, onAcknowledge }: Props) {
                 }}>
                   {toast.alert.title}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 10 }}>
+                <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10 }}>
                   {toast.alert.assetName}
                 </div>
               </div>
@@ -122,7 +122,7 @@ export function AlertToast({ alerts, onAcknowledge }: Props) {
                 style={{
                   flex: 1, padding: '5px 0', cursor: 'pointer', fontSize: 10,
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 4, color: 'rgba(255,255,255,0.32)',
+                  borderRadius: 4, color: 'rgba(255,255,255,0.72)',
                 }}
               >稍後處理</button>
             </div>

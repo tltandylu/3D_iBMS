@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
+﻿import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Alert, Device, WorkOrder } from '../../types'
 import { DEVICES, WORK_ORDERS } from '../../data/mockData'
@@ -193,20 +193,20 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
           {query && (
             <button
               onClick={() => setQuery('')}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 14, padding: 0 }}
+              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 14, padding: 0 }}
             >✕</button>
           )}
           <kbd style={{
             padding: '2px 6px', background: 'rgba(255,255,255,0.06)',
             border: '1px solid rgba(255,255,255,0.12)', borderRadius: 3,
-            color: 'rgba(255,255,255,0.3)', fontSize: 10, fontFamily: 'inherit',
+            color: 'rgba(255,255,255,0.7)', fontSize: 10, fontFamily: 'inherit',
           }}>ESC</kbd>
         </div>
 
         {/* 無查詢：快速導覽 */}
         {!query.trim() ? (
           <div style={{ padding: '16px 18px 20px' }}>
-            <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 9, letterSpacing: '0.12em', marginBottom: 12 }}>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, letterSpacing: '0.12em', marginBottom: 12 }}>
               QUICK NAVIGATION
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -228,12 +228,12 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
                   <span style={{ fontSize: 20 }}>{s.icon}</span>
                   <div>
                     <div style={{ color: s.color, fontSize: 22, fontWeight: 700, lineHeight: 1 }}>{s.count}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 2 }}>{s.label}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, marginTop: 2 }}>{s.label}</div>
                   </div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: 16, color: 'rgba(255,255,255,0.15)', fontSize: 9, textAlign: 'center', letterSpacing: '0.06em' }}>
+            <div style={{ marginTop: 16, color: 'rgba(255,255,255,0.55)', fontSize: 9, textAlign: 'center', letterSpacing: '0.06em' }}>
               輸入關鍵字搜尋 · ↑↓ 導覽 · Enter 確認 · ESC 關閉
             </div>
           </div>
@@ -241,7 +241,7 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
           /* 搜尋結果 */
           <div ref={listRef} style={{ maxHeight: 480, overflowY: 'auto', paddingBottom: 4 }}>
             {results.length === 0 ? (
-              <div style={{ padding: '40px 18px', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+              <div style={{ padding: '40px 18px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
                 找不到符合「{query}」的項目
               </div>
             ) : (
@@ -251,7 +251,7 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
                   <div style={{
                     padding: '8px 18px 5px',
                     display: 'flex', alignItems: 'center', gap: 7,
-                    color: 'rgba(255,255,255,0.22)', fontSize: 9, letterSpacing: '0.12em',
+                    color: 'rgba(255,255,255,0.6)', fontSize: 9, letterSpacing: '0.12em',
                   }}>
                     <span>{KIND_ICONS[kind]}</span>
                     <span>{KIND_LABELS[kind].toUpperCase()}</span>
@@ -287,7 +287,7 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
                             {item.title}
                           </div>
                           <div style={{
-                            color: 'rgba(255,255,255,0.28)', fontSize: 9.5, marginTop: 2,
+                            color: 'rgba(255,255,255,0.65)', fontSize: 9.5, marginTop: 2,
                             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                           }}>
                             {item.sub}
@@ -318,7 +318,7 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
             padding: '7px 18px',
             borderTop: '1px solid rgba(255,255,255,0.05)',
             display: 'flex', gap: 16, alignItems: 'center',
-            color: 'rgba(255,255,255,0.18)', fontSize: 9,
+            color: 'rgba(255,255,255,0.55)', fontSize: 9,
           }}>
             <span>↑↓ 導覽</span>
             <span>Enter 確認</span>

@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react'
+﻿import { useEffect, useState, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
@@ -79,10 +79,10 @@ function CreateWOModal({ device, onSubmit, onClose }: {
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
           <div style={{ width: 3, height: 16, background: '#10b981', borderRadius: 2 }} />
           <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 700 }}>建立工單</span>
-          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 16, cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 16, cursor: 'pointer' }}>✕</button>
         </div>
 
-        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginBottom: 14, letterSpacing: '0.06em' }}>
+        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, marginBottom: 14, letterSpacing: '0.06em' }}>
           {device.assetCode} · {device.category}
         </div>
 
@@ -168,7 +168,7 @@ function CreateWOModal({ device, onSubmit, onClose }: {
               flex: 1, padding: '7px 0',
               background: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+              borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
             }}>取消</button>
           <button onClick={() => onSubmit(form)}
             style={{
@@ -185,7 +185,7 @@ function CreateWOModal({ device, onSubmit, onClose }: {
 
 function Label({ children }: { children: ReactNode }) {
   return (
-    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>
+    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>
       {String(children).toUpperCase()}
     </div>
   )
@@ -316,7 +316,7 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
                   <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700, marginBottom: 2 }}>
                     {device.name}
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, letterSpacing: '0.05em' }}>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, letterSpacing: '0.05em' }}>
                     {device.assetCode}
                   </div>
                 </div>
@@ -326,7 +326,7 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
                     onClick={onClose}
                     style={{
                       background: 'none', border: 'none',
-                      color: 'rgba(255,255,255,0.3)', fontSize: 16,
+                      color: 'rgba(255,255,255,0.7)', fontSize: 16,
                       cursor: 'pointer', padding: '0 2px',
                       lineHeight: 1
                     }}
@@ -400,7 +400,7 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
                   border: '1px solid rgba(6,182,212,0.15)',
                   borderRadius: 5
                 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginBottom: 4 }}>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, marginBottom: 4 }}>
                     座標 (X, Y, Z)
                   </div>
                   <div style={{ color: '#06b6d4', fontSize: 12, fontFamily: 'monospace' }}>
@@ -562,7 +562,7 @@ function AiScoreBar({ score }: { score: number }) {
   return (
     <div style={{ marginTop: 10, padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: 4 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>AI 異常分數</span>
+        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>AI 異常分數</span>
         <span style={{ color, fontWeight: 700, fontSize: 11 }}>{(score * 100).toFixed(0)} / 100</span>
       </div>
       <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2 }}>
@@ -580,7 +580,7 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
       <div style={{
-        color: 'rgba(255,255,255,0.3)', fontSize: 9,
+        color: 'rgba(255,255,255,0.7)', fontSize: 9,
         letterSpacing: '0.1em', marginBottom: 8,
         display: 'flex', alignItems: 'center', gap: 6
       }}>
@@ -600,7 +600,7 @@ function DataCard({ label, value, color, icon }: { label: string; value: string;
       border: `1px solid ${color}20`,
       borderRadius: 5
     }}>
-      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8, marginBottom: 4 }}>{icon} {label}</div>
+      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 8, marginBottom: 4 }}>{icon} {label}</div>
       <div style={{ color, fontWeight: 700, fontSize: 13 }}>{value}</div>
     </div>
   )
@@ -614,7 +614,7 @@ function InfoTable({ rows }: { rows: Array<{ label: string; value: string }> }) 
           display: 'flex', gap: 8, padding: '5px 0',
           borderBottom: i < rows.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none'
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, width: 70, flexShrink: 0 }}>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, width: 70, flexShrink: 0 }}>
             {row.label}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>{row.value}</span>
@@ -651,7 +651,7 @@ function WorkOrderCard({ wo }: { wo: WorkOrder }) {
       </div>
       <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, marginBottom: 2 }}>{wo.title}</div>
       {wo.assignedTo && (
-        <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>
+        <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>
           派工：{wo.assignedTo}
         </div>
       )}
@@ -661,7 +661,7 @@ function WorkOrderCard({ wo }: { wo: WorkOrder }) {
 
 function EmptyState({ text }: { text: string }) {
   return (
-    <div style={{ textAlign: 'center', padding: '12px 0', color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+    <div style={{ textAlign: 'center', padding: '12px 0', color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>
       {text}
     </div>
   )
@@ -720,7 +720,7 @@ function ConfirmControlDialog({ label, deviceName, isDangerous, onConfirm, onCan
           <button onClick={onCancel} style={{
             flex: 1, padding: '7px 0', background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.12)', borderRadius: 5,
-            color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+            color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
           }}>取消</button>
           <button onClick={onConfirm} style={{
             flex: 2, padding: '7px 0', background: `${accentColor}20`,
@@ -738,7 +738,7 @@ function SparkRow({ label, unit, data, color }: { label: string; unit: string; d
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
       <div style={{ width: 38, flexShrink: 0 }}>
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>{label}</div>
+        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>{label}</div>
         <div style={{ color, fontWeight: 700, fontSize: 11 }}>{latest}<span style={{ fontSize: 8, marginLeft: 2 }}>{unit}</span></div>
       </div>
       <div style={{ flex: 1, height: 38 }}>

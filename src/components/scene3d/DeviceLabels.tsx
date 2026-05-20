@@ -1,4 +1,4 @@
-import type { Device } from '../../types'
+﻿import type { Device } from '../../types'
 
 interface Props {
   devices: Device[]
@@ -73,7 +73,7 @@ export function DeviceLabels({ devices, selectedDeviceId, onDeviceClick, isNear 
                     <span style={{ color: col, fontSize: 10, fontWeight: 700 }}>
                       {device.assetCode}
                     </span>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginLeft: 'auto' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginLeft: 'auto' }}>
                       {device.floor > 0 ? `${device.floor}F` : `B${Math.abs(device.floor)}F`}
                     </span>
                   </div>
@@ -81,7 +81,7 @@ export function DeviceLabels({ devices, selectedDeviceId, onDeviceClick, isNear 
                     {device.name}
                   </div>
                   <div style={{ display: 'flex', gap: 8, paddingLeft: 13 }}>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>
                       {device.category}
                     </span>
                     <span style={{ color: '#38bdf8', fontSize: 8 }}>

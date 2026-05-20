@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect, useMemo, type MutableRefObject } from 'react'
+﻿import { useRef, useState, useCallback, useEffect, useMemo, type MutableRefObject } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
@@ -514,7 +514,7 @@ export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sce
             background: 'transparent',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 4,
-            color: 'rgba(255,255,255,0.45)', fontSize: 13, cursor: 'pointer',
+            color: 'rgba(255,255,255,0.78)', fontSize: 13, cursor: 'pointer',
           }}
         >⌂</button>
         <div style={{ width: 1, background: 'rgba(255,255,255,0.1)', margin: '0 2px' }} />
@@ -545,12 +545,12 @@ export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sce
           borderRadius: 4, padding: '4px 10px',
           backdropFilter: 'blur(8px)', zIndex: 9,
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>低能耗</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>低能耗</span>
           <div style={{
             width: 80, height: 6, borderRadius: 3,
             background: 'linear-gradient(90deg, #22c55e, #facc15, #ef4444)',
           }} />
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>高能耗</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>高能耗</span>
           {Object.entries(BUILDING_ENERGY_RATIO).map(([id, r]) => {
             const bldg = BUILDINGS.find(b => b.id === id)
             if (!bldg) return null

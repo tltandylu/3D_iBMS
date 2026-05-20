@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+﻿import { useEffect, useRef } from 'react'
 import type { Alert } from '../../types'
 
 const TICKER_SPEEDS = { slow: 0.3, medium: 0.55, fast: 1.0 }
@@ -107,9 +107,9 @@ export function BottomAlarmTicker({ alerts, onAlertClick, speed = 'medium' }: Pr
         height: '100%',
         display: 'flex', alignItems: 'center', gap: 4
       }}>
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>共</span>
+        <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>共</span>
         <span style={{ color: '#ef4444', fontWeight: 700, fontSize: 14 }}>{alerts.length}</span>
-        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>則</span>
+        <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>則</span>
       </div>
     </div>
   )
@@ -150,7 +150,7 @@ function TickerItem({ alert, onClick }: { alert: Alert; onClick: (a: Alert) => v
       </span>
 
       {/* 時間 */}
-      <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>
+      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>
         {formatTimeAgo(alert.occurredAt)}
       </span>
 

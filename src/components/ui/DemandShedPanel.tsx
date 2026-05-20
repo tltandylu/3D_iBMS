@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 interface ShedCandidate {
@@ -77,11 +77,11 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
               <div style={{ width: 3, height: 16, background: statusColor, borderRadius: 2 }} />
               <div>
                 <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700 }}>AI 需量卸載建議</div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEMAND SHED PLAN</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEMAND SHED PLAN</div>
               </div>
               <button onClick={onClose} style={{
                 marginLeft: 'auto', background: 'none', border: 'none',
-                color: 'rgba(255,255,255,0.3)', fontSize: 16, cursor: 'pointer',
+                color: 'rgba(255,255,255,0.7)', fontSize: 16, cursor: 'pointer',
               }}>✕</button>
             </div>
           </div>
@@ -89,7 +89,7 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
           {/* 內容 */}
           <div style={{ flex: 1, overflow: 'auto', padding: '14px 18px' }}>
             {loading && (
-              <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.3)', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: '32px 0', color: 'rgba(255,255,255,0.7)', fontSize: 12 }}>
                 分析中…
               </div>
             )}
@@ -117,19 +117,19 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
                 }}>
                   <span style={{ width: 8, height: 8, borderRadius: '50%', background: statusColor, display: 'inline-block' }} />
                   <span style={{ color: statusColor, fontSize: 11, fontWeight: 600 }}>{statusLabel}</span>
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>
                     {plan.message ?? '需量超出警戒，建議執行以下卸載方案'}
                   </span>
                 </div>
 
                 {/* 候選設備列表 */}
                 {plan.candidates.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.25)', fontSize: 11 }}>
+                  <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.62)', fontSize: 11 }}>
                     無需卸載候選設備
                   </div>
                 ) : (
                   <>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 8 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 8 }}>
                       建議卸載設備（HVAC · 依功率排序）
                     </div>
                     {plan.candidates.map((c, i) => (
@@ -143,7 +143,7 @@ export function DemandShedPanel({ restBase, onClose }: Props) {
                   <div style={{
                     marginTop: 14, padding: '8px 12px', borderRadius: 5,
                     background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.15)',
-                    color: 'rgba(255,255,255,0.35)', fontSize: 9, lineHeight: 1.6,
+                    color: 'rgba(255,255,255,0.75)', fontSize: 9, lineHeight: 1.6,
                   }}>
                     💡 於設備清單或 3D 場景點擊設備，透過「遠端控制 → 緊急停機」執行卸載。
                   </div>
@@ -165,7 +165,7 @@ function SummaryCard({ label, value, color }: { label: string; value: string; co
       textAlign: 'center',
     }}>
       <div style={{ color, fontSize: 15, fontWeight: 700, lineHeight: 1 }}>{value}</div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, marginTop: 3 }}>{label}</div>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, marginTop: 3 }}>{label}</div>
     </div>
   )
 }
@@ -188,11 +188,11 @@ function CandidateRow({ candidate, rank }: { candidate: ShedCandidate; rank: num
       }}>{rank}</span>
       <div style={{ flex: 1 }}>
         <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 600 }}>{candidate.name}</div>
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>{candidate.asset_code}</div>
+        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>{candidate.asset_code}</div>
       </div>
       <div style={{ textAlign: 'right' }}>
         <div style={{ color, fontSize: 13, fontWeight: 700 }}>-{candidate.estimated_reduction_kw} kW</div>
-        <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>估算卸減</div>
+        <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>估算卸減</div>
       </div>
     </div>
   )

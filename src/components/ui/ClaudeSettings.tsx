@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+﻿import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 
 export const LS_API_KEY    = 'CLAUDE_API_KEY'
@@ -129,7 +129,7 @@ export function ClaudeSettings({ onClose }: Props) {
           )}
           <button
             onClick={onClose}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}
+            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}
           >✕</button>
         </div>
 
@@ -154,7 +154,7 @@ export function ClaudeSettings({ onClose }: Props) {
             style={{
               position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
               background: 'none', border: 'none',
-              color: 'rgba(255,255,255,0.35)', fontSize: 13, cursor: 'pointer',
+              color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer',
             }}
           >
             {showKey ? '🙈' : '👁'}
@@ -197,7 +197,7 @@ export function ClaudeSettings({ onClose }: Props) {
           background: 'rgba(255,255,255,0.02)',
           border: '1px solid rgba(255,255,255,0.06)',
           borderRadius: 5,
-          color: 'rgba(255,255,255,0.28)', fontSize: 9, lineHeight: 1.8,
+          color: 'rgba(255,255,255,0.65)', fontSize: 9, lineHeight: 1.8,
         }}>
           API Key 儲存於瀏覽器 localStorage，不會上傳至任何伺服器。<br />
           前端直接呼叫 api.anthropic.com（需瀏覽器 CORS 允許）。<br />
@@ -227,7 +227,7 @@ export function ClaudeSettings({ onClose }: Props) {
               background: 'rgba(255,255,255,0.03)',
               border: '1px solid rgba(255,255,255,0.08)',
               borderRadius: 6,
-              color: 'rgba(255,255,255,0.35)', fontSize: 11, cursor: 'pointer',
+              color: 'rgba(255,255,255,0.75)', fontSize: 11, cursor: 'pointer',
             }}
           >
             清除
@@ -253,7 +253,7 @@ export function ClaudeSettings({ onClose }: Props) {
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      color: 'rgba(255,255,255,0.35)', fontSize: 8.5,
+      color: 'rgba(255,255,255,0.75)', fontSize: 8.5,
       letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 6,
     }}>
       {children}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+﻿import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SystemSettingsData, SceneSettings, AlertSettings, ConnectionSettings, AppearanceSettings, AISettingsData, EnergySettings, SkySettings, SkyPreset, WebhookSettings } from '../../hooks/useSystemSettings'
 import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
@@ -65,7 +65,7 @@ function Row({ label, hint, children }: { label: string; hint?: string; children
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12 }}>{label}</div>
-        {hint && <div style={{ color: 'rgba(255,255,255,0.32)', fontSize: 10, marginTop: 1 }}>{hint}</div>}
+        {hint && <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 10, marginTop: 1 }}>{hint}</div>}
       </div>
       <div style={{ flexShrink: 0 }}>{children}</div>
     </div>
@@ -145,7 +145,7 @@ function NumberInput({ value, min, max, step = 1, onChange, unit }: {
           borderRadius: 4, color: '#e2e8f0', outline: 'none',
         }}
       />
-      {unit && <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>{unit}</span>}
+      {unit && <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10 }}>{unit}</span>}
     </div>
   )
 }
@@ -407,7 +407,7 @@ function AIPage({ s, update }: { s: AISettingsData; update: (p: Partial<AISettin
           />
           <button
             onClick={() => setShowKey(v => !v)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: 14 }}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)', cursor: 'pointer', fontSize: 14 }}
           >
             {showKey ? '🙈' : '👁'}
           </button>
@@ -456,7 +456,7 @@ function AIPage({ s, update }: { s: AISettingsData; update: (p: Partial<AISettin
           style={{
             padding: '4px 12px', fontSize: 10, cursor: 'pointer',
             background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 4, color: 'rgba(255,255,255,0.35)',
+            borderRadius: 4, color: 'rgba(255,255,255,0.75)',
           }}
         >
           清除
@@ -575,7 +575,7 @@ function EnergyPage({ s, update }: { s: EnergySettings; update: (p: Partial<Ener
         marginTop: 16, padding: '8px 12px',
         background: 'rgba(6,182,212,0.06)',
         border: '1px solid rgba(6,182,212,0.15)',
-        borderRadius: 6, color: 'rgba(255,255,255,0.45)', fontSize: 10, lineHeight: 1.7,
+        borderRadius: 6, color: 'rgba(255,255,255,0.78)', fontSize: 10, lineHeight: 1.7,
       }}>
         💡 今日預估電費 = 今日用電度數 × 電費單價<br />
         需量 % = 即時需量 ÷ 契約容量 × 100
@@ -612,8 +612,8 @@ function ColorPicker({ label, value, onChange }: { label: string; value: string;
         onChange={e => onChange(e.target.value)}
         style={{ width: 28, height: 22, cursor: 'pointer', border: 'none', padding: 0, borderRadius: 3, background: 'none' }}
       />
-      <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, fontFamily: 'monospace' }}>{value}</span>
-      <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10, fontFamily: 'monospace' }}>{value}</span>
+      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 10 }}>{label}</span>
     </div>
   )
 }
@@ -719,7 +719,7 @@ function SkyPage({ s, update }: { s: SkySettings; update: (p: Partial<SkySetting
         marginTop: 14, padding: '8px 12px',
         background: 'rgba(6,182,212,0.06)',
         border: '1px solid rgba(6,182,212,0.15)',
-        borderRadius: 6, color: 'rgba(255,255,255,0.38)', fontSize: 10, lineHeight: 1.7,
+        borderRadius: 6, color: 'rgba(255,255,255,0.78)', fontSize: 10, lineHeight: 1.7,
       }}>
         💡 天空設定即時套用至 BIM 檢視器，不需重新載入模型。<br />
         雲朵數量或星星數量變更後，需重新開啟 BIM 視圖或切換模型才完整生效。
@@ -759,7 +759,7 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
         padding: '8px 12px', marginBottom: 12,
         background: 'rgba(6,182,212,0.06)',
         border: '1px solid rgba(6,182,212,0.2)',
-        borderRadius: 6, color: 'rgba(255,255,255,0.45)', fontSize: 10, lineHeight: 1.7,
+        borderRadius: 6, color: 'rgba(255,255,255,0.78)', fontSize: 10, lineHeight: 1.7,
       }}>
         💡 當告警觸發時，平台可主動推送 POST 請求至您的外部 Webhook（如 Slack、Teams、n8n 等）。
       </div>
@@ -886,7 +886,7 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
           <button
             onClick={onClose}
             style={{
-              background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+              background: 'none', border: 'none', color: 'rgba(255,255,255,0.8)',
               fontSize: 18, cursor: 'pointer', lineHeight: 1, padding: '0 4px',
             }}
           >
@@ -977,7 +977,7 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
             {resetConfirm ? '確認重置所有設定？' : '↺ 恢復預設值'}
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>設定即時生效 · 自動儲存</span>
+            <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>設定即時生效 · 自動儲存</span>
             <button
               onClick={onClose}
               style={{

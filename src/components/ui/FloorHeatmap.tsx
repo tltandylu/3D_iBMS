@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import type { Device, Alert } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
 
@@ -97,7 +97,7 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>樓層熱力圖</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>FLOOR HEATMAP</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>FLOOR HEATMAP</div>
         </div>
         <div style={{ display: 'flex', gap: 4, marginLeft: 20 }}>
           {MODE_OPTIONS.map(m => (
@@ -112,7 +112,7 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
             </button>
           ))}
         </div>
-        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+        <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>
 
       {/* Body */}
@@ -159,7 +159,7 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
               </div>
             ))}
           </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.2)', fontSize: 9, lineHeight: 1.8 }}>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.6)', fontSize: 9, lineHeight: 1.8 }}>
             顯示 {visible.length} 台設備<br />
             {BUILDINGS.find(b => b.id === selectedBldg)?.name}
           </div>
@@ -168,7 +168,7 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
         {/* Canvas area */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
           {visible.length === 0 ? (
-            <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13 }}>此樓層無設備資料</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>此樓層無設備資料</div>
           ) : (
             <>
               <div style={{ position: 'relative' }}>
@@ -235,14 +235,14 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
                   }}>
                     <div>
                       <div style={{ color: '#06b6d4', fontWeight: 700, fontSize: 11 }}>{hovDev.name}</div>
-                      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{hovDev.assetCode} · {hovDev.category}</div>
+                      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>{hovDev.assetCode} · {hovDev.category}</div>
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, lineHeight: 1.8 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, lineHeight: 1.8 }}>
                       功率 <span style={{ color: '#06b6d4' }}>{hovDev.currentPowerKw.toFixed(1)} kW</span><br />
                       RUL <span style={{ color: rulColor(hovDev.rulDays) }}>{hovDev.rulDays} 天</span>
                     </div>
                     {hovDev.aiScore !== undefined && (
-                      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, lineHeight: 1.8 }}>
+                      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, lineHeight: 1.8 }}>
                         AI <span style={{ color: hovDev.aiScore > 0.6 ? '#ef4444' : '#10b981' }}>{Math.round(hovDev.aiScore * 100)} pts</span><br />
                         狀態 <span style={{ color: STATUS_COLORS[hovDev.status] }}>{hovDev.status}</span>
                       </div>
@@ -258,14 +258,14 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
                   return (
                     <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <div style={{ width: 9, height: 9, borderRadius: '50%', background: col }} />
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{lbl}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>{lbl}</span>
                     </div>
                   )
                 })}
                 {mode === 'power' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div style={{ width: 120, height: 7, borderRadius: 4, background: 'linear-gradient(to right, hsl(120,85%,55%), hsl(60,85%,55%), hsl(0,85%,55%))' }} />
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>低功率 → 高功率</span>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>低功率 → 高功率</span>
                   </div>
                 )}
                 {mode === 'rul' && ['<90天:#ef4444', '90-180天:#f59e0b', '180-365天:#10b981', '>365天:#06b6d4'].map(s => {
@@ -273,7 +273,7 @@ export function FloorHeatmap({ devices, alerts, onDeviceClick, onClose }: Props)
                   return (
                     <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                       <div style={{ width: 9, height: 9, borderRadius: '50%', background: col }} />
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{lbl}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>{lbl}</span>
                     </div>
                   )
                 })}

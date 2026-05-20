@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as XLSX from 'xlsx'
@@ -89,7 +89,7 @@ function CreateModal({ onSubmit, onClose }: { onSubmit: (f: CreateWOForm) => voi
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
           <div style={{ width: 3, height: 16, background: '#10b981', borderRadius: 2 }} />
           <span style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700 }}>新增工單</span>
-          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 16, cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 16, cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -143,7 +143,7 @@ function CreateModal({ onSubmit, onClose }: { onSubmit: (f: CreateWOForm) => voi
         <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
           <button onClick={onClose} style={{ flex: 1, padding: '8px', background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(255,255,255,0.12)', borderRadius: 5,
-            color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>取消</button>
+            color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>取消</button>
           <button onClick={() => valid && onSubmit(form)} style={{ flex: 2, padding: '8px',
             background: valid ? 'rgba(16,185,129,0.16)' : 'rgba(255,255,255,0.04)',
             border: `1px solid ${valid ? 'rgba(16,185,129,0.45)' : 'rgba(255,255,255,0.08)'}`,
@@ -164,7 +164,7 @@ const inputSt: React.CSSProperties = {
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.06em', marginBottom: 5 }}>
         {label.toUpperCase()}
       </div>
       {children}
@@ -239,10 +239,10 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
       borderColor: 'rgba(255,255,255,0.1)',
       textStyle: { color: '#e2e8f0', fontSize: 10 },
     },
-    legend: { data: ['緊急維修EM', '改善維修CM', '預防維修PM'], textStyle: { color: 'rgba(255,255,255,0.45)', fontSize: 9 }, right: 8, top: 0 },
+    legend: { data: ['緊急維修EM', '改善維修CM', '預防維修PM'], textStyle: { color: 'rgba(255,255,255,0.78)', fontSize: 9 }, right: 8, top: 0 },
     grid: { top: 28, right: 8, bottom: 24, left: 32 },
-    xAxis: { type: 'category', data: MONTHLY.labels, axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
-    yAxis: { type: 'value', axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+    xAxis: { type: 'category', data: MONTHLY.labels, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 }, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } } },
+    yAxis: { type: 'value', axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
     series: [
       { name: '緊急維修EM', type: 'bar', data: MONTHLY.em, stack: 'total', itemStyle: { color: '#ef444480', borderRadius: [0,0,0,0] } },
       { name: '改善維修CM', type: 'bar', data: MONTHLY.cm, stack: 'total', itemStyle: { color: '#f9731680' } },
@@ -262,7 +262,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
         <div style={{ width: 3, height: 18, background: '#10b981', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>工單管理中心</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>WORK ORDER CENTER</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>WORK ORDER CENTER</div>
         </div>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 4, padding: '2px 8px',
@@ -294,7 +294,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
                 animation: s.blink ? 'woBlink 1.2s infinite' : 'none' }}>
                 {s.value}
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 1 }}>{s.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginTop: 1 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -348,7 +348,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
         <button onClick={onClose} style={{
           padding: '5px 14px', background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5,
-          color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+          color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
         }}>✕ 關閉</button>
       </div>
 
@@ -386,7 +386,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
           {/* 工單卡片列表 */}
           <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
             {filtered.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+              <div style={{ textAlign: 'center', padding: '48px 0', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
                 無符合條件的工單
               </div>
             ) : filtered.map(wo => (
@@ -398,7 +398,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
         {/* 右側：月度統計圖 */}
         <div style={{ width: 340, flexShrink: 0, display: 'flex', flexDirection: 'column', padding: '16px 14px', gap: 14 }}>
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>
               近 12 個月工單統計
             </div>
             <div style={{ height: 180 }}>
@@ -408,7 +408,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
 
           {/* 本月績效 */}
           <div style={{ padding: '12px 14px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)', borderRadius: 8 }}>
-            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>本月維護績效</div>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>本月維護績效</div>
             {[
               { label: '完工率', value: `${stats.completed > 0 ? Math.round(stats.completed / (stats.completed + stats.pending + stats.inProgress) * 100) : 0}%`, color: '#10b981' },
               { label: 'MTTR（均值）', value: '2.3 h', color: '#06b6d4' },
@@ -416,7 +416,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
               { label: '緊急工單佔比', value: `${allWOs.filter(w => w.priority === 'URGENT').length > 0 ? Math.round(allWOs.filter(w => w.priority === 'URGENT').length / allWOs.length * 100) : 0}%`, color: '#f59e0b' },
             ].map(m => (
               <div key={m.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>{m.label}</span>
+                <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>{m.label}</span>
                 <span style={{ color: m.color, fontSize: 12, fontWeight: 700 }}>{m.value}</span>
               </div>
             ))}
@@ -424,7 +424,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
 
           {/* 人員工作量 */}
           <div style={{ padding: '12px 14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 8 }}>
-            <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>人員工作量</div>
+            <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 10 }}>人員工作量</div>
             {ASSIGNEES.map(name => {
               const cnt = allWOs.filter(w => w.assignedTo === name).length
               const bar = Math.min(cnt / (Math.max(...ASSIGNEES.map(n => allWOs.filter(w => w.assignedTo === n).length)) || 1) * 100, 100)
@@ -479,7 +479,7 @@ function WOCard({ wo, onStatusChange }: { wo: WorkOrder; onStatusChange: (id: st
           padding: '2px 7px', borderRadius: 3, fontSize: 9,
           background: `${priCol}18`, color: priCol, border: `1px solid ${priCol}30`, flexShrink: 0,
         }}>{PRI_LABELS[wo.priority]}</span>
-        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, marginLeft: 'auto', flexShrink: 0 }}>{wo.woNumber}</span>
+        <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9, marginLeft: 'auto', flexShrink: 0 }}>{wo.woNumber}</span>
       </div>
 
       <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 12, fontWeight: 600, marginBottom: 4, lineHeight: 1.4 }}>
@@ -487,16 +487,16 @@ function WOCard({ wo, onStatusChange }: { wo: WorkOrder; onStatusChange: (id: st
       </div>
 
       <div style={{ display: 'flex', gap: 12, marginBottom: wo.aiRootCause ? 6 : 0 }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>📍 {wo.assetName}</span>
-        {wo.assignedTo && <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>👤 {wo.assignedTo}</span>}
-        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>🕐 {fmtAgo(wo.createdAt)}</span>
-        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9 }}>⏱ {wo.estimatedHours}h</span>
+        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>📍 {wo.assetName}</span>
+        {wo.assignedTo && <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>👤 {wo.assignedTo}</span>}
+        <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>🕐 {fmtAgo(wo.createdAt)}</span>
+        <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>⏱ {wo.estimatedHours}h</span>
       </div>
 
       {wo.aiRootCause && (
         <div style={{ padding: '5px 8px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.15)', borderRadius: 4, marginBottom: 6 }}>
           <span style={{ color: '#a78bfa', fontSize: 8, fontWeight: 700, marginRight: 4 }}>AI 根因</span>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 9 }}>{wo.aiRootCause}</span>
+          <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 9 }}>{wo.aiRootCause}</span>
         </div>
       )}
 

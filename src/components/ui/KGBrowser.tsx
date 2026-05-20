@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, type ReactNode } from 'react'
+﻿import { useMemo, useState, useEffect, type ReactNode } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap,
   Handle, Position, BackgroundVariant,
@@ -63,7 +63,7 @@ function DeviceNodeComp({ data }: NodeProps) {
         </span>
       </div>
       <div style={{ fontWeight: 600, fontSize: 10.5, marginBottom: 1 }}>{d.label}</div>
-      <div style={{ color: 'rgba(255,255,255,0.32)', fontSize: 9 }}>{d.assetCode}</div>
+      <div style={{ color: 'rgba(255,255,255,0.72)', fontSize: 9 }}>{d.assetCode}</div>
       <Handle type="source" position={Position.Right}
         style={{ background: col, width: 8, height: 8, border: 'none', right: -5 }} />
     </div>
@@ -86,7 +86,7 @@ function AlertNodeComp({ data }: NodeProps) {
           color: col, fontSize: 8, fontWeight: 700 }}>
           {d.severity}
         </span>
-        <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8, marginLeft: 'auto' }}>
+        <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8, marginLeft: 'auto' }}>
           {statusText}
         </span>
       </div>
@@ -119,7 +119,7 @@ function WONodeComp({ data }: NodeProps) {
         <span style={{ color: stCol, fontSize: 8, marginLeft: 'auto' }}>{stText}</span>
       </div>
       <div style={{ fontWeight: 600, fontSize: 10, lineHeight: 1.4 }}>{d.label}</div>
-      <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, marginTop: 2 }}>{d.woNumber}</div>
+      <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, marginTop: 2 }}>{d.woNumber}</div>
       <Handle type="target" position={Position.Left}
         style={{ background: col, width: 8, height: 8, border: 'none', left: -5 }} />
       <Handle type="source" position={Position.Right}
@@ -149,7 +149,7 @@ function PersonNodeComp({ data }: NodeProps) {
       </div>
       <div>
         <div style={{ fontWeight: 600, fontSize: 10.5 }}>{d.label}</div>
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, marginTop: 1 }}>{d.role}</div>
+        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, marginTop: 1 }}>{d.role}</div>
       </div>
       <Handle type="target" position={Position.Left}
         style={{ background: col, width: 8, height: 8, border: 'none', left: -5 }} />
@@ -454,7 +454,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
           <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 700, letterSpacing: '0.06em' }}>
             知識圖譜瀏覽器
           </div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.1em', marginTop: 1 }}>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.1em', marginTop: 1 }}>
             KNOWLEDGE GRAPH BROWSER · Enterprise Schema v4.0
           </div>
         </div>
@@ -470,7 +470,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
           ].map(s => (
             <div key={s.label} style={{ textAlign: 'center' }}>
               <div style={{ color: s.col, fontSize: 16, fontWeight: 700, lineHeight: 1 }}>{s.val}</div>
-              <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 8, marginTop: 2 }}>{s.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, marginTop: 2 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -497,18 +497,18 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
         borderBottom: '1px solid rgba(255,255,255,0.04)',
         background: 'rgba(0,0,0,0.15)',
       }}>
-        <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 8.5, letterSpacing: '0.08em' }}>節點</span>
+        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 8.5, letterSpacing: '0.08em' }}>節點</span>
         {[
           { label: '設備', col: '#0e7ab5' }, { label: '告警', col: '#ef4444' },
           { label: '工單', col: '#06b6d4' }, { label: '人員', col: '#10b981' },
         ].map(l => (
           <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: l.col, opacity: 0.85 }} />
-            <span style={{ color: 'rgba(255,255,255,0.38)', fontSize: 8.5 }}>{l.label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 8.5 }}>{l.label}</span>
           </div>
         ))}
         <div style={{ width: 1, height: 14, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }} />
-        <span style={{ color: 'rgba(255,255,255,0.18)', fontSize: 8.5, letterSpacing: '0.08em' }}>關係</span>
+        <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 8.5, letterSpacing: '0.08em' }}>關係</span>
         {[
           { label: 'HAS_ALERT', col: '#ef4444' }, { label: 'GENERATED', col: '#06b6d4' },
           { label: 'ASSIGNED_TO', col: '#10b981' }, { label: 'SERVES/AFFECTS', col: '#8b5cf6', dash: true },
@@ -518,7 +518,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
               <line x1="0" y1="2" x2="16" y2="2" stroke={l.col}
                 strokeWidth="1.5" strokeDasharray={l.dash ? '4 2' : undefined} />
             </svg>
-            <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8.5 }}>{l.label}</span>
+            <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 8.5 }}>{l.label}</span>
           </div>
         ))}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -550,7 +550,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
                 style={{
                   position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)',
                   background: 'none', border: 'none',
-                  color: 'rgba(255,255,255,0.3)', fontSize: 10, cursor: 'pointer', padding: 0,
+                  color: 'rgba(255,255,255,0.7)', fontSize: 10, cursor: 'pointer', padding: 0,
                 }}
               >✕</button>
             )}
@@ -660,7 +660,7 @@ function NodeDetailPanel({
         </div>
         <button
           onClick={onClose}
-          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 16 }}
+          style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 16 }}
         >✕</button>
       </div>
 
@@ -841,7 +841,7 @@ function NodeDetailPanel({
                         borderRadius: 4,
                       }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-                          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>{wo.woNumber}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 8 }}>{wo.woNumber}</span>
                           <span style={{ color: stCol, fontSize: 8 }}>
                             {wo.status === 'completed' ? '完成' : wo.status === 'in_progress' ? '進行中' : '待處理'}
                           </span>
@@ -868,7 +868,7 @@ function KVList({ rows }: { rows: [string, string][] }) {
           display: 'flex', justifyContent: 'space-between',
           padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9 }}>{k}</span>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9 }}>{k}</span>
           <span style={{ color: 'rgba(255,255,255,0.72)', fontSize: 9, fontWeight: 600, maxWidth: 160, textAlign: 'right' }}>{v}</span>
         </div>
       ))}
@@ -879,7 +879,7 @@ function KVList({ rows }: { rows: [string, string][] }) {
 function SectionLabel({ children }: { children: ReactNode }) {
   return (
     <div style={{
-      color: 'rgba(255,255,255,0.25)', fontSize: 8, letterSpacing: '0.1em',
+      color: 'rgba(255,255,255,0.62)', fontSize: 8, letterSpacing: '0.1em',
       textTransform: 'uppercase' as const, marginTop: 12, marginBottom: 6,
       display: 'flex', alignItems: 'center', gap: 6,
     }}>

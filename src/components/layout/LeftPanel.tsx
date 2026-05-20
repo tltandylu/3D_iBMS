@@ -1,4 +1,4 @@
-import { useMemo, type ReactNode } from 'react'
+﻿import { useMemo, type ReactNode } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { AssetStatusChart } from '../charts/AssetStatusChart'
 import { CategoryBarChart } from '../charts/CategoryBarChart'
@@ -161,7 +161,7 @@ function BuildingEnergyChart() {
     yAxis: {
       type: 'category',
       data: data.map(d => d.name),
-      axisLabel: { color: 'rgba(255,255,255,0.45)', fontSize: 9 },
+      axisLabel: { color: 'rgba(255,255,255,0.78)', fontSize: 9 },
       axisLine: { show: false }, axisTick: { show: false },
     },
     tooltip: {
@@ -214,7 +214,7 @@ function MaintenanceGantt() {
       {/* Time labels */}
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
         {[-4, -2, 0, 2, 4].map(h => (
-          <span key={h} style={{ color: 'rgba(255,255,255,0.25)', fontSize: 7.5 }}>
+          <span key={h} style={{ color: 'rgba(255,255,255,0.62)', fontSize: 7.5 }}>
             {h === 0 ? '現在' : `${h > 0 ? '+' : ''}${h}h`}
           </span>
         ))}
@@ -231,7 +231,7 @@ function MaintenanceGantt() {
         }} />
 
         {rows.length === 0 && (
-          <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10, textAlign: 'center', padding: '6px 0' }}>
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, textAlign: 'center', padding: '6px 0' }}>
             無進行中工單
           </div>
         )}
@@ -256,7 +256,7 @@ function MaintenanceGantt() {
             {/* Label */}
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0,
-              color: 'rgba(255,255,255,0.45)', fontSize: 8,
+              color: 'rgba(255,255,255,0.78)', fontSize: 8,
               whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
               lineHeight: '22px', paddingLeft: 2,
             }}>
@@ -276,7 +276,7 @@ function PanelSection({ title, children }: { title: string; children: ReactNode 
     <div style={{ padding: '0 0 4px 0' }}>
       <div style={{
         padding: '4px 14px 6px',
-        color: 'rgba(255,255,255,0.3)',
+        color: 'rgba(255,255,255,0.7)',
         fontSize: 9,
         letterSpacing: '0.12em',
         textTransform: 'uppercase',
@@ -316,7 +316,7 @@ function MetricRow({ label, value, color, progress }: {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{label}</span>
+        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>{label}</span>
         <span style={{ color, fontSize: 11, fontWeight: 600 }}>{value}</span>
       </div>
       <div style={{ height: 3, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
@@ -371,7 +371,7 @@ function EnergyCostSection({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: numb
           <span style={{ color: '#fbbf24', fontSize: 22, fontWeight: 700, lineHeight: 1, letterSpacing: '-0.01em' }}>
             {todayCost.toLocaleString('zh-TW', { maximumFractionDigits: 0 })}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 2 }}>NT$</span>
+          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, marginBottom: 2 }}>NT$</span>
         </div>
 
         {/* 細項 */}
@@ -389,7 +389,7 @@ function EnergyCostSection({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: numb
           border: '1px solid rgba(255,255,255,0.07)',
           borderRadius: 4,
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>月預估（×30天）</span>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>月預估（×30天）</span>
           <span style={{ color: 'rgba(251,191,36,0.7)', fontSize: 11, fontWeight: 600 }}>
             NT${monthlyEst.toLocaleString('zh-TW', { maximumFractionDigits: 0 })}
           </span>
@@ -402,7 +402,7 @@ function EnergyCostSection({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: numb
 function CostRow({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>{label}</span>
       <span style={{ color, fontSize: 10, fontWeight: 500 }}>{value}</span>
     </div>
   )

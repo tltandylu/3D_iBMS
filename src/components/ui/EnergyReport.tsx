@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+﻿import { useMemo, useState } from 'react'
 import ReactECharts from 'echarts-for-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -81,19 +81,19 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
       },
       legend: {
         data: ['實際需量', '基準線', '預測'],
-        textStyle: { color: 'rgba(255,255,255,0.4)', fontSize: 9 },
+        textStyle: { color: 'rgba(255,255,255,0.8)', fontSize: 9 },
         top: 2, right: 8,
       },
       grid: { top: 28, right: 8, bottom: 30, left: 44 },
       xAxis: {
         type: 'category', data: xData,
-        axisLabel: { color: 'rgba(255,255,255,0.25)', fontSize: 8, interval: 7 },
+        axisLabel: { color: 'rgba(255,255,255,0.62)', fontSize: 8, interval: 7 },
         axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       },
       yAxis: {
         type: 'value', name: 'kW',
-        nameTextStyle: { color: 'rgba(255,255,255,0.3)', fontSize: 9 },
-        axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 },
+        nameTextStyle: { color: 'rgba(255,255,255,0.7)', fontSize: 9 },
+        axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 },
         splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } },
       },
       series: [
@@ -131,7 +131,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
       type: 'pie', radius: ['40%', '72%'], center: ['50%', '50%'],
       data: catPower,
       label: { show: true, color: 'rgba(255,255,255,0.55)', fontSize: 10, formatter: '{b}\n{d}%' },
-      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } },
+      labelLine: { lineStyle: { color: 'rgba(255,255,255,0.6)' } },
     }],
   }), [catPower])
 
@@ -148,7 +148,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
       },
     },
     grid: { top: 8, right: 60, bottom: 12, left: 88 },
-    xAxis: { type: 'value', axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 9 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
+    xAxis: { type: 'value', axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 9 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } } },
     yAxis: { type: 'category', data: bldgPower.map(b => b.name), axisLabel: { color: 'rgba(255,255,255,0.55)', fontSize: 10 } },
     series: [{
       type: 'bar', barWidth: 18,
@@ -198,13 +198,13 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
     xAxis: {
       type: 'category',
       data: monthlyDays.map((_, i) => `${i + 1}`),
-      axisLabel: { color: 'rgba(255,255,255,0.25)', fontSize: 8, interval: 4 },
+      axisLabel: { color: 'rgba(255,255,255,0.62)', fontSize: 8, interval: 4 },
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
     },
     yAxis: {
       type: 'value', name: 'kWh',
-      nameTextStyle: { color: 'rgba(255,255,255,0.3)', fontSize: 8 },
-      axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 8 },
+      nameTextStyle: { color: 'rgba(255,255,255,0.7)', fontSize: 8 },
+      axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8 },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
     },
     series: [{
@@ -229,7 +229,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
         <div style={{ width: 3, height: 18, background: '#fbbf24', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>能源報表</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>ENERGY ANALYTICS</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>ENERGY ANALYTICS</div>
         </div>
 
         {/* 頂部彙總 */}
@@ -247,7 +247,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
               textAlign: 'center',
             }}>
               <div style={{ color: s.color, fontSize: 13, fontWeight: 700, lineHeight: 1 }}>{s.value}</div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, marginTop: 1 }}>{s.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8, marginTop: 1 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -262,7 +262,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
           <button onClick={onClose} style={{
             padding: '5px 14px',
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+            borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
           }}>✕ 關閉</button>
         </div>
       </div>
@@ -284,9 +284,9 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
             <div style={{ width: 120, display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
               {bldgPower.map(b => (
                 <div key={b.name} style={{ padding: '6px 10px', background: `${b.color}10`, border: `1px solid ${b.color}25`, borderRadius: 5 }}>
-                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 8, marginBottom: 2 }}>{b.name.slice(0, 5)}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 8, marginBottom: 2 }}>{b.name.slice(0, 5)}</div>
                   <div style={{ color: b.color, fontSize: 14, fontWeight: 700 }}>{b.kw}</div>
-                  <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>{totalKW > 0 ? Math.round(b.kw / totalKW * 100) : 0}% · kW</div>
+                  <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>{totalKW > 0 ? Math.round(b.kw / totalKW * 100) : 0}% · kW</div>
                 </div>
               ))}
             </div>
@@ -309,7 +309,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 0, justifyContent: 'space-between', minHeight: 0 }}>
               {/* 費用明細 */}
               <div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 4 }}>費用明細</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8.5, letterSpacing: '0.08em', marginBottom: 4 }}>費用明細</div>
                 {catPower.map(c => {
                   const dailyKwh = c.value * 24
                   const dailyCost = dailyKwh * electricityCostPerKwh
@@ -318,7 +318,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
                       <span style={{ width: 5, height: 5, borderRadius: '50%', background: (c.itemStyle as { color: string }).color, flexShrink: 0, display: 'inline-block' }} />
                       <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9.5, width: 48 }}>{c.name}</span>
                       <span style={{ color: '#06b6d4', fontSize: 9.5, fontWeight: 600, width: 50 }}>{c.value} kW</span>
-                      <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8.5 }}>NT${(dailyCost / 1000).toFixed(1)}K/天</span>
+                      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8.5 }}>NT${(dailyCost / 1000).toFixed(1)}K/天</span>
                     </div>
                   )
                 })}
@@ -326,14 +326,14 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
 
               {/* 碳排追蹤 */}
               <div style={{ padding: '10px', background: `${co2Color}08`, border: `1px solid ${co2Color}22`, borderRadius: 6, marginTop: 6 }}>
-                <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8, letterSpacing: '0.08em', marginBottom: 6 }}>本月碳排放追蹤</div>
+                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 8, letterSpacing: '0.08em', marginBottom: 6 }}>本月碳排放追蹤</div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 5 }}>
                   <div>
                     <span style={{ color: co2Color, fontSize: 18, fontWeight: 700 }}>{monthlyCo2T.toFixed(1)}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginLeft: 3 }}>tCO₂</span>
+                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, marginLeft: 3 }}>tCO₂</span>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>月配額 {annualBudgetMonthly.toFixed(0)} t</div>
+                    <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>月配額 {annualBudgetMonthly.toFixed(0)} t</div>
                     <div style={{ color: co2Color, fontSize: 9, fontWeight: 600 }}>{co2BudgetRatio.toFixed(0)}% 使用率</div>
                   </div>
                 </div>
@@ -349,7 +349,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
                     <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(239,68,68,0.2) 3px, rgba(239,68,68,0.2) 6px)' }} />
                   )}
                 </div>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 7.5, marginTop: 3 }}>
+                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 7.5, marginTop: 3 }}>
                   年度目標 {ANNUAL_BUDGET_T} tCO₂ · {ANNUAL_BUDGET_T - monthlyCo2T * 12 > 0 ? `剩餘空間 ${(ANNUAL_BUDGET_T - monthlyCo2T * 12).toFixed(1)} t` : '已超出年度配額'}
                 </div>
               </div>
@@ -370,7 +370,7 @@ function ChartCard({ title, sub, children }: { title: string; sub?: string; chil
     }}>
       <div style={{ marginBottom: 8, flexShrink: 0 }}>
         <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 12, fontWeight: 600 }}>{title}</div>
-        {sub && <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9, marginTop: 1 }}>{sub}</div>}
+        {sub && <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9, marginTop: 1 }}>{sub}</div>}
       </div>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
         {children}

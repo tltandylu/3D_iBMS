@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import type { KPIData } from '../../types'
 import type { DashboardSettings } from '../../hooks/useSystemSettings'
 
@@ -42,7 +42,7 @@ export function TopKPIBar({ kpi, contractCapacityKw, demandWarningPct = 80, elec
         <div style={{ color: '#06b6d4', fontSize: 14, fontWeight: 700, letterSpacing: '0.1em', lineHeight: 1.2 }}>
           AI-DT
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.08em' }}>
+        <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em' }}>
           企業智慧監控
         </div>
       </div>
@@ -113,7 +113,7 @@ export function TopKPIBar({ kpi, contractCapacityKw, demandWarningPct = 80, elec
 function KPIGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 2 }}>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: '0.1em', marginBottom: 2 }}>
         {label}
       </div>
       <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
@@ -129,7 +129,7 @@ function KPIItem({ label, value, color }: { label: string; value: string; color:
       <div style={{ color, fontSize: 16, fontWeight: 700, lineHeight: 1, letterSpacing: '0.02em' }}>
         {value}
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginTop: 1 }}>{label}</div>
+      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, marginTop: 1 }}>{label}</div>
     </div>
   )
 }
@@ -150,7 +150,7 @@ function KPIChip({ value, label, color, blink }: { value: number; label: string;
         animation: blink && value > 0 ? 'topBlink 1s infinite' : 'none'
       }} />
       <span style={{ color, fontSize: 14, fontWeight: 700 }}>{value}</span>
-      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>{label}</span>
       <style>{`
         @keyframes topBlink { 0%,100%{opacity:1} 50%{opacity:0.2} }
       `}</style>
@@ -184,7 +184,7 @@ function PeakIndicator({ start, end }: { start: number; end: number }) {
           {label}
         </span>
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginTop: 1 }}>
+      <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, marginTop: 1 }}>
         {fmt(start)} – {fmt(end)}
       </div>
     </div>
@@ -201,7 +201,7 @@ function DemandBar({ ratio, demand, contract, color, warningPct = 80, onClick }:
       title={onClick ? '點擊查看需量卸載建議' : undefined}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9 }}>需量 / 契約</span>
+        <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>需量 / 契約</span>
         <span style={{ color, fontSize: 11, fontWeight: 700 }}>{ratio.toFixed(1)}%</span>
       </div>
       <div style={{
@@ -221,9 +221,9 @@ function DemandBar({ ratio, demand, contract, color, warningPct = 80, onClick }:
           width: 1, height: '100%', background: '#f59e0b80'
         }} />
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginTop: 2, display: 'flex', justifyContent: 'space-between' }}>
         <span>{demand.toFixed(0)} / {contract.toFixed(0)} kW
-          <span style={{ color: 'rgba(255,255,255,0.2)', marginLeft: 4 }}>警戒 {warningPct}%</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)', marginLeft: 4 }}>警戒 {warningPct}%</span>
         </span>
         {onClick && <span style={{ color: color, fontSize: 8 }}>▶ AI建議</span>}
       </div>
@@ -247,7 +247,7 @@ function Clock() {
       <div style={{ color: '#06b6d4', fontSize: 18, fontWeight: 300, letterSpacing: '0.05em' }}>
         {time.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, textAlign: 'right' }}>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, textAlign: 'right' }}>
         {time.toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })}
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
 import { DEVICES, BUILDINGS } from '../../data/mockData'
@@ -117,7 +117,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>設備清單</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEVICE INVENTORY</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>DEVICE INVENTORY</div>
         </div>
 
         {/* 狀態統計 Chips */}
@@ -136,7 +136,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
               display: 'flex', gap: 5, alignItems: 'center',
             }}>
               <span style={{ color: s.color, fontSize: 13, fontWeight: 700 }}>{s.value}</span>
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>{s.label}</span>
+              <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>{s.label}</span>
             </div>
           ))}
         </div>
@@ -144,7 +144,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
         <button onClick={onClose} style={{
           marginLeft: 'auto', padding: '5px 14px',
           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+          borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
         }}>✕ 關閉</button>
       </div>
 
@@ -235,7 +235,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
           }}
         >↓ 匯出 Excel</button>
 
-        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, marginLeft: 'auto' }}>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, marginLeft: 'auto' }}>
           共 {filtered.length} 筆設備
         </span>
       </div>
@@ -249,15 +249,15 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
           background: 'rgba(0,0,0,0.3)', borderBottom: '1px solid rgba(255,255,255,0.06)',
           position: 'sticky', top: 0, zIndex: 2, fontSize: 9,
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.2)' }}>類型</span>
-          <span style={{ color: 'rgba(255,255,255,0.2)' }}>資產編號</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)' }}>類型</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)' }}>資產編號</span>
           <SortBtn k="name" label="設備名稱" />
-          <span style={{ color: 'rgba(255,255,255,0.2)' }}>棟/樓層</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)' }}>棟/樓層</span>
           <SortBtn k="status" label="狀態" />
           <SortBtn k="rul" label="RUL" />
           <SortBtn k="power" label="功率 kW" />
           <SortBtn k="aiScore" label="AI 風險" />
-          <span style={{ color: 'rgba(255,255,255,0.2)' }}>操作</span>
+          <span style={{ color: 'rgba(255,255,255,0.6)' }}>操作</span>
         </div>
 
         {/* 資料列 */}
@@ -290,10 +290,10 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
 
               <div>
                 <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 600 }}>{device.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>{device.manufacturer} · {device.model}</div>
+                <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>{device.manufacturer} · {device.model}</div>
               </div>
 
-              <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10 }}>
+              <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10 }}>
                 {bldg?.name.slice(0, 3) ?? '—'} · {device.floor > 0 ? `${device.floor}F` : `B${Math.abs(device.floor)}F`}
               </span>
 
@@ -325,7 +325,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
                   }}>{Math.round(device.aiScore * 100)}</span>
                 </div>
               ) : (
-                <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9 }}>—</span>
+                <span style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9 }}>—</span>
               )}
 
               <div style={{ display: 'flex', gap: 4 }}>

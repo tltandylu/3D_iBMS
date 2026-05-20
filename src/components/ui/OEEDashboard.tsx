@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+﻿import { useMemo, useState, type ReactNode } from 'react'
 import ReactECharts from 'echarts-for-react'
 import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
@@ -98,12 +98,12 @@ export function OEEDashboard({ devices, onClose }: Props) {
       },
       xAxis: {
         type: 'category', data: months,
-        axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 8 },
+        axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8 },
         axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       },
       yAxis: {
         type: 'value', min: 0, max: 1,
-        axisLabel: { color: 'rgba(255,255,255,0.3)', fontSize: 8, formatter: (v: number) => `${(v * 100).toFixed(0)}%` },
+        axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8, formatter: (v: number) => `${(v * 100).toFixed(0)}%` },
         splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
       },
       series: [{
@@ -150,7 +150,7 @@ export function OEEDashboard({ devices, onClose }: Props) {
         <div style={{ width: 3, height: 18, background: '#818cf8', borderRadius: 2 }} />
         <div>
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>OEE 整體設備效率</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>OVERALL EQUIPMENT EFFECTIVENESS</div>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>OVERALL EQUIPMENT EFFECTIVENESS</div>
         </div>
         <div style={{ display: 'flex', gap: 4, marginLeft: 24 }}>
           {[
@@ -161,7 +161,7 @@ export function OEEDashboard({ devices, onClose }: Props) {
           ].map(m => (
             <div key={m.label} style={{ padding: '3px 12px', borderRadius: 3, background: `${m.color}12`, border: `1px solid ${m.color}30`, textAlign: 'center' }}>
               <div style={{ color: m.color, fontSize: 13, fontWeight: 700, lineHeight: 1 }}>{m.value}</div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, marginTop: 1 }}>{m.label}</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8, marginTop: 1 }}>{m.label}</div>
             </div>
           ))}
         </div>
@@ -182,7 +182,7 @@ export function OEEDashboard({ devices, onClose }: Props) {
             style={{ padding: '5px 14px', background: 'rgba(129,140,248,0.1)', border: '1px solid rgba(129,140,248,0.3)', borderRadius: 5, color: '#818cf8', fontSize: 11, cursor: 'pointer' }}>
             ↓ 匯出 Excel
           </button>
-          <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
+          <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
         </div>
       </div>
 
@@ -215,10 +215,10 @@ export function OEEDashboard({ devices, onClose }: Props) {
               const c = oeeColor(d.oee)
               return (
                 <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: `${c}08`, border: `1px solid ${c}20`, borderRadius: 5 }}>
-                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 12, width: 20, textAlign: 'center', flexShrink: 0 }}>#{i + 1}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 12, width: 20, textAlign: 'center', flexShrink: 0 }}>#{i + 1}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name}</div>
-                    <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{d.category} · {bldg?.name ?? d.buildingId}</div>
+                    <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>{d.category} · {bldg?.name ?? d.buildingId}</div>
                   </div>
                   <OEEMiniBar avail={d.avail} perf={d.perf} qual={d.qual} />
                   <span style={{ color: c, fontSize: 14, fontWeight: 700, minWidth: 46, textAlign: 'right', flexShrink: 0 }}>{(d.oee * 100).toFixed(1)}%</span>
@@ -251,7 +251,7 @@ function OEEMiniBar({ avail, perf, qual }: { avail: number; perf: number; qual: 
           <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 2 }}>
             <div style={{ width: `${v * 100}%`, height: '100%', background: c, borderRadius: 2 }} />
           </div>
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 7, width: 26, textAlign: 'right' }}>{(v * 100).toFixed(0)}%</span>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 7, width: 26, textAlign: 'right' }}>{(v * 100).toFixed(0)}%</span>
         </div>
       ))}
     </div>
@@ -263,7 +263,7 @@ function ChartCard({ title, children, extra }: { title: string; children: ReactN
     <div style={{ background: 'rgba(6,12,24,0.95)', display: 'flex', flexDirection: 'column', padding: '12px 14px', overflow: 'hidden' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexShrink: 0 }}>
         <div style={{ width: 2, height: 12, background: '#818cf8', borderRadius: 1 }} />
-        <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10, letterSpacing: '0.08em', flex: 1 }}>{title.toUpperCase()}</span>
+        <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 10, letterSpacing: '0.08em', flex: 1 }}>{title.toUpperCase()}</span>
         {extra}
       </div>
       {children}

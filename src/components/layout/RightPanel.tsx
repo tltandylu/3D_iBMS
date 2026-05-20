@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import { DemandGauge } from '../charts/DemandGauge'
 import { EnergyTrendChart } from '../charts/EnergyTrendChart'
@@ -158,7 +158,7 @@ export function RightPanel({ kpi, devices, alerts, onAlertClick, onAcknowledge, 
                 <AlertCard key={alert.id} alert={alert} onClick={onAlertClick} onAcknowledge={onAcknowledge} onBIM={onAlertBIM} />
               ))}
               {sortedAlerts.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.2)', fontSize: 12 }}>
+                <div style={{ textAlign: 'center', padding: '24px 0', color: 'rgba(255,255,255,0.6)', fontSize: 12 }}>
                   無待處理告警
                 </div>
               )}
@@ -216,7 +216,7 @@ function TodayUsageChart({ costPerKwh }: { costPerKwh: number }) {
       data: hours,
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       axisLabel: {
-        color: 'rgba(255,255,255,0.25)', fontSize: 8,
+        color: 'rgba(255,255,255,0.62)', fontSize: 8,
         interval: Math.floor(hours.length / 4),
       },
       splitLine: { show: false },
@@ -226,7 +226,7 @@ function TodayUsageChart({ costPerKwh }: { costPerKwh: number }) {
       min: 'dataMin',
       axisLine: { show: false },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
-      axisLabel: { color: 'rgba(255,255,255,0.25)', fontSize: 8 },
+      axisLabel: { color: 'rgba(255,255,255,0.62)', fontSize: 8 },
     },
     series: [{
       type: 'line',
@@ -267,9 +267,9 @@ function EnergyCostBar({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: number }
           <span style={{ color: '#fbbf24', fontSize: 18, fontWeight: 700, lineHeight: 1 }}>
             {todayCost.toLocaleString('zh-TW', { maximumFractionDigits: 0 })}
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>NT$</span>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>NT$</span>
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 2 }}>
+        <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginTop: 2 }}>
           {kpi.todayKwh.toLocaleString()} kWh × {costPerKwh.toFixed(1)}
         </div>
       </div>
@@ -278,7 +278,7 @@ function EnergyCostBar({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: number }
         <div style={{ color: 'rgba(251,191,36,0.55)', fontSize: 11, fontWeight: 600 }}>
           {(monthlyEst / 10000).toFixed(1)} 萬
         </div>
-        <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8, marginTop: 1 }}>月預估</div>
+        <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, marginTop: 1 }}>月預估</div>
       </div>
     </div>
   )
@@ -287,7 +287,7 @@ function EnergyCostBar({ kpi, costPerKwh }: { kpi: KPIData; costPerKwh: number }
 function SectionTitle({ title }: { title: string }) {
   return (
     <div style={{
-      color: 'rgba(255,255,255,0.3)',
+      color: 'rgba(255,255,255,0.7)',
       fontSize: 9,
       letterSpacing: '0.12em',
       textTransform: 'uppercase' as const,
@@ -303,7 +303,7 @@ function SectionTitle({ title }: { title: string }) {
 function MiniStat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div>
-      <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8, marginBottom: 1 }}>{label}</div>
+      <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8, marginBottom: 1 }}>{label}</div>
       <div style={{ color, fontWeight: 600, fontSize: 12 }}>{value}</div>
     </div>
   )
@@ -342,7 +342,7 @@ function AlertCard({ alert, onClick, onAcknowledge, onBIM }: { alert: Alert; onC
         }}>
           {SEVERITY_LABELS[alert.severity]}
         </span>
-        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginLeft: 'auto' }}>
+        <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, marginLeft: 'auto' }}>
           {formatTimeAgo(alert.occurredAt)}
         </span>
       </div>
@@ -353,7 +353,7 @@ function AlertCard({ alert, onClick, onAcknowledge, onBIM }: { alert: Alert; onC
       </div>
 
       {/* 設備名 */}
-      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginBottom: 4 }}>
+      <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, marginBottom: 4 }}>
         {alert.assetName} · {alert.floor > 0 ? `${alert.floor}F` : `B${Math.abs(alert.floor)}F`}
       </div>
 
@@ -391,7 +391,7 @@ function AlertCard({ alert, onClick, onAcknowledge, onBIM }: { alert: Alert; onC
             style={{ padding: '2px 8px', background: `${color}12`, border: `1px solid ${color}30`, borderRadius: 3, color, fontSize: 9, cursor: 'pointer' }}
           >✓ 確認</button>
         )}
-        <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.2)', fontSize: 9, alignSelf: 'center' }}>
+        <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.6)', fontSize: 9, alignSelf: 'center' }}>
           {alert.status === 'acknowledged' ? '已確認' : alert.status === 'resolved' ? '已解決' : ''}
         </span>
       </div>

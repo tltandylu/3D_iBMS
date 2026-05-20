@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
 import type { Device, BIMModelEntry } from '../../types'
 import { DEVICES as ALL_DEVICES, BUILDINGS } from '../../data/mockData'
@@ -945,7 +945,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
         <div>
           <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 700 }}>BIM 3D 模型檢視器</div>
-          <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em', display: 'flex', alignItems: 'center', gap: 6 }}>
             IFC MODEL VIEWER{loadState !== 'idle' ? ` · ${selectedFile.label}` : ''}
             {isProcedural && loadState === 'done' && (
               <span style={{
@@ -971,7 +971,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
               background: 'rgba(255,255,255,0.05)',
               border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 4,
-              color: 'rgba(255,255,255,0.45)',
+              color: 'rgba(255,255,255,0.78)',
               fontSize: 10, cursor: 'pointer',
             }}
           >⇄ 切換模型</button>
@@ -1037,7 +1037,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
           ].map(l => (
             <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: l.col }} />
-              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8.5 }}>{l.label}</span>
+              <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 8.5 }}>{l.label}</span>
             </div>
           ))}
         </div>
@@ -1139,7 +1139,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                 borderRadius: 6, padding: '6px 10px',
                 backdropFilter: 'blur(10px)',
               }}>
-                <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 7, letterSpacing: '0.1em', marginBottom: 4 }}>
+                <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 7, letterSpacing: '0.1em', marginBottom: 4 }}>
                   ENERGY / FLOOR SLICE
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -1167,7 +1167,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
           }}>
             <div style={{
-              color: 'rgba(255,255,255,0.25)', fontSize: 8,
+              color: 'rgba(255,255,255,0.62)', fontSize: 8,
               textAlign: 'center', letterSpacing: '0.1em',
               marginBottom: 2, fontWeight: 600,
             }}>LEVEL</div>
@@ -1197,7 +1197,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             {/* 面板標頭 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8, letterSpacing: '0.12em', fontWeight: 700 }}>
+                <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8, letterSpacing: '0.12em', fontWeight: 700 }}>
                   ✂ 三軸剖面
                 </span>
               </div>
@@ -1250,7 +1250,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                       flex: 1, padding: '3px 0', fontSize: 8,
                       background: 'rgba(255,255,255,0.04)',
                       border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: 3, color: 'rgba(255,255,255,0.3)',
+                      borderRadius: 3, color: 'rgba(255,255,255,0.7)',
                       cursor: 'pointer',
                     }}
                   >重置位置</button>
@@ -1271,7 +1271,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                 </div>
               </div>
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, textAlign: 'center', padding: '4px 0' }}>
+              <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, textAlign: 'center', padding: '4px 0' }}>
                 開啟後可沿 X / Y / Z 軸剖切建築
               </div>
             )}
@@ -1312,7 +1312,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                   <div style={{ color: '#67e8f9', fontSize: 14, fontWeight: 700, marginBottom: 3 }}>
                     IFC 模型載入中
                   </div>
-                  <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9 }}>{selectedFile.label}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9 }}>{selectedFile.label}</div>
                 </div>
                 <div style={{
                   fontSize: 30, fontWeight: 800, color: '#06b6d4',
@@ -1366,7 +1366,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                 })}
               </div>
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9 }}>
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9 }}>
               大型 IFC 檔案解析需要 30–60 秒，請耐心等候
             </div>
           </div>
@@ -1407,11 +1407,11 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             }}>✓</div>
             <div style={{ flex: 1 }}>
               <div style={{ color: '#10b981', fontSize: 12, fontWeight: 700 }}>模型載入完成</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, marginTop: 2 }}>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, marginTop: 2 }}>
                 {selectedFile.label} · {meshCount.toLocaleString()} 個網格 · {devices.length} 個設備標記 · 點擊關閉
               </div>
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 14, marginLeft: 4, flexShrink: 0 }}>✕</span>
+            <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 14, marginLeft: 4, flexShrink: 0 }}>✕</span>
           </div>
         )}
 
@@ -1433,7 +1433,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             }}>⚠</div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ color: '#fca5a5', fontSize: 16, fontWeight: 700, marginBottom: 6 }}>IFC 載入失敗</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 11 }}>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>
                 載入「{selectedFile.label}」時發生錯誤
               </div>
             </div>
@@ -1443,7 +1443,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
               border: '1px solid rgba(239,68,68,0.22)',
               borderRadius: 10, padding: '14px 18px',
             }}>
-              <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8, letterSpacing: '0.1em', marginBottom: 8 }}>錯誤訊息</div>
+              <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8, letterSpacing: '0.1em', marginBottom: 8 }}>錯誤訊息</div>
               <div style={{
                 color: '#fca5a5', fontSize: 11, lineHeight: 1.7,
                 wordBreak: 'break-all', whiteSpace: 'pre-wrap',
@@ -1458,14 +1458,14 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
               border: '1px solid rgba(245,158,11,0.18)',
               borderRadius: 10, padding: '12px 18px',
             }}>
-              <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8, letterSpacing: '0.1em', marginBottom: 8 }}>常見原因</div>
+              <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8, letterSpacing: '0.1em', marginBottom: 8 }}>常見原因</div>
               {[
                 'IFC 檔案不在專案根目錄 (E:/3D監控管理平台/)',
                 'Vite serve-ifc middleware 未正常啟動',
                 'public/web-ifc.wasm 或 web-ifc-mt.wasm 缺失',
                 'IFC 格式版本不受支援（需 IFC2X3 或 IFC4）',
               ].map(r => (
-                <div key={r} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, padding: '2px 0' }}>· {r}</div>
+                <div key={r} style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, padding: '2px 0' }}>· {r}</div>
               ))}
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
@@ -1482,7 +1482,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                 style={{
                   padding: '8px 20px',
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
-                  borderRadius: 6, color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer',
+                  borderRadius: 6, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer',
                 }}
               >關閉</button>
             </div>
@@ -1503,7 +1503,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
               <span style={{ color: '#06b6d4', fontSize: 11, fontWeight: 700 }}>設備資訊</span>
               <button onClick={() => setSelectedDev(null)}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 14 }}>✕</button>
             </div>
             <DevInfo device={selectedDev} />
           </div>
@@ -1523,7 +1523,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.25 }}>🏢</div>
               <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 15, fontWeight: 700 }}>選擇 BIM 模型</div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, marginTop: 4 }}>選取要載入的模型，或新增一個</div>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10, marginTop: 4 }}>選取要載入的模型，或新增一個</div>
             </div>
 
             {/* 模型清單 */}
@@ -1554,7 +1554,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
                     <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, marginBottom: 2 }}>
                       {entry.label}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {entry.url}
                     </div>
                   </div>
@@ -1575,7 +1575,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
               {fileList.length === 0 && (
                 <div style={{
                   textAlign: 'center', padding: '32px 0',
-                  color: 'rgba(255,255,255,0.2)', fontSize: 11,
+                  color: 'rgba(255,255,255,0.6)', fontSize: 11,
                 }}>
                   尚無 BIM 模型，請點擊「新增」來新增第一個
                 </div>
@@ -1633,7 +1633,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
         borderTop: '1px solid rgba(255,255,255,0.04)',
       }}>
         {['拖曳旋轉', '滾輪縮放', '點擊標記查看設備', '左下角切換樓層'].map((t, i) => (
-          <span key={i} style={{ color: 'rgba(255,255,255,0.18)', fontSize: 9 }}>
+          <span key={i} style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9 }}>
             {i > 0 && <span style={{ marginRight: 16, opacity: 0.4 }}>·</span>}{t}
           </span>
         ))}
@@ -1695,7 +1695,7 @@ function SectionAxisRow({
         <span style={{ color: en ? color : 'rgba(255,255,255,0.3)', fontSize: 11, fontWeight: 700, width: 14 }}>
           {axis}
         </span>
-        <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8 }}>{label}</span>
+        <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8 }}>{label}</span>
         {/* 位置百分比 */}
         <span style={{
           marginLeft: 'auto', fontSize: 8, fontFamily: 'monospace',
@@ -1784,7 +1784,7 @@ function DevInfo({ device: d }: { device: Device }) {
           display: 'flex', justifyContent: 'space-between',
           padding: '5px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
         }}>
-          <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9 }}>{k}</span>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9 }}>{k}</span>
           <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, fontWeight: 600 }}>{v}</span>
         </div>
       ))}

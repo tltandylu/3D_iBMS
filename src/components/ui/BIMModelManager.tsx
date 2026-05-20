@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+﻿import { useState, useMemo, useCallback } from 'react'
 import type { BIMModelEntry, IFCBuildingGeom } from '../../types'
 import { BUILDINGS, DEVICES } from '../../data/mockData'
 
@@ -217,7 +217,7 @@ export function AddEditModal({
         {/* IFC 來源：本地上傳 */}
         {mode === 'file' && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
               IFC 檔案（本地）
             </div>
             <label
@@ -253,17 +253,17 @@ export function AddEditModal({
                   <span style={{ color: '#6ee7b7', fontSize: 11, fontWeight: 600, textAlign: 'center', wordBreak: 'break-all' }}>
                     {fileName}
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>
                     {(fileSize / 1024 / 1024).toFixed(1)} MB · 點擊重新選擇
                   </span>
                 </>
               ) : (
                 <>
                   <span style={{ fontSize: 24, opacity: 0.35 }}>📂</span>
-                  <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 11 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 11 }}>
                     拖曳或點擊選擇 .ifc 檔案
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9 }}>
                     支援任意大小 IFC 2x3 / IFC 4
                   </span>
                 </>
@@ -275,7 +275,7 @@ export function AddEditModal({
         {/* IFC 來源：URL 路徑 */}
         {mode === 'url' && (
           <div style={{ marginBottom: 14 }}>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
+            <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
               IFC 檔案路徑
             </div>
             <input
@@ -289,7 +289,7 @@ export function AddEditModal({
 
         {/* 顯示名稱 */}
         <div style={{ marginBottom: 14 }}>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
+          <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
             顯示名稱
           </div>
           <input
@@ -301,7 +301,7 @@ export function AddEditModal({
         </div>
 
         <div style={{ marginBottom: 22 }}>
-          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
+          <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
             對應棟別
           </div>
           <select
@@ -337,7 +337,7 @@ export function AddEditModal({
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 6,
-              color: 'rgba(255,255,255,0.4)', fontSize: 12, cursor: 'pointer',
+              color: 'rgba(255,255,255,0.8)', fontSize: 12, cursor: 'pointer',
             }}
           >
             取消
@@ -414,7 +414,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
   ]
 
   const STATE_STYLE: Record<string, { color: string; bg: string; dot: string; label: string }> = {
-    unloaded: { color: 'rgba(255,255,255,0.3)', bg: 'rgba(255,255,255,0.05)', dot: '#64748b', label: '未載入' },
+    unloaded: { color: 'rgba(255,255,255,0.7)', bg: 'rgba(255,255,255,0.05)', dot: '#64748b', label: '未載入' },
     loaded:   { color: '#10b981', bg: 'rgba(16,185,129,0.1)', dot: '#10b981', label: '已載入' },
     error:    { color: '#ef4444', bg: 'rgba(239,68,68,0.1)',  dot: '#ef4444', label: '載入失敗' },
   }
@@ -454,7 +454,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
           <span style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: 700 }}>
             BIM 模型管理
           </span>
-          <span style={{ color: 'rgba(255,255,255,0.22)', fontSize: 9, letterSpacing: '0.1em' }}>
+          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, letterSpacing: '0.1em' }}>
             IFC MODEL REGISTRY · {models.length} 筆模型
           </span>
           {loadedCount > 0 && (
@@ -492,7 +492,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
               background: 'rgba(255,255,255,0.04)',
               border: '1px solid rgba(255,255,255,0.1)',
               borderRadius: 5,
-              color: 'rgba(255,255,255,0.45)', fontSize: 11, cursor: 'pointer',
+              color: 'rgba(255,255,255,0.78)', fontSize: 11, cursor: 'pointer',
             }}
           >
             ✕ 關閉
@@ -509,12 +509,12 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
             borderRight: '1px solid rgba(255,255,255,0.06)',
             overflowY: 'auto',
           }}>
-            <div style={{ padding: '10px 14px 6px', color: 'rgba(255,255,255,0.22)', fontSize: 8, letterSpacing: '0.1em', fontWeight: 700 }}>
+            <div style={{ padding: '10px 14px 6px', color: 'rgba(255,255,255,0.6)', fontSize: 8, letterSpacing: '0.1em', fontWeight: 700 }}>
               模型列表
             </div>
 
             {models.length === 0 ? (
-              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>
+              <div style={{ padding: '24px 16px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>
                 尚未加入任何模型
               </div>
             ) : (
@@ -611,7 +611,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                         }} />
                         <span style={{ color: st.color, fontSize: 8 }}>{st.label}</span>
                         {m.loadState === 'loaded' && (
-                          <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8 }}>
+                          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8 }}>
                             · {m.meshCount.toLocaleString()} 格
                           </span>
                         )}
@@ -625,7 +625,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                             width: 20, height: 20, borderRadius: 3,
                             background: 'transparent',
                             border: '1px solid rgba(255,255,255,0.1)',
-                            color: 'rgba(255,255,255,0.3)', fontSize: 9, cursor: 'pointer',
+                            color: 'rgba(255,255,255,0.7)', fontSize: 9, cursor: 'pointer',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}
                         >✎</button>
@@ -691,7 +691,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                   border: '1px solid rgba(16,185,129,0.15)',
                   borderRadius: 4,
                 }}>
-                  <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>
+                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>
                     快取 {loadedCount} / 總 {models.length}
                   </span>
                   <span style={{ color: '#10b981', fontSize: 8 }}>
@@ -720,7 +720,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                       background: 'rgba(255,255,255,0.03)',
                       border: '1px solid rgba(255,255,255,0.08)',
                       borderRadius: 4,
-                      color: 'rgba(255,255,255,0.3)', fontSize: 8, fontWeight: 600, cursor: 'pointer',
+                      color: 'rgba(255,255,255,0.7)', fontSize: 8, fontWeight: 600, cursor: 'pointer',
                     }}
                   >全部隱藏</button>
                 </div>
@@ -762,7 +762,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                     <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: 700 }}>
                       {meta.buildingName}
                     </div>
-                    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 2 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginTop: 2 }}>
                       {meta.address}
                     </div>
                   </div>
@@ -825,7 +825,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
                 flexDirection: 'column', gap: 12,
               }}>
                 <div style={{ fontSize: 32, opacity: 0.2 }}>🏗</div>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11 }}>
+                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>
                   {models.length === 0 ? '請先新增 BIM 模型' : '請從左側選擇模型'}
                 </div>
               </div>
@@ -935,12 +935,12 @@ function TabInfo({
               display: 'flex', justifyContent: 'space-between',
               padding: '3px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
             }}>
-              <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{name}</span>
+              <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>{name}</span>
               <span style={{ color: '#67e8f9', fontSize: 9, fontFamily: 'monospace' }}>{elevStr}</span>
             </div>
           ))}
           {meta.slabElevs.length > 6 && (
-            <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8, marginTop: 4, textAlign: 'right' }}>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, marginTop: 4, textAlign: 'right' }}>
               … 更多請見「樓層明細」
             </div>
           )}
@@ -962,7 +962,7 @@ function TabFloors({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
             {['樓層', '樓板標高', '樓層高度', '空間數', '設備數'].map(h => (
               <th key={h} style={{
                 textAlign: 'left', padding: '5px 8px',
-                color: 'rgba(255,255,255,0.25)', fontSize: 8,
+                color: 'rgba(255,255,255,0.62)', fontSize: 8,
                 letterSpacing: '0.08em', fontWeight: 700,
                 borderBottom: '1px solid rgba(255,255,255,0.08)',
               }}>{h}</th>
@@ -1046,11 +1046,11 @@ function TabSpaces({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
                   <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>{c.category}</span>
                 </div>
                 <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{c.count} 間</span>
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9 }}>{c.count} 間</span>
                   <span style={{ color: c.color, fontSize: 9, fontFamily: 'monospace', width: 80, textAlign: 'right' }}>
                     {c.areaSqm.toLocaleString()} m²
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 9, width: 36, textAlign: 'right' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 9, width: 36, textAlign: 'right' }}>
                     {pct.toFixed(1)}%
                   </span>
                 </div>
@@ -1093,7 +1093,7 @@ function TabZones({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
       <div style={{ flex: 1, minWidth: 240 }}>
         <SectionTitle>區域（Zone）分類</SectionTitle>
         {meta.zones.length === 0 ? (
-          <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10 }}>此棟無設備資料</div>
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10 }}>此棟無設備資料</div>
         ) : (
           meta.zones.map(z => (
             <div key={z.id} style={{
@@ -1115,10 +1115,10 @@ function TabZones({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 10, marginTop: 4, paddingLeft: 14 }}>
-                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>
+                <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>
                   類別：{z.type}
                 </span>
-                <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>
+                <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>
                   樓層：{z.floorRange}
                 </span>
               </div>
@@ -1175,7 +1175,7 @@ function TabZones({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
                     <span style={{ color: 'rgba(6,182,212,0.6)', fontSize: 8, fontFamily: 'monospace' }}>
                       {item.name}
                     </span>
-                    <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 8 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 8 }}>
                       {item.desc}
                     </span>
                   </div>
@@ -1193,7 +1193,7 @@ function TabZones({ meta }: { meta: ReturnType<typeof genMeta> & {} }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <div style={{
-      color: 'rgba(255,255,255,0.25)', fontSize: 8,
+      color: 'rgba(255,255,255,0.62)', fontSize: 8,
       letterSpacing: '0.1em', fontWeight: 700,
       marginBottom: 8, textTransform: 'uppercase',
     }}>
@@ -1208,7 +1208,7 @@ function MetaRow({ label, value, valueColor }: { label: string; value: string; v
       display: 'flex', justifyContent: 'space-between',
       padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
     }}>
-      <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>{label}</span>
       <span style={{
         color: valueColor ?? 'rgba(255,255,255,0.72)',
         fontSize: 9, fontWeight: 600,
@@ -1223,7 +1223,7 @@ function MetaRow({ label, value, valueColor }: { label: string; value: string; v
 function SumStat({ label, value }: { label: string; value: string }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 8 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 8 }}>{label}</span>
       <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontWeight: 700 }}>{value}</span>
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type ReactNode } from 'react'
+﻿import { useState, useEffect, useCallback, type ReactNode } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 // ── Constants ────────────────────────────────────────────────
@@ -96,7 +96,7 @@ function Navbar({ sidebarOpen, onToggle, logo, actions }: NavbarProps) {
               <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>
                 3D 監控管理平台
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, letterSpacing: '0.1em' }}>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, letterSpacing: '0.1em' }}>
                 SMART FACILITY MANAGEMENT
               </div>
             </div>

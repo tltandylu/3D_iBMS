@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+﻿import { useMemo } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
 import type { Device, Alert } from '../../types'
@@ -76,14 +76,14 @@ export function AIAnalysisPanel({ devices, alerts }: Props) {
       type: 'category',
       data: xLabels,
       boundaryGap: false,
-      axisLabel: { color: 'rgba(255,255,255,0.22)', fontSize: 8, interval: 7 },
+      axisLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 8, interval: 7 },
       axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       splitLine: { show: false },
     },
     yAxis: {
       type: 'value',
       min: 'dataMin',
-      axisLabel: { color: 'rgba(255,255,255,0.22)', fontSize: 8 },
+      axisLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 8 },
       splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
       axisLine: { show: false },
     },
@@ -201,7 +201,7 @@ export function AIAnalysisPanel({ devices, alerts }: Props) {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 2 }}>
           <LegendDot color="#06b6d4" label="實測" />
           <LegendDash color="#f59e0b" label="AI預測" />
-          <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.2)', fontSize: 8 }}>
+          <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.6)', fontSize: 8 }}>
             MAPE 4.2%
           </span>
         </div>
@@ -216,7 +216,7 @@ export function AIAnalysisPanel({ devices, alerts }: Props) {
           {topAlert ? (
             <RootCauseCard alert={topAlert} />
           ) : (
-            <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10, padding: '16px 0', textAlign: 'center' }}>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 10, padding: '16px 0', textAlign: 'center' }}>
               目前無需分析的告警
             </div>
           )}
@@ -231,7 +231,7 @@ function AISectionTitle({ title, badge }: { title: string; badge?: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
       <div style={{ width: 2, height: 10, background: '#8b5cf6', borderRadius: 1, flexShrink: 0 }} />
-      <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 9, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
         {title}
       </span>
       {badge && (
@@ -259,7 +259,7 @@ function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
       <div style={{ width: 14, height: 2, background: color, borderRadius: 1 }} />
-      <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8 }}>{label}</span>
     </div>
   )
 }
@@ -270,7 +270,7 @@ function LegendDash({ color, label }: { color: string; label: string }) {
       <svg width="14" height="4">
         <line x1="0" y1="2" x2="14" y2="2" stroke={color} strokeWidth="1.5" strokeDasharray="3 2" />
       </svg>
-      <span style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8 }}>{label}</span>
     </div>
   )
 }
@@ -289,7 +289,7 @@ function RootCauseCard({ alert }: { alert: Alert }) {
       <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, fontWeight: 600, marginBottom: 2 }}>
         {alert.assetName}
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 9, marginBottom: 8 }}>
+      <div style={{ color: 'rgba(255,255,255,0.78)', fontSize: 9, marginBottom: 8 }}>
         {alert.title}
       </div>
 
@@ -334,7 +334,7 @@ function RootCauseDAG({ alert }: { alert: Alert }) {
 
   return (
     <div style={{ marginTop: 8 }}>
-      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 8, marginBottom: 4, letterSpacing: '0.05em' }}>
+      <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 8, marginBottom: 4, letterSpacing: '0.05em' }}>
         KG 推理 DAG
       </div>
       <svg width="100%" viewBox={`0 0 215 ${totalH}`} overflow="visible" style={{ display: 'block' }}>

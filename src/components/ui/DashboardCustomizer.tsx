@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { motion } from 'framer-motion'
 import type { DashboardSettings } from '../../hooks/useSystemSettings'
 
@@ -78,9 +78,9 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose }: Props) {
             <div style={{ width: 3, height: 16, background: '#818cf8', borderRadius: 2 }} />
             <div>
               <div style={{ color: '#e2e8f0', fontSize: 13, fontWeight: 700 }}>儀表板個人化</div>
-              <div style={{ color: 'rgba(255,255,255,0.28)', fontSize: 8.5, letterSpacing: '0.08em' }}>DASHBOARD CUSTOMIZER</div>
+              <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>DASHBOARD CUSTOMIZER</div>
             </div>
-            <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 16, cursor: 'pointer' }}>✕</button>
+            <button onClick={onClose} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: 16, cursor: 'pointer' }}>✕</button>
           </div>
 
           {/* Tab 切換 */}
@@ -122,7 +122,7 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose }: Props) {
                     active={s[def.key] as boolean} onToggle={() => toggle(def.key)} />
                 ))}
               </div>
-              <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, marginBottom: 12 }}>注意：告警列表（AI 告警）恆顯示，不可隱藏</div>
+              <div style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9, marginBottom: 12 }}>注意：告警列表（AI 告警）恆顯示，不可隱藏</div>
               <SliderRow label="面板寬度" value={s.rightPanelWidth} min={220} max={380} unit="px"
                 onChange={v => onUpdate({ rightPanelWidth: v })} />
             </>
@@ -153,7 +153,7 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose }: Props) {
               rightPanelWidth: 280,
               kpiShowDeviceStatus: true, kpiShowEnergy: true, kpiShowAlerts: true, kpiShowMaintenance: true,
             })}
-            style={{ padding: '6px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.35)', fontSize: 10, cursor: 'pointer' }}>
+            style={{ padding: '6px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.75)', fontSize: 10, cursor: 'pointer' }}>
             ↺ 恢復預設
           </button>
           <button onClick={onClose}
@@ -168,7 +168,7 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose }: Props) {
 
 function SummaryLine({ visible, total }: { visible: number; total: number }) {
   return (
-    <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginBottom: 10 }}>
+    <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9, marginBottom: 10 }}>
       顯示 <span style={{ color: '#818cf8', fontWeight: 600 }}>{visible}</span> / {total} 個區塊
     </div>
   )
@@ -198,7 +198,7 @@ function SliderRow({ label, value, min, max, unit, onChange }: {
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, width: 70 }}>{label}</span>
+      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: 10, width: 70 }}>{label}</span>
       <input type="range" min={min} max={max} value={value} onChange={e => onChange(Number(e.target.value))}
         style={{ flex: 1, accentColor: '#818cf8', cursor: 'pointer' }} />
       <span style={{ color: '#818cf8', fontSize: 11, fontWeight: 600, width: 50, textAlign: 'right' }}>
