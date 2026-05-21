@@ -24,6 +24,12 @@
 |---|---|
 | ![側邊欄 Admin](docs/screenshots/05_sidebar_admin.png) | ![側邊欄 Viewer](docs/screenshots/07_sidebar_viewer.png) |
 
+| 設備抽屜 — 概覽 | 設備抽屜 — 孿生診斷 |
+|---|---|
+| ![抽屜概覽](docs/screenshots/10_drawer_overview.png) | ![抽屜孿生](docs/screenshots/10_drawer_twin.png) |
+
+![抽屜維修歷程](docs/screenshots/10_drawer_history.png)
+
 ---
 
 ## 功能概覽
@@ -81,6 +87,15 @@
 - **維護日曆**：月曆視圖，工單排程視覺化
 - **需量卸載**：AI 卸載計畫面板（需後端連線）
 - **規則引擎**：自訂告警規則，支援 AND/OR 條件
+
+### 設備詳情抽屜（Phase 10 — 數位孿生名片）
+點擊任何設備後，右側滑出強化版詳情抽屜，分三個 Tab：
+
+| Tab | 內容 |
+|-----|------|
+| **概覽** | 即時數據（功率/溫度/RUL/重要性）、24h 歷史趨勢迷你圖、設備資訊、BIM 定位、遠端控制 |
+| **孿生診斷** | 互動式 3D 設備模型（WebGL）、健康評分環圖（AI偵測 + RUL + 狀態）、剩餘壽命時間軸、AI 健康衰退預測曲線（含警戒/危急閾值） |
+| **維修歷程** | 工單垂直時間軸（EM/CM/PM 色分、派工人員、AI 根因）、快速建立工單 |
 
 ### 驗證 & 存取控制（Phase 7）
 | 角色 | 說明 | 可存取功能數 |
