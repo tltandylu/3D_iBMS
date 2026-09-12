@@ -19,6 +19,8 @@ import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
 import type { PointMeta, BindingForScene } from '../../hooks/usePointBindings'
 import { CollabAvatars, MOCK_ONLINE_USERS } from '../collaboration/CollabPresenceLayer'
 import { RobotFleetLayer } from './RobotFleet'
+import { RobotRouteLines } from './RobotRouteLines'
+import type { RoutesConfig } from '../../hooks/useRobotRoutes'
 import type { RobotCalibrationProfile, RobotViewMode } from '../../types'
 import type { FPPos } from '../walkthrough/WalkthroughMiniMap'
 
@@ -732,6 +734,17 @@ function SceneContent({
         />
       )}
 
+      {/* 動線與站點疊圖 */}
+      {robots?.enabled && robots.showRoutes && (
+        <RobotRouteLines
+          routes={robots.routes}
+          profile={robots.profile}
+          storeys={(ifcGroup?.userData?.storeys as IFCStorey[] | undefined) ?? null}
+          floorFilter={robots.floorFilter}
+          highlightId={robots.routeHighlightId}
+        />
+      )}
+
       {/* 相機動畫器 */}
       <CameraAnimator flyTarget={flyTarget} controlsRef={controlsRef} onDone={onFlyDone} />
 
@@ -770,6 +783,10 @@ export interface RobotSceneProps {
   showTrails: boolean
   showLabels: boolean
   floorFilter: Set<string> | null
+  /** 動線疊圖（robot_routes.json）*/
+  routes: RoutesConfig | null
+  showRoutes: boolean
+  routeHighlightId: string | null
 }
 
 interface Scene3DProps {

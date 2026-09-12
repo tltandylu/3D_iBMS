@@ -13,6 +13,8 @@ import {
   useRobotSnapshot, isSignalLost, getFleetStats, getFleetMap, backendTelemetryFresh, HEARTBEAT_TIMEOUT_MS,
 } from '../../hooks/useRobotFleet'
 import { ROBOT_STATE_COLOR, ROBOT_STATE_LABEL } from '../scene3d/RobotFleet'
+import { RobotRouteEditor } from './RobotRouteEditor'
+import type { RoutesConfig } from '../../hooks/useRobotRoutes'
 
 interface Props {
   restBase: string
@@ -31,6 +33,15 @@ interface Props {
   onToggleLabels: (v: boolean) => void
   floorFilter: Set<string> | null
   onFloorFilter: (f: Set<string> | null) => void
+  showRoutes: boolean
+  onToggleRoutes: (v: boolean) => void
+  routes: RoutesConfig | null
+  routesLoading: boolean
+  routesError: string | null
+  canEditRoutes: boolean
+  onSaveRoutes: (cfg: RoutesConfig) => Promise<{ ok: boolean; error?: string }>
+  onReloadRoutes: () => void
+  onFocusRouteRobot: (deviceId: string | null) => void
   onClose: () => void
 }
 
@@ -55,10 +66,12 @@ export function RobotFleetPanel({
   restBase, backendConnected, canEdit, profile, onProfileChange,
   selectedId, onSelect, viewMode, followId, onViewMode,
   showTrails, onToggleTrails, showLabels, onToggleLabels,
-  floorFilter, onFloorFilter, onClose,
+  floorFilter, onFloorFilter, showRoutes, onToggleRoutes,
+  routes, routesLoading, routesError, canEditRoutes, onSaveRoutes, onReloadRoutes, onFocusRouteRobot,
+  onClose,
 }: Props) {
   const robots = useRobotSnapshot(400)
-  const [tab, setTab] = useState<'fleet' | 'calibration'>('fleet')
+  const [tab, setTab] = useState<'fleet' | 'routes' | 'calibration'>('fleet')
   const [, forceTick] = useState(0)
 
   // 讓延遲 / 心跳等時間相關欄位持續刷新
@@ -131,22 +144,33 @@ export function RobotFleetPanel({
             </div>
           </div>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {(['fleet', 'calibration'] as const).map(t => (
+            {(['fleet', 'routes', 'calibration'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)} style={tabStyle(tab === t)}>
-                {t === 'fleet' ? '車隊監控' : '坐標校準'}
+                {t === 'fleet' ? '車隊監控' : t === 'routes' ? '動線編輯' : '坐標校準'}
               </button>
             ))}
             <button onClick={onClose} style={closeStyle}>✕</button>
           </div>
         </div>
 
-        {tab === 'fleet' ? (
+        {tab === 'routes' ? (
+          <RobotRouteEditor
+            routes={routes}
+            loading={routesLoading}
+            error={routesError}
+            canEdit={canEditRoutes}
+            onSave={onSaveRoutes}
+            onReload={onReloadRoutes}
+            onFocusRobot={onFocusRouteRobot}
+          />
+        ) : tab === 'fleet' ? (
           <FleetTab
             robots={robots} floors={floors} floorFilter={floorFilter} toggleFloor={toggleFloor}
             onFloorFilter={onFloorFilter} selectedId={selectedId} onSelect={onSelect}
             viewMode={viewMode} followId={followId} onViewMode={onViewMode}
             showTrails={showTrails} onToggleTrails={onToggleTrails}
             showLabels={showLabels} onToggleLabels={onToggleLabels}
+            showRoutes={showRoutes} onToggleRoutes={onToggleRoutes}
             avgLatency={avgLatency} stats={stats} profile={profile}
           />
         ) : (
@@ -165,6 +189,7 @@ function FleetTab({
   robots, floors, floorFilter, toggleFloor, onFloorFilter,
   selectedId, onSelect, viewMode, followId, onViewMode,
   showTrails, onToggleTrails, showLabels, onToggleLabels,
+  showRoutes, onToggleRoutes,
   avgLatency, stats, profile,
 }: {
   robots: RobotRuntimeState[]; floors: string[]
@@ -175,6 +200,7 @@ function FleetTab({
   onViewMode: (m: RobotViewMode, id: string | null) => void
   showTrails: boolean; onToggleTrails: (v: boolean) => void
   showLabels: boolean; onToggleLabels: (v: boolean) => void
+  showRoutes: boolean; onToggleRoutes: (v: boolean) => void
   avgLatency: number | null
   stats: { packets: number; driftRejects: number }
   profile: RobotCalibrationProfile
@@ -287,6 +313,7 @@ function FleetTab({
         <Section title="顯示選項">
           <Toggle label="歷史軌跡殘影" checked={showTrails} onChange={onToggleTrails} />
           <Toggle label="3D 狀態看板" checked={showLabels} onChange={onToggleLabels} />
+          <Toggle label="動線與站點疊圖" checked={showRoutes} onChange={onToggleRoutes} />
         </Section>
 
         <Section title="樓層過濾（§7）">

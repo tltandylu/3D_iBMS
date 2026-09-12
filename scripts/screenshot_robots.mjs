@@ -91,6 +91,35 @@ await page.waitForTimeout(3500)
 await page.screenshot({ path: `${OUT}/13c_robot_chase_view.png` })
 console.log('✓ 13c_robot_chase_view.png')
 
+// ── 動線編輯器：開啟 → 新增站點 ───────────────────────────────────────
+await clickByText('機器人車隊')
+await waitForText('AMR / AGV 車隊即時追蹤')
+await clickByText('動線編輯', 'button')
+await waitForText('空白處點擊新增站點')
+const svgBox = await page.locator('svg').first().boundingBox()
+const before = await page.evaluate(() => document.querySelectorAll('svg g circle').length)
+await page.mouse.click(svgBox.x + 130, svgBox.y + 130)
+await page.waitForTimeout(700)
+const after = await page.evaluate(() => document.querySelectorAll('svg g circle').length)
+console.log(`✓ 動線編輯器：點擊新增站點（站點數 ${before} → ${after}）`)
+await page.screenshot({ path: `${OUT}/13g_robot_route_editor.png` })
+console.log('✓ 13g_robot_route_editor.png')
+
+// 不儲存，還原草稿後回到車隊監控並開啟動線疊圖
+await clickByText('還原', 'button')
+await page.waitForTimeout(500)
+await clickByText('車隊監控', 'button')
+await waitForText('動線與站點疊圖')
+await page.evaluate(() => {
+  const lbl = Array.from(document.querySelectorAll('label')).find(l => l.textContent.includes('動線與站點疊圖'))
+  lbl?.querySelector('input')?.click()
+})
+await page.waitForTimeout(500)
+await page.mouse.click(700, 862)          // 點遮罩關閉面板（避開告警 toast 的 ✕）
+await page.waitForTimeout(2500)
+await page.screenshot({ path: `${OUT}/13h_robot_route_overlay.png` })
+console.log('✓ 13h_robot_route_overlay.png（3D 動線疊圖）')
+
 // ── 即時機器人視角：啟動 → 切換機載 → 巡看下一台 → Esc 停止 ──────────
 await clickByText('機器人車隊')
 await waitForText('AMR / AGV 車隊即時追蹤')

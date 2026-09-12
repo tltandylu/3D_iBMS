@@ -51,6 +51,7 @@ import { useAlertRules } from './hooks/useAlertRules'
 import { useAuth } from './hooks/useAuth'
 import { usePointBindings } from './hooks/usePointBindings'
 import { useRobotCalibration, useRobotFleetSource } from './hooks/useRobotFleet'
+import { useRobotRoutes } from './hooks/useRobotRoutes'
 import type { RobotViewMode } from './types'
 import type { Feature, DemoUser } from './hooks/useAuth'
 import { LoginPage } from './components/ui/LoginPage'
@@ -101,6 +102,10 @@ export default function App() {
   // AMR 車隊：後端連線時吃真實遙測，離線自動切本地模擬；校準 profile 由後端熱加載
   useRobotFleetSource()
   const { profile: robotProfile, reload: reloadRobotCalib } = useRobotCalibration(restBase, backendConnected, user?.id ?? '')
+  const {
+    routes: robotRoutes, loading: robotRoutesLoading, error: robotRoutesError,
+    save: saveRobotRoutes, reload: reloadRobotRoutes,
+  } = useRobotRoutes(restBase, backendConnected, user?.id ?? '')
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const [showKG, setShowKG] = useState(false)
   const [showBIM, setShowBIM] = useState(false)
@@ -141,6 +146,8 @@ export default function App() {
   const [robotTrails,      setRobotTrails]      = useState(true)
   const [robotLabels,      setRobotLabels]      = useState(true)
   const [robotFloorFilter, setRobotFloorFilter] = useState<Set<string> | null>(null)
+  const [robotShowRoutes,  setRobotShowRoutes]  = useState(false)
+  const [robotRouteFocus,  setRobotRouteFocus]  = useState<string | null>(null)
 
   /** 啟動即時機器人視角（跟隨 / 機載）；mode='global' 代表停止 */
   const setRobotView = useCallback((mode: RobotViewMode, targetId: string | null) => {
@@ -579,6 +586,9 @@ export default function App() {
               showTrails: robotTrails,
               showLabels: robotLabels,
               floorFilter: robotFloorFilter,
+              routes: robotRoutes,
+              showRoutes: robotShowRoutes || robotRouteFocus !== null,   // 編輯中一律顯示
+              routeHighlightId: robotRouteFocus,
             }}
           />
           {/* 即時機器人視角控制列（啟動後常駐於 3D 場景上方）*/}
@@ -1003,7 +1013,16 @@ export default function App() {
             onToggleLabels={setRobotLabels}
             floorFilter={robotFloorFilter}
             onFloorFilter={setRobotFloorFilter}
-            onClose={() => setShowRobots(false)}
+            showRoutes={robotShowRoutes}
+            onToggleRoutes={setRobotShowRoutes}
+            routes={robotRoutes}
+            routesLoading={robotRoutesLoading}
+            routesError={robotRoutesError}
+            canEditRoutes={can('robotRoute')}
+            onSaveRoutes={saveRobotRoutes}
+            onReloadRoutes={reloadRobotRoutes}
+            onFocusRouteRobot={setRobotRouteFocus}
+            onClose={() => { setRobotRouteFocus(null); setShowRobots(false) }}
           />
         )}
       </AnimatePresence>
