@@ -2,21 +2,21 @@
 import { motion, AnimatePresence } from 'framer-motion'
 
 const EXAMPLE_QUERIES = [
-  'A棟本週故障最多的設備？',
+  '樂迦大樓本週故障最多的設備？',
   '目前有哪些 CRITICAL 告警影響需量？',
   '哪些設備的 RUL 小於 90 天？',
-  '3F 空調今日維修了幾次？',
+  '3FL 空調今日維修了幾次？',
 ]
 
 const MOCK_RESPONSES: Record<string, string> = {
-  'A棟本週故障最多的設備？':
-    '📊 A棟本週故障排名：\n1. AHU-A-3F-01（3次，最近：高壓保護跳脫）\n2. UPS-A-2F-01（1次，電池溫度異常）\n\n建議對 AHU-A-3F-01 進行深度維護。',
+  '樂迦大樓本週故障最多的設備？':
+    '📊 樂迦大樓本週故障排名：\n1. AHU-L-3F-01（3次，最近：高壓保護跳脫）\n2. UPS-L-2F-01（1次，電池溫度異常）\n\n建議對 AHU-L-3F-01 進行深度維護。',
   '目前有哪些 CRITICAL 告警影響需量？':
-    '🔴 2 筆 CRITICAL 告警影響需量：\n• AHU-A-3F-01 停機 → 補償約 +42 kW\n• CRAC-C-1F-01 離線 → 機房轉移 +15 kW\n\n需量目前 87.5%，建議執行卸載計畫。',
+    '🔴 2 筆 CRITICAL 告警影響需量：\n• AHU-L-3F-01 停機 → 補償約 +42 kW\n• CRAC-L-4F-01 離線 → 機房轉移 +15 kW\n\n需量目前 87.5%，建議執行卸載計畫。',
   '哪些設備的 RUL 小於 90 天？':
-    '⏱ RUL < 90 天設備：\n1. CRAC-C-1F-01 — 已超期（緊急！）\n2. AHU-A-3F-01 — 剩餘 45 天\n\n建議立即排定 C棟精密空調更換計畫。',
-  '3F 空調今日維修了幾次？':
-    '🔧 AHU-A-3F-01 今日記錄：\n• 1 筆 EM 工單進行中（WO-2026-001234）\n• 派工：陳大維，預估 3 小時\n• 本月累計 3 次，費用 NT$ 12,500',
+    '⏱ RUL < 90 天設備：\n1. CRAC-L-4F-01 — 已超期（緊急！）\n2. AHU-L-3F-01 — 剩餘 45 天\n\n建議立即排定樂迦大樓精密空調更換計畫。',
+  '3FL 空調今日維修了幾次？':
+    '🔧 AHU-L-3F-01 今日記錄：\n• 1 筆 EM 工單進行中（WO-2026-001234）\n• 派工：陳大維，預估 3 小時\n• 本月累計 3 次，費用 NT$ 12,500',
 }
 
 // 關鍵字模糊比對回應庫
@@ -27,23 +27,23 @@ const KEYWORD_RESPONSES: Array<{ keys: string[]; answer: string }> = [
   },
   {
     keys: ['工單', '維修', '保養', 'wo', 'workorder'],
-    answer: '🔧 工單摘要（本日）：\n• 待指派：3 筆（其中 1 筆 URGENT）\n• 進行中：7 筆（平均已耗 2.1h）\n• 今日完工：5 筆，累計工時 14.5h\n\n最高優先：WO-2026-001234（AHU-A-3F-01）',
+    answer: '🔧 工單摘要（本日）：\n• 待指派：3 筆（其中 1 筆 URGENT）\n• 進行中：7 筆（平均已耗 2.1h）\n• 今日完工：5 筆，累計工時 14.5h\n\n最高優先：WO-2026-001234（AHU-L-3F-01）',
   },
   {
     keys: ['告警', 'alert', 'critical', 'alarm', '警報', '嚴重'],
-    answer: '🔔 告警概況：\n• CRITICAL：2 筆（AHU-A-3F-01、CRAC-C-1F-01）\n• ALARM：4 筆（待確認）\n• WARNING：8 筆\n\n建議優先處理 AHU-A-3F-01 高壓壓縮機告警。',
+    answer: '🔔 告警概況：\n• CRITICAL：2 筆（AHU-L-3F-01、CRAC-L-4F-01）\n• ALARM：4 筆（待確認）\n• WARNING：8 筆\n\n建議優先處理 AHU-L-3F-01 高壓壓縮機告警。',
   },
   {
     keys: ['設備', '狀態', '離線', '異常', '正常', 'device'],
-    answer: '📋 設備狀態總覽（共 24 台）：\n• 正常運行：18 台（75%）\n• 警示中：4 台\n• 嚴重故障：1 台（AHU-A-3F-01）\n• 通訊離線：1 台（CRAC-C-1F-01）',
+    answer: '📋 設備狀態總覽（共 12 台）：\n• 正常運行：9 台（75%）\n• 警示中：2 台\n• 嚴重故障：1 台（AHU-L-3F-01）\n• 通訊離線：1 台（CRAC-L-4F-01）',
   },
   {
     keys: ['bim', 'ifc', '模型', '建築', '樓層', '樓'],
-    answer: '🏗 BIM 模型資訊：\n• A棟：已載入（3,245 個構件）\n• B棟：已載入（2,180 個構件）\n• C棟機房：未載入\n\n進入「BIM 視圖」可點擊構件定位設備。',
+    answer: '🏗 BIM 模型資訊：\n• 樂迦大樓：已載入（5,200 個構件）\n• 共 12 層（含 R1FL/R2FL）＋地下 B1/B2\n\n進入「BIM 視圖」可點擊構件定位設備。',
   },
   {
     keys: ['rul', '壽命', '剩餘', '預測', '老化'],
-    answer: '⏱ 設備壽命預測（RUL）：\n• 超期（緊急）：CRAC-C-1F-01\n• < 90 天：AHU-A-3F-01（剩 45天）\n• < 180 天：UPS-A-2F-01（剩 130天）\n\n建議本月排定精密空調汰換計畫。',
+    answer: '⏱ 設備壽命預測（RUL）：\n• 超期（緊急）：CRAC-L-4F-01\n• < 90 天：AHU-L-3F-01（剩 45天）\n• < 180 天：UPS-L-2F-01（剩 130天）\n\n建議本月排定精密空調汰換計畫。',
   },
   {
     keys: ['oee', '效率', '可用率', '稼動', '生產'],
@@ -73,6 +73,8 @@ function fuzzyMockResponse(question: string): string {
 
 import { getStoredApiKey, getStoredModel } from './ClaudeSettings'
 import { getSystemSettings } from '../../hooks/useSystemSettings'
+import { DEVICES } from '../../data/mockData'
+import type { Device } from '../../types'
 
 async function callClaudeNL(question: string): Promise<string> {
   const apiKey = getStoredApiKey()
@@ -101,7 +103,7 @@ async function callClaudeNL(question: string): Promise<string> {
   return data.content.find(c => c.type === 'text')?.text ?? '（無回應）'
 }
 
-export function NLQueryBar() {
+export function NLQueryBar({ onBIMClick }: { onBIMClick?: (device: Device) => void }) {
   const [query, setQuery]       = useState('')
   const [response, setResponse] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -127,6 +129,11 @@ export function NLQueryBar() {
     if (query.trim()) handleQuery(query.trim())
   }
 
+  // 從回應文字中找出提及的設備（比對 assetCode）
+  const mentionedDevices: Device[] = response
+    ? DEVICES.filter(d => response.includes(d.assetCode))
+    : []
+
   return (
     <div style={{
       position: 'absolute', bottom: 48, left: '50%',
@@ -144,7 +151,7 @@ export function NLQueryBar() {
               background: 'rgba(4,12,24,0.95)',
               border: '1px solid rgba(6,182,212,0.25)',
               borderRadius: 8, backdropFilter: 'blur(16px)',
-              maxHeight: 180, overflowY: 'auto', position: 'relative',
+              maxHeight: 220, overflowY: 'auto', position: 'relative',
             }}
           >
             {isLoading ? (
@@ -154,10 +161,34 @@ export function NLQueryBar() {
                 <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
               </div>
             ) : (
-              <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 11, lineHeight: 1.7, whiteSpace: 'pre-line' }}>
-                {getStoredApiKey() && <span style={{ color: '#10b981', fontSize: 8, fontWeight: 700, display: 'block', marginBottom: 4 }}>Claude AI · NL2Cypher</span>}
-                {response}
-              </div>
+              <>
+                <div style={{ color: 'rgba(255,255,255,0.82)', fontSize: 11, lineHeight: 1.7, whiteSpace: 'pre-line', paddingRight: 20 }}>
+                  {getStoredApiKey() && <span style={{ color: '#10b981', fontSize: 8, fontWeight: 700, display: 'block', marginBottom: 4 }}>Claude AI · NL2Cypher</span>}
+                  {response}
+                </div>
+
+                {/* BIM 定位按鈕列 */}
+                {mentionedDevices.length > 0 && onBIMClick && (
+                  <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.35)', alignSelf: 'center', flexShrink: 0 }}>BIM 定位：</span>
+                    {mentionedDevices.map(dev => (
+                      <button
+                        key={dev.id}
+                        onClick={() => onBIMClick(dev)}
+                        style={{
+                          padding: '3px 9px', fontSize: 9, fontWeight: 600,
+                          background: 'rgba(6,182,212,0.14)',
+                          border: '1px solid rgba(6,182,212,0.35)',
+                          borderRadius: 4, color: '#06b6d4', cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        🏢 {dev.assetCode}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
             )}
             <button
               onClick={() => { setExpanded(false); setResponse(null) }}
@@ -181,7 +212,7 @@ export function NLQueryBar() {
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="AI 自然語言查詢 — 例：A棟本週故障最多的設備？"
+            placeholder="AI 自然語言查詢 — 例：樂迦大樓本週故障最多的設備？"
             style={{
               flex: 1, padding: '9px 0',
               background: 'transparent', border: 'none',

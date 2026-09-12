@@ -1,37 +1,43 @@
 import { useState, useCallback } from 'react'
+import { getSystemSettings } from './useSystemSettings'
 
 // ── Feature union ─────────────────────────────────────────────
 export type Feature =
-  | 'search' | 'inventory' | 'alerts' | 'rules'
+  | 'search' | 'inventory' | 'alerts' | 'rules' | 'alertAnalytics'
   | 'bim' | 'bimManager' | 'kg' | 'heatmap'
-  | 'oee' | 'trend' | 'energy'
-  | 'workOrders' | 'demand' | 'calendar'
-  | 'customizer' | 'auditLog' | 'settings'
+  | 'oee' | 'trend' | 'energy' | 'carbon' | 'predictiveMaint'
+  | 'workOrders' | 'demand' | 'calendar' | 'inspection' | 'spareParts'
+  | 'customizer' | 'auditLog' | 'settings' | 'userManage'
+  | 'shiftLog' | 'health'
+  | 'pointBinding' | 'floorPlan' | 'floorPlanSettings'
 
 // ── Role permissions ──────────────────────────────────────────
 const ROLE_PERMISSIONS: Record<string, Set<Feature>> = {
   admin: new Set<Feature>([
-    'search', 'inventory', 'alerts', 'rules',
+    'search', 'inventory', 'alerts', 'rules', 'alertAnalytics',
     'bim', 'bimManager', 'kg', 'heatmap',
-    'oee', 'trend', 'energy',
-    'workOrders', 'demand', 'calendar',
-    'customizer', 'auditLog', 'settings',
+    'oee', 'trend', 'energy', 'carbon', 'predictiveMaint',
+    'workOrders', 'demand', 'calendar', 'inspection', 'spareParts',
+    'customizer', 'auditLog', 'settings', 'userManage', 'shiftLog', 'health',
+    'pointBinding', 'floorPlan', 'floorPlanSettings',
   ]),
   operator: new Set<Feature>([
-    'search', 'inventory', 'alerts', 'rules',
+    'search', 'inventory', 'alerts', 'rules', 'alertAnalytics',
     'bim', 'bimManager', 'kg', 'heatmap',
-    'oee', 'trend', 'energy',
-    'workOrders', 'demand', 'calendar', 'customizer',
+    'oee', 'trend', 'energy', 'carbon', 'predictiveMaint',
+    'workOrders', 'demand', 'calendar', 'inspection', 'spareParts', 'customizer', 'auditLog', 'shiftLog', 'health',
+    'pointBinding', 'floorPlan',
   ]),
   viewer: new Set<Feature>([
-    'search', 'inventory', 'alerts',
+    'search', 'inventory', 'alerts', 'alertAnalytics',
     'bim', 'kg', 'heatmap',
-    'oee', 'trend', 'energy',
-    'workOrders', 'calendar',
+    'oee', 'trend', 'energy', 'carbon', 'predictiveMaint', 'health',
+    'workOrders', 'calendar', 'inspection', 'spareParts', 'shiftLog',
+    'pointBinding', 'floorPlan',
   ]),
 }
 
-// ── Demo users ────────────────────────────────────────────────
+// ── Demo users (SIM 模式 fallback) ────────────────────────────
 export interface DemoUser {
   id: string
   name: string
@@ -47,9 +53,10 @@ export const DEMO_USERS: DemoUser[] = [
   { id: 'u3', name: '資料檢視者', email: 'viewer@ibms.com',   password: 'viewer123',   role: 'viewer',   avatarColor: '#10b981' },
 ]
 
-// ── Session storage ───────────────────────────────────────────
+// ── Session & JWT storage ─────────────────────────────────────
 const SESSION_KEY = 'IBMS_AUTH_V1'
-const SESSION_TTL = 8 * 60 * 60 * 1000 // 8 hours
+const JWT_KEY     = 'IBMS_JWT_V1'
+const SESSION_TTL = 8 * 60 * 60 * 1000
 
 interface StoredSession { userId: string; expiresAt: number }
 
@@ -64,15 +71,26 @@ function loadSession(): DemoUser | null {
 }
 
 function saveSession(user: DemoUser) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: user.id, expiresAt: Date.now() + SESSION_TTL }))
+  localStorage.setItem(SESSION_KEY, JSON.stringify({
+    userId: user.id, expiresAt: Date.now() + SESSION_TTL,
+  }))
 }
 
-function clearSession() { localStorage.removeItem(SESSION_KEY) }
+function clearSession() {
+  localStorage.removeItem(SESSION_KEY)
+  localStorage.removeItem(JWT_KEY)
+}
+
+/** 讀取已儲存的 JWT token（供 REST 呼叫使用）*/
+export function getJwtToken(): string | null {
+  return localStorage.getItem(JWT_KEY)
+}
 
 // ── Hook ──────────────────────────────────────────────────────
 export interface AuthState {
   user: DemoUser | null
-  login: (email: string, password: string) => boolean
+  /** async 版本：優先嘗試後端 JWT 登入，失敗時 fallback 至 DEMO */
+  login: (email: string, password: string) => Promise<boolean>
   loginAs: (user: DemoUser) => void
   logout: () => void
   can: (feature: Feature) => boolean
@@ -81,7 +99,43 @@ export interface AuthState {
 export function useAuth(): AuthState {
   const [user, setUser] = useState<DemoUser | null>(() => loadSession())
 
-  const login = useCallback((email: string, password: string): boolean => {
+  const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    // 1. 嘗試後端 JWT 登入
+    const { connection } = getSystemSettings()
+    if (connection.forceMode !== 'mock') {
+      const restBase = connection.wsUrl.replace(/^ws/, 'http').replace('/ws', '')
+      try {
+        const res = await fetch(`${restBase}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          signal: AbortSignal.timeout(3000),
+        })
+        if (res.ok) {
+          const data = await res.json() as {
+            access_token: string
+            user: { id: string; name: string; email: string; role: string; avatarColor: string }
+          }
+          localStorage.setItem(JWT_KEY, data.access_token)
+          const backendUser: DemoUser = {
+            id:          data.user.id,
+            name:        data.user.name,
+            email:       data.user.email,
+            password:    '',
+            role:        data.user.role as DemoUser['role'],
+            avatarColor: data.user.avatarColor,
+          }
+          saveSession(backendUser)
+          setUser(backendUser)
+          return true
+        }
+        if (res.status === 401) return false   // 帳密錯誤，不 fallback
+      } catch {
+        // 後端不可用，繼續 fallback
+      }
+    }
+
+    // 2. SIM 模式 fallback：DEMO_USERS
     const found = DEMO_USERS.find(u => u.email === email && u.password === password)
     if (!found) return false
     saveSession(found)

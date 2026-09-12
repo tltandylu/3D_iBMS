@@ -4,9 +4,17 @@
  * 接收 snapshot + 增量更新；未連線時 fallback 到 useSimulation
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { Device, Alert, WorkOrder, KPIData } from '../types'
+import type { Device, Alert, WorkOrder, KPIData, InboxNotification } from '../types'
 import { useSimulation } from './useSimulation'
 import { getSystemSettings } from './useSystemSettings'
+import { getJwtToken } from './useAuth'
+import { SIM_POINT_VALUES } from './usePointBindings'
+
+function showForegroundNotification(title: string, body: string): void {
+  if (Notification.permission !== 'granted') return
+  try { new Notification(title, { body, icon: '/pwa-icon.svg', tag: 'ibms-alert-fg' }) }
+  catch (_) { /* unsupported in this context */ }
+}
 
 const _conn         = getSystemSettings().connection
 const WS_URL        = _conn.wsUrl
@@ -115,20 +123,41 @@ interface BackendState {
 export function useBackendWS() {
   const simulation = useSimulation()
   const [backendAvailable, setBackendAvailable] = useState(false)
+  const [isReconnecting, setIsReconnecting] = useState(false)
   const [state, setState] = useState<BackendState | null>(null)
-  const wsRef        = useRef<WebSocket | null>(null)
-  const reconnectRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [notifications, setNotifications] = useState<InboxNotification[]>([])
+  const [pointValues, setPointValues] = useState<Record<string, number>>(SIM_POINT_VALUES)
+  const wsRef          = useRef<WebSocket | null>(null)
+  const reconnectRef   = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hadSuccessRef  = useRef(false)
 
   // ── WebSocket 連線 ──────────────────────────────────────────────────────
   const connect = useCallback(() => {
     if (FORCE_MOCK) return
     if (wsRef.current?.readyState === WebSocket.OPEN) return
 
-    const ws = new WebSocket(WS_URL)
+    // 若有 JWT token，附加於 query string 供後端驗證
+    const token = getJwtToken()
+    const url   = token ? `${WS_URL}?token=${encodeURIComponent(token)}` : WS_URL
+    const ws    = new WebSocket(url)
     wsRef.current = ws
 
     ws.onopen = () => {
       setBackendAvailable(true)
+      setIsReconnecting(false)
+      hadSuccessRef.current = true
+      const token = getJwtToken()
+      const h: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      // 載入最近 50 則站內通知
+      fetch(`${REST_BASE}/api/notifications/inbox?limit=50`, { headers: h })
+        .then(r => r.ok ? r.json() as Promise<InboxNotification[]> : [])
+        .then(list => setNotifications(list))
+        .catch(() => {})
+      // 從 DB 還原上次持久化的點位即時值（避免等第一個 WS broadcast）
+      fetch(`${REST_BASE}/api/point-values`, { headers: h })
+        .then(r => r.ok ? r.json() as Promise<Record<string, number>> : null)
+        .then(vals => { if (vals && Object.keys(vals).length > 0) setPointValues(vals) })
+        .catch(() => {})
     }
 
     ws.onmessage = (e) => {
@@ -192,6 +221,12 @@ export function useBackendWS() {
             alerts: [a, ...prev.alerts].slice(0, 50),
             lastEvent: `🔴 新告警：${a.title}`,
           } : prev)
+          if (getSystemSettings().alert.desktopNotify && (a.severity === 'CRITICAL' || a.severity === 'ALARM')) {
+            showForegroundNotification(
+              `【${a.severity}】${a.assetName}`,
+              a.title,
+            )
+          }
         }
 
         // ── 告警狀態更新 ────────────────────────────────────────────
@@ -221,11 +256,24 @@ export function useBackendWS() {
           } : prev)
         }
 
+        // ── 站內通知 ────────────────────────────────────────────
+        if (msg.type === 'notification_new') {
+          const n = msg.payload as unknown as InboxNotification
+          setNotifications(prev => [n, ...prev].slice(0, 50))
+        }
+
+        // ── 點位即時數值（每 2 秒）─────────────────────────────
+        if (msg.type === 'point_values') {
+          const { values } = msg.payload as { values: Record<string, number> }
+          setPointValues(values)
+        }
+
       } catch { /* ignore parse errors */ }
     }
 
     ws.onclose = () => {
       setBackendAvailable(false)
+      if (hadSuccessRef.current) setIsReconnecting(true)
       setState(prev => prev ? { ...prev, lastEvent: '⚠ 後端連線中斷，重連中…' } : null)
       reconnectRef.current = setTimeout(connect, RECONNECT_MS)
     }
@@ -261,11 +309,23 @@ export function useBackendWS() {
     // 優先透過 WS，後端 broadcast 會觸發所有客戶端更新
     const sent = sendWS({ type: 'update_workorder_status', payload: { id, status } })
     if (!sent && backendAvailable) {
-      // 後端連線但 WS 暫時不通：用 REST PATCH
-      await fetch(`${REST_BASE}/api/workorders/${id}/status?status=${status}`, { method: 'PATCH' })
+      await authFetch(`${REST_BASE}/api/workorders/${id}/status?status=${status}`, { method: 'PATCH' })
         .catch(() => {/* ignore */})
     }
   }, [sendWS, backendAvailable])
+
+  // ── 帶 JWT token 的 fetch helper ─────────────────────────────────────
+  const authFetch = useCallback((url: string, init: RequestInit = {}) => {
+    const token = getJwtToken()
+    return fetch(url, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init.headers ?? {}),
+      },
+    })
+  }, [])
 
   // ── 設備遠端控制：REST POST ───────────────────────────────────────────
   const controlDevice = useCallback(async (
@@ -273,9 +333,8 @@ export function useBackendWS() {
     command: 'restart' | 'emergency_stop',
   ): Promise<{ ok: boolean; message: string }> => {
     try {
-      const res = await fetch(`${REST_BASE}/api/devices/${deviceId}/control`, {
+      const res = await authFetch(`${REST_BASE}/api/devices/${deviceId}/control`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command }),
       })
       if (!res.ok) {
@@ -293,10 +352,10 @@ export function useBackendWS() {
   const fetchDeviceHistory = useCallback(async (
     deviceId: string,
   ): Promise<{ time: string; power_kw: number; temperature?: number }[]> => {
-    const res = await fetch(`${REST_BASE}/api/devices/${deviceId}/history?hours=24`)
+    const res = await authFetch(`${REST_BASE}/api/devices/${deviceId}/history?hours=24`)
     if (!res.ok) throw new Error('history fetch failed')
     return res.json() as Promise<{ time: string; power_kw: number; temperature?: number }[]>
-  }, [])
+  }, [authFetch])
 
   // ── 建立工單：WS（後端廣播）或 REST POST ─────────────────────────────
   const createWorkOrder = useCallback(async (wo: Omit<WorkOrder, 'id' | 'woNumber' | 'status' | 'createdAt'>) => {
@@ -315,13 +374,22 @@ export function useBackendWS() {
     }
     const sent = sendWS({ type: 'create_workorder', payload })
     if (!sent && backendAvailable) {
-      await fetch(`${REST_BASE}/api/workorders`, {
+      await authFetch(`${REST_BASE}/api/workorders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       }).catch(() => {/* ignore */})
     }
   }, [sendWS, backendAvailable])
+
+  const markNotificationRead = useCallback((id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+  }, [])
+
+  const markAllNotificationsRead = useCallback(() => {
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
+  }, [])
+
+  const unreadCount = notifications.filter(n => !n.is_read).length
 
   // ── 回傳值：後端連線時用後端資料，否則用前端模擬 ───────────────────
   if (backendAvailable && state) {
@@ -337,23 +405,32 @@ export function useBackendWS() {
       controlDevice,
       fetchDeviceHistory,
       backendConnected:     true,
+      isReconnecting:       false,
+      notifications,
+      unreadCount,
+      markNotificationRead,
+      markAllNotificationsRead,
+      pointValues,
     }
   }
 
   return {
     devices:              simulation.devices,
     alerts:               simulation.alerts,
-    workOrders:           [] as WorkOrder[],
+    workOrders:           simulation.workOrders,
     kpi:                  simulation.kpi,
     lastEvent:            simulation.lastEvent,
     acknowledgeAlert:     simulation.acknowledgeAlert,
-    updateWorkOrderStatus: async (id: string, status: WorkOrder['status']) => {
-      void id; void status
-    },
-    createWorkOrder: async () => { /* fallback */ },
-    controlDevice: async (_id: string, _cmd: 'restart' | 'emergency_stop') =>
-      ({ ok: false, message: '後端未連線' }),
-    fetchDeviceHistory: async (_id: string) => [] as { time: string; power_kw: number; temperature?: number }[],
+    updateWorkOrderStatus: simulation.updateWorkOrderStatus,
+    createWorkOrder:      simulation.createWorkOrder,
+    controlDevice:        simulation.controlDevice,
+    fetchDeviceHistory:   simulation.fetchDeviceHistory,
     backendConnected:     false,
+    isReconnecting,
+    notifications:        [] as InboxNotification[],
+    unreadCount:          0,
+    markNotificationRead,
+    markAllNotificationsRead,
+    pointValues:          {} as Record<string, number>,
   }
 }

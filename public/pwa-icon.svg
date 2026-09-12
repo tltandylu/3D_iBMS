@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#060f20"/>
+  <rect x="12" y="12" width="488" height="488" rx="72" fill="none" stroke="#06b6d4" stroke-width="2" opacity="0.35"/>
+  <rect x="130" y="240" width="72" height="190" rx="3" fill="#06b6d4" opacity="0.15"/>
+  <rect x="220" y="185" width="72" height="245" rx="3" fill="#06b6d4" opacity="0.22"/>
+  <rect x="310" y="215" width="72" height="215" rx="3" fill="#06b6d4" opacity="0.15"/>
+  <line x1="90" y1="435" x2="422" y2="435" stroke="#06b6d4" stroke-width="2" opacity="0.5"/>
+  <text x="256" y="156" font-size="110" font-weight="900" text-anchor="middle"
+        font-family="'Arial Black', Arial" letter-spacing="-3" fill="#06b6d4">3D</text>
+  <text x="256" y="488" font-size="38" font-weight="700" text-anchor="middle"
+        font-family="Arial" letter-spacing="10" fill="#06b6d4" opacity="0.7">iBMS</text>
+</svg>

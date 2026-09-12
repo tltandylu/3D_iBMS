@@ -90,6 +90,8 @@ export interface BuildingInfo {
   floors: number
   position: [number, number, number]
   size: [number, number, number]  // width, height, depth
+  floorNames?: string[]     // custom label per floor (index 0 = 1F)
+  basementNames?: string[]  // basement labels shallowest-first (index 0 = B1)
 }
 
 // BIM 模型管理列表中的一筆條目
@@ -101,6 +103,17 @@ export interface BIMModelEntry {
   visible: boolean
   loadState: 'unloaded' | 'loaded' | 'error'
   meshCount: number
+}
+
+export interface InboxNotification {
+  id: string
+  type: 'alert_new' | 'device_offline' | 'device_critical' | 'workorder_created' | 'workorder_completed'
+  title: string
+  message: string
+  severity: 'CRITICAL' | 'ALARM' | 'WARNING' | 'INFO' | null
+  related_id: string | null
+  is_read: boolean
+  created_at: string
 }
 
 // IFC 載入後萃取的合併幾何，歸一化至單位立方體，用於 Scene3D 替換 BuildingMesh

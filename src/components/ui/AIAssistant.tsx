@@ -43,10 +43,10 @@ ${devices.sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0)).slice(0, 5)
 }
 
 // 呼叫 Claude API
-async function callClaude(messages: Message[], systemPrompt: string): Promise<string> {
+async function callClaude(messages: Message[], systemPrompt: string, devices: Device[], alerts: Alert[], kpi: KPIData): Promise<string> {
   const apiKey = getStoredApiKey()
   if (!apiKey) {
-    return await mockResponse(messages[messages.length - 1]?.content ?? '')
+    return await mockResponse(messages[messages.length - 1]?.content ?? '', devices, alerts, kpi)
   }
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -75,19 +75,34 @@ async function callClaude(messages: Message[], systemPrompt: string): Promise<st
 }
 
 // Mock 回應（未設定 API Key 時）
-async function mockResponse(question: string): Promise<string> {
+async function mockResponse(question: string, devices: Device[], alerts: Alert[], kpi: KPIData): Promise<string> {
   await new Promise(r => setTimeout(r, 800))
   const q = question.toLowerCase()
-  if (q.includes('需量') || q.includes('用電')) {
-    return '根據即時監控資料，目前需量使用率約 87.5%，接近契約容量上限。建議啟動需量卸載計畫，優先卸載 A棟 6F 空調箱（-38.7 kW），預估可降低 3-5% 需量使用率，避免超約罰款。'
+  const criticals = alerts.filter(a => a.severity === 'CRITICAL' && a.status === 'open')
+  const urgentDevices = [...devices].sort((a, b) => (b.aiScore ?? 0) - (a.aiScore ?? 0)).slice(0, 3)
+  const lowRulDevices = devices.filter(d => (d.rulDays ?? 999) < 90).sort((a, b) => (a.rulDays ?? 999) - (b.rulDays ?? 999))
+
+  if (q.includes('需量') || q.includes('用電') || q.includes('能源')) {
+    return `根據即時監控資料，目前需量使用率約 ${kpi.demandRatioPct.toFixed(1)}%（${kpi.demandKw.toFixed(0)} kW / 契約 ${kpi.contractDemandKw} kW）。今日累計用電 ${kpi.todayKwh.toLocaleString()} kWh。${kpi.demandRatioPct >= 80 ? '已接近契約容量上限，建議啟動需量卸載計畫，避免超約罰款。' : '需量使用率正常，無需卸載。'}`
   }
-  if (q.includes('告警') || q.includes('異常')) {
-    return 'AI 偵測到目前有 2 筆嚴重告警：\n1. A棟3F空調箱 — 冷媒洩漏/膨脹閥故障（工單進行中）\n2. C棟精密空調 — 通訊中斷導致機房升溫至 42°C（緊急處理中）\n\n建議立即確認機房備援冷卻方案，防止 IT 設備過熱。'
+  if (q.includes('告警') || q.includes('異常') || q.includes('警報')) {
+    const critList = criticals.length > 0
+      ? criticals.map((a, i) => `${i + 1}. ${a.assetName} — ${a.title}`).join('\n')
+      : '目前無嚴重告警'
+    return `AI 偵測到目前有 ${criticals.length} 筆嚴重告警，共 ${kpi.openAlerts} 筆開啟告警：\n${critList}\n\n${criticals.length > 0 ? '建議立即確認並排定維修工單。' : '系統告警狀況良好。'}`
   }
-  if (q.includes('維護') || q.includes('保養') || q.includes('rul')) {
-    return '根據 RUL 預測模型分析：\n- C棟1F精密空調 (RUL: 0天)：應立即更換或大修\n- A棟3F空調箱 (RUL: 45天)：建議下個月安排預防性維護\n- A棟2F UPS-01 (RUL: 180天)：Q3 前安排電池組檢測\n\n建議以 URGENT 優先級建立預防保養工單。'
+  if (q.includes('維護') || q.includes('保養') || q.includes('rul') || q.includes('壽命')) {
+    if (lowRulDevices.length > 0) {
+      const rulList = lowRulDevices.slice(0, 3).map(d => `- ${d.assetCode}（${d.name}）RUL: ${d.rulDays ?? '?'}天`).join('\n')
+      return `根據 RUL 預測模型分析，以下設備剩餘壽命不足 90 天，需優先處理：\n${rulList}\n\n建議以 URGENT 優先級建立預防保養工單。`
+    }
+    return '目前所有設備 RUL 均在 90 天以上，近期無緊急汰換需求。建議依正常 PM 排程進行保養。'
   }
-  return '感謝您的提問。目前系統運行正常，有 2 台設備需要緊急處理。如需進一步分析特定設備或能源數據，請提供更具體的問題，我將為您提供詳細的 AI 根因分析與行動建議。\n\n💡 提示：點擊右上角「⚙ AI設定」輸入 Anthropic API Key 即可啟用真實 Claude AI 回應。'
+  if (q.includes('設備') || q.includes('風險') || q.includes('高風險')) {
+    const list = urgentDevices.map((d, i) => `${i + 1}. ${d.assetCode}（${d.name}）— AI分數 ${((d.aiScore ?? 0) * 100).toFixed(0)}/100，狀態：${d.status}`).join('\n')
+    return `目前高風險設備 Top 3（依 AI 異常分數排名）：\n${list}\n\n共 ${kpi.criticalDevices} 台嚴重、${kpi.warningDevices} 台警示、${kpi.offlineDevices} 台離線。`
+  }
+  return `感謝您的提問。目前系統共 ${kpi.totalDevices} 台設備，${kpi.openAlerts} 筆開啟告警，需量使用率 ${kpi.demandRatioPct.toFixed(1)}%。如需進一步分析特定設備或能源數據，請提供更具體的問題。\n\n💡 提示：點擊右上角「⚙ AI設定」輸入 Anthropic API Key 即可啟用真實 Claude AI 回應。`
 }
 
 const QUICK_QUERIES = [
@@ -130,7 +145,7 @@ export function AIAssistant({ devices, alerts, kpi }: Props) {
 
     try {
       const history = [...messages, userMsg]
-      const reply = await callClaude(history, systemPrompt.current)
+      const reply = await callClaude(history, systemPrompt.current, devices, alerts, kpi)
       setMessages(prev => [...prev, {
         role: 'assistant', content: reply,
         ts: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),

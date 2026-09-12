@@ -19,6 +19,7 @@ interface Props {
   devices?: Device[]
   onDeviceClick?: (device: Device) => void
   onPassport?: (device: Device) => void
+  onOpenBIM?: (device: Device) => void
   onClose: () => void
 }
 
@@ -41,7 +42,7 @@ function rulLabel(days: number) {
   return `${days}天`
 }
 
-export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }: Props) {
+export function DeviceInventory({ devices, onDeviceClick, onPassport, onOpenBIM, onClose }: Props) {
   const allDevices = devices ?? DEVICES
   const [search,      setSearch]      = useState('')
   const [filterBldg,  setFilterBldg]  = useState('all')
@@ -209,7 +210,8 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
 
         <button
           onClick={() => {
-            const headers = ['資產編號', '設備名稱', '類別', '棟別', '樓層', '狀態', 'RUL(天)', '功率(kW)', 'AI風險', '製造商', '型號']
+            const headers = ['資產編號', '設備名稱', '類別', '棟別', '樓層', '狀態', 'RUL(天)', '功率(kW)', 'AI風險(%)', '製造商', '型號']
+            const sample = ['(範例) A-MECH-001', '空調箱 AHU-01', 'HVAC', 'A棟', '3F', '正常', '120', '18.5', '72', 'Carrier', 'AHU-100']
             const rows = filtered.map(d => {
               const bldg = BUILDINGS.find(b => b.id === d.buildingId)
               return [
@@ -223,7 +225,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
                 d.manufacturer ?? '', d.model ?? '',
               ]
             })
-            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+            const ws = XLSX.utils.aoa_to_sheet([headers, sample, ...rows])
             const wb = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(wb, ws, '設備清單')
             XLSX.writeFile(wb, `devices_${new Date().toISOString().slice(0, 10)}.xlsx`)
@@ -338,6 +340,17 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onClose }:
                       color: '#06b6d4', fontSize: 9, cursor: 'pointer',
                     }}
                   >詳情</button>
+                )}
+                {onOpenBIM && (
+                  <button
+                    onClick={e => { e.stopPropagation(); onOpenBIM(device) }}
+                    style={{
+                      padding: '3px 7px', background: 'rgba(16,185,129,0.1)',
+                      border: '1px solid rgba(16,185,129,0.25)', borderRadius: 3,
+                      color: '#10b981', fontSize: 9, cursor: 'pointer',
+                    }}
+                    title="在 BIM 模型中定位"
+                  >🏢</button>
                 )}
                 {onPassport && (
                   <button

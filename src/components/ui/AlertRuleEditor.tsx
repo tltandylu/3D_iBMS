@@ -14,6 +14,7 @@ const EMPTY_FORM: Omit<AlertRule, 'id' | 'createdAt'> = {
 interface Props {
   rules: AlertRule[]
   devices: Device[]
+  backendSynced?: boolean
   onAdd:    (rule: Omit<AlertRule, 'id' | 'createdAt'>) => void
   onUpdate: (id: string, patch: Partial<AlertRule>) => void
   onDelete: (id: string) => void
@@ -21,7 +22,7 @@ interface Props {
   onClose:  () => void
 }
 
-export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onToggle, onClose }: Props) {
+export function AlertRuleEditor({ rules, devices, backendSynced, onAdd, onUpdate, onDelete, onToggle, onClose }: Props) {
   const [editingId, setEditingId] = useState<string | 'new' | null>(null)
   const [form, setForm] = useState<Omit<AlertRule, 'id' | 'createdAt'>>(EMPTY_FORM)
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
@@ -66,9 +67,19 @@ export function AlertRuleEditor({ rules, devices, onAdd, onUpdate, onDelete, onT
           <div style={{ color: '#e2e8f0', fontSize: 14, fontWeight: 700 }}>告警規則引擎</div>
           <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: '0.08em' }}>ALERT RULE ENGINE</div>
         </div>
-        <div style={{ marginLeft: 20, display: 'flex', gap: 8 }}>
+        <div style={{ marginLeft: 20, display: 'flex', gap: 8, alignItems: 'center' }}>
           <Badge color="#10b981" label={`${rules.filter(r => r.enabled).length} 啟用`} />
           <Badge color="#6b7280" label={`${rules.filter(r => !r.enabled).length} 停用`} />
+          {backendSynced !== undefined && (
+            <span style={{
+              padding: '2px 8px', borderRadius: 3, fontSize: 9, fontWeight: 600,
+              background: backendSynced ? 'rgba(16,185,129,0.12)' : 'rgba(245,158,11,0.12)',
+              border: `1px solid ${backendSynced ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)'}`,
+              color: backendSynced ? '#6ee7b7' : '#fcd34d',
+            }}>
+              {backendSynced ? '● 後端已同步' : '○ 本機模式'}
+            </span>
+          )}
         </div>
         <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>

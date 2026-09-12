@@ -13,6 +13,7 @@ export interface SceneSettings {
 export interface AlertSettings {
   soundEnabled: boolean
   desktopNotify: boolean
+  emailNotify: boolean
   rulThresholdDays: number
   severityFilter: Array<'CRITICAL' | 'ALARM' | 'WARNING' | 'INFO'>
 }
@@ -105,6 +106,14 @@ export interface SystemSettingsData {
   webhook: WebhookSettings
 }
 
+function getDefaultWsUrl(): string {
+  if (import.meta.env.PROD) {
+    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+    return `${proto}://${window.location.host}/ws`
+  }
+  return 'ws://localhost:8001/ws'
+}
+
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
   scene: {
     showParticles: true,
@@ -116,11 +125,12 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
   alert: {
     soundEnabled: false,
     desktopNotify: false,
+    emailNotify: true,
     rulThresholdDays: 90,
     severityFilter: ['CRITICAL', 'ALARM', 'WARNING', 'INFO'],
   },
   connection: {
-    wsUrl: 'ws://localhost:8001/ws',
+    wsUrl: getDefaultWsUrl(),
     forceMode: 'auto',
     reconnectIntervalSec: 3,
   },
@@ -181,7 +191,7 @@ export function getSystemSettings(): SystemSettingsData {
     const parsed = JSON.parse(raw) as Partial<SystemSettingsData>
     // 舊設定遷移：後端已改跑 8001（8000 埠被其他服務佔用）
     if (parsed.connection?.wsUrl === 'ws://localhost:8000/ws') {
-      parsed.connection = { ...parsed.connection, wsUrl: DEFAULT_SYSTEM_SETTINGS.connection.wsUrl }
+      parsed.connection = { ...parsed.connection, wsUrl: getDefaultWsUrl() }
     }
     return {
       scene:      { ...DEFAULT_SYSTEM_SETTINGS.scene,      ...parsed.scene },

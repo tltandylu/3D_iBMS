@@ -11,16 +11,16 @@ interface FlowLine {
 }
 
 const FLOW_LINES: FlowLine[] = [
-  // 主電表 → A棟
-  { from: [-20, 0, 2], to: [-18, -1, 0], color: '#f59e0b', particleCount: 8, speed: 0.6 },
-  // 主電表 → B棟
-  { from: [-20, 0, 2], to: [0, 1, 0],   color: '#f59e0b', particleCount: 8, speed: 0.6 },
-  // 主電表 → C棟
-  { from: [-20, 0, 2], to: [20, 1, 0],  color: '#f59e0b', particleCount: 6, speed: 0.5 },
-  // B棟 PV → 主電表（反向，綠色）
-  { from: [0, 15, 0], to: [-20, 0, 2],  color: '#10b981', particleCount: 5, speed: 0.4 },
-  // A棟 AHU → 冰水主機
-  { from: [-18, 6, 0], to: [-18, -1, 0], color: '#06b6d4', particleCount: 4, speed: 0.5 },
+  // 1F電表 → 冰水主機 B1
+  { from: [8, 1.25, -4], to: [0, -1.25, 0],   color: '#f59e0b', particleCount: 8, speed: 0.6 },
+  // 1F電表 → 3F空調箱
+  { from: [8, 1.25, -4], to: [-8, 6.25, 3],   color: '#f59e0b', particleCount: 8, speed: 0.6 },
+  // 1F電表 → 2F UPS
+  { from: [8, 1.25, -4], to: [-8, 3.75, -4],  color: '#f59e0b', particleCount: 6, speed: 0.5 },
+  // R1FL PV → 1F電表（反向，綠色）
+  { from: [0, 28.75, 0], to: [8, 1.25, -4],   color: '#10b981', particleCount: 5, speed: 0.4 },
+  // 3F空調箱 → B1冰水主機
+  { from: [-8, 6.25, 3], to: [0, -1.25, 0],   color: '#06b6d4', particleCount: 4, speed: 0.5 },
 ]
 
 function FlowParticles({ line }: { line: FlowLine }) {

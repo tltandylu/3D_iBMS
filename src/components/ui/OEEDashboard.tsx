@@ -1,8 +1,9 @@
-﻿import { useMemo, useState, type ReactNode } from 'react'
+﻿import { useMemo, useState, useEffect, type ReactNode } from 'react'
 import ReactECharts from 'echarts-for-react'
 import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
+import { getJwtToken } from '../../hooks/useAuth'
 
 function computeOEE(dev: Device) {
   const base = ({ normal: 0.96, warning: 0.78, critical: 0.52, offline: 0 } as Record<string, number>)[dev.status] ?? 0
@@ -18,10 +19,23 @@ function oeeColor(v: number) {
   return v >= 0.85 ? '#10b981' : v >= 0.65 ? '#f59e0b' : '#ef4444'
 }
 
-interface Props { devices: Device[]; onClose: () => void }
+interface OEEHistoryPoint { date: string; oee: number; avail: number; perf: number; qual: number }
+interface Props { devices: Device[]; onClose: () => void; restBase?: string; backendConnected?: boolean }
 
-export function OEEDashboard({ devices, onClose }: Props) {
+export function OEEDashboard({ devices, onClose, restBase, backendConnected }: Props) {
   const [groupBy, setGroupBy] = useState<'building' | 'category'>('building')
+  const [oeeHistory, setOeeHistory] = useState<OEEHistoryPoint[] | null>(null)
+
+  useEffect(() => {
+    if (!restBase || !backendConnected) return
+    const token = getJwtToken()
+    fetch(`${restBase}/api/ems/oee-history?days=30`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.ok ? r.json() as Promise<OEEHistoryPoint[]> : null)
+      .then(d => { if (d && d.length > 0) setOeeHistory(d) })
+      .catch(() => {})
+  }, [restBase, backendConnected])
 
   const enriched = useMemo(() => devices.map(d => ({ ...d, ...computeOEE(d) })), [devices])
 
@@ -81,10 +95,14 @@ export function OEEDashboard({ devices, onClose }: Props) {
   }), [byGroup])
 
   const trendOption = useMemo(() => {
-    const months = Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(); d.setMonth(d.getMonth() - 11 + i)
-      return `${d.getMonth() + 1}月`
-    })
+    const useReal = oeeHistory && oeeHistory.length > 0
+    const xData = useReal
+      ? oeeHistory!.map(h => h.date.slice(5))  // "MM-DD"
+      : Array.from({ length: 12 }, (_, i) => {
+          const d = new Date(); d.setMonth(d.getMonth() - 11 + i)
+          return `${d.getMonth() + 1}月`
+        })
+    const yData = useReal ? oeeHistory!.map(h => h.oee) : monthly
     return {
       animation: false, backgroundColor: 'transparent',
       grid: { top: 8, right: 8, bottom: 20, left: 52 },
@@ -97,8 +115,8 @@ export function OEEDashboard({ devices, onClose }: Props) {
         },
       },
       xAxis: {
-        type: 'category', data: months,
-        axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8 },
+        type: 'category', data: xData,
+        axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8, interval: useReal ? Math.floor(xData.length / 6) : 0 },
         axisLine: { lineStyle: { color: 'rgba(255,255,255,0.08)' } },
       },
       yAxis: {
@@ -107,7 +125,7 @@ export function OEEDashboard({ devices, onClose }: Props) {
         splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } },
       },
       series: [{
-        type: 'line', data: monthly, smooth: 0.4, symbol: 'circle', symbolSize: 5,
+        type: 'line', data: yData, smooth: 0.4, symbol: 'circle', symbolSize: 5,
         lineStyle: { color: '#818cf8', width: 2 },
         itemStyle: { color: '#818cf8' },
         areaStyle: {
@@ -116,7 +134,7 @@ export function OEEDashboard({ devices, onClose }: Props) {
         },
       }],
     }
-  }, [monthly])
+  }, [monthly, oeeHistory])
 
   const distOption = useMemo(() => {
     const buckets = ['≥85%', '70–85%', '55–70%', '<55%']
@@ -169,12 +187,13 @@ export function OEEDashboard({ devices, onClose }: Props) {
           <button
             onClick={() => {
               const headers = ['設備名稱', '類別', '棟別', '狀態', 'OEE(%)', '可用率(%)', '性能率(%)', '品質率(%)']
+              const sample = ['(範例) 空調箱 AHU-01', 'HVAC', 'A棟', 'normal', '85.2', '92.0', '94.5', '98.1']
               const rows = enriched.map(d => {
                 const bldg = BUILDINGS.find(b => b.id === d.buildingId)
                 return [d.name, d.category, bldg?.name ?? d.buildingId, d.status,
                   (d.oee*100).toFixed(1), (d.avail*100).toFixed(1), (d.perf*100).toFixed(1), (d.qual*100).toFixed(1)]
               })
-              const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+              const ws = XLSX.utils.aoa_to_sheet([headers, sample, ...rows])
               const wb = XLSX.utils.book_new()
               XLSX.utils.book_append_sheet(wb, ws, 'OEE')
               XLSX.writeFile(wb, `oee_${new Date().toISOString().slice(0, 10)}.xlsx`)
@@ -228,8 +247,8 @@ export function OEEDashboard({ devices, onClose }: Props) {
           </div>
         </ChartCard>
 
-        {/* 左下：月趨勢 */}
-        <ChartCard title="近 12 個月 OEE 趨勢">
+        {/* 左下：月/日趨勢 */}
+        <ChartCard title={oeeHistory && oeeHistory.length > 0 ? `近 ${oeeHistory.length} 天 OEE 趨勢（DB 實測）` : '近 12 個月 OEE 趨勢（估算）'}>
           <ReactECharts option={trendOption} style={{ flex: 1, height: '100%' }} notMerge />
         </ChartCard>
 

@@ -51,7 +51,8 @@ export function BottomAlarmTicker({ alerts, onAlertClick, speed = 'medium' }: Pr
     return () => cancelAnimationFrame(rafId)
   }, [speed]) // alerts は依存不要 — scrollWidth は毎フレーム動的に読む
 
-  const sortedAlerts = [...alerts].sort((a, b) => {
+  const openAlerts = alerts.filter(a => a.status === 'open')
+  const sortedAlerts = [...openAlerts].sort((a, b) => {
     const order = { CRITICAL: 0, ALARM: 1, WARNING: 2, INFO: 3 }
     return order[a.severity] - order[b.severity]
   })
@@ -108,7 +109,7 @@ export function BottomAlarmTicker({ alerts, onAlertClick, speed = 'medium' }: Pr
         display: 'flex', alignItems: 'center', gap: 4
       }}>
         <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>共</span>
-        <span style={{ color: '#ef4444', fontWeight: 700, fontSize: 14 }}>{alerts.length}</span>
+        <span style={{ color: '#ef4444', fontWeight: 700, fontSize: 14 }}>{openAlerts.length}</span>
         <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 10 }}>則</span>
       </div>
     </div>

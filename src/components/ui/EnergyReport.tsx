@@ -1,36 +1,206 @@
-﻿import { useMemo, useState } from 'react'
+﻿import { useMemo, useState, useEffect } from 'react'
 import ReactECharts from 'echarts-for-react'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
+import * as XLSX from 'xlsx'
 import type { KPIData, Device } from '../../types'
 import { DEVICES, BUILDINGS, ENERGY_TREND } from '../../data/mockData'
+
+interface DailyEnergy {
+  date: string; total_kwh: number; peak_kw: number; avg_kw: number; samples: number
+}
 
 interface Props {
   kpi: KPIData
   devices?: Device[]
   electricityCostPerKwh?: number
+  restBase?: string
+  backendConnected?: boolean
   onClose: () => void
 }
 
-export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClose }: Props) {
+export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, restBase, backendConnected, onClose }: Props) {
   const allDevices = devices ?? DEVICES
-  const [exporting, setExporting] = useState(false)
+  const [exportingType, setExportingType] = useState<null | 'pdf' | 'excel'>(null)
+  const [dailyEnergy, setDailyEnergy] = useState<DailyEnergy[] | null>(null)
 
+  useEffect(() => {
+    if (!restBase || !backendConnected) return
+    fetch(`${restBase}/api/ems/daily-energy?days=30`)
+      .then(r => r.ok ? r.json() as Promise<DailyEnergy[]> : null)
+      .then(d => { if (d && d.length > 0) setDailyEnergy(d) })
+      .catch(() => setDailyEnergy(null))
+  }, [restBase, backendConnected])
+
+  // ── PDF 匯出：建立專屬排版容器後截圖輸出 A4 橫式 ───────────────────
   const handleExportPDF = async () => {
-    const el = document.getElementById('energy-report-body')
-    if (!el) return
-    setExporting(true)
+    const body = document.getElementById('energy-report-body')
+    if (!body) return
+    setExportingType('pdf')
     try {
-      const canvas = await html2canvas(el, { backgroundColor: '#030812', scale: 1.5, useCORS: true })
-      const imgData = canvas.toDataURL('image/png')
-      const w = canvas.width / 1.5
-      const h = canvas.height / 1.5
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [w, h] })
-      pdf.addImage(imgData, 'PNG', 0, 0, w, h)
+      // 建立隱藏的列印容器（含標題列）
+      const wrapper = document.createElement('div')
+      Object.assign(wrapper.style, {
+        position: 'fixed', top: '-9999px', left: '-9999px',
+        width: '1240px', background: '#030812',
+        fontFamily: 'system-ui,-apple-system,sans-serif',
+      })
+
+      // 標題列 HTML（含即時 KPI）
+      const dateStr  = new Date().toLocaleString('zh-TW')
+      const kpiChips = [
+        { label: '即時需量', value: `${kpi.demandKw.toFixed(0)} kW`,           color: '#06b6d4' },
+        { label: '今日用電', value: `${(kpi.todayKwh / 1000).toFixed(2)} MWh`,  color: '#38bdf8' },
+        { label: '需量使用率', value: `${kpi.demandRatioPct.toFixed(1)}%`,       color: kpi.demandRatioPct >= 80 ? '#ef4444' : '#10b981' },
+        { label: '今日電費',  value: `NT$${Math.round(kpi.todayKwh * electricityCostPerKwh).toLocaleString()}`, color: '#fbbf24' },
+        { label: '本月碳排',  value: `${monthlyCo2T.toFixed(1)} tCO₂`,          color: co2Color },
+      ]
+      const chipHtml = kpiChips.map(c => `
+        <div style="padding:4px 14px;background:${c.color}18;border:1px solid ${c.color}30;border-radius:5px;text-align:center;flex-shrink:0;">
+          <div style="color:${c.color};font-size:14px;font-weight:700;line-height:1.2;">${c.value}</div>
+          <div style="color:rgba(255,255,255,0.65);font-size:9px;margin-top:2px;">${c.label}</div>
+        </div>`).join('')
+
+      const titleDiv = document.createElement('div')
+      titleDiv.innerHTML = `
+        <div style="padding:14px 20px;background:rgba(251,191,36,0.06);border-bottom:1px solid rgba(251,191,36,0.2);display:flex;align-items:center;gap:14px;box-sizing:border-box;">
+          <div style="width:3px;height:22px;background:#fbbf24;border-radius:2px;flex-shrink:0;"></div>
+          <div>
+            <div style="color:#e2e8f0;font-size:17px;font-weight:700;line-height:1.3;">3D iBMS — 能源報表</div>
+            <div style="color:rgba(255,255,255,0.55);font-size:10px;margin-top:2px;">產製時間：${dateStr}</div>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;">${chipHtml}</div>
+        </div>`
+      wrapper.appendChild(titleDiv)
+
+      // 複製圖表區域
+      const bodyClone = body.cloneNode(true) as HTMLElement
+      Object.assign(bodyClone.style, { height: '620px' })
+      wrapper.appendChild(bodyClone)
+
+      document.body.appendChild(wrapper)
+      await new Promise(r => setTimeout(r, 120))   // let layout stabilize
+
+      const canvas = await html2canvas(wrapper, {
+        backgroundColor: '#030812', scale: 1.8,
+        useCORS: true, allowTaint: true, logging: false,
+      })
+      document.body.removeChild(wrapper)
+
+      const imgData  = canvas.toDataURL('image/png')
+      const pageW    = 297   // A4 landscape mm
+      const pageH    = 210
+      const imgRatio = canvas.width / canvas.height
+      let drawW = pageW, drawH = pageW / imgRatio
+      if (drawH > pageH) { drawH = pageH; drawW = pageH * imgRatio }
+      const xOff = (pageW - drawW) / 2
+      const yOff = (pageH - drawH) / 2
+
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      pdf.setProperties({ title: '3D iBMS 能源報表', author: 'AI-DT Enterprise' })
+      pdf.addImage(imgData, 'PNG', xOff, yOff, drawW, drawH)
       pdf.save(`energy_report_${new Date().toISOString().slice(0, 10)}.pdf`)
     } finally {
-      setExporting(false)
+      setExportingType(null)
     }
+  }
+
+  // ── Excel 匯出：4 個 Sheet（KPI彙總 / 建築用電 / 類別能耗 / 每日用電） ─
+  const handleExportExcel = () => {
+    const wb   = XLSX.utils.book_new()
+    const date = new Date()
+    const fmt  = (n: number, d = 0) => +n.toFixed(d)
+
+    // Sheet 1 — KPI 彙總
+    const ws1 = XLSX.utils.aoa_to_sheet([
+      ['3D iBMS 能源報表', '', '', ''],
+      ['產製時間', date.toLocaleString('zh-TW'), '', ''],
+      ['', '', '', ''],
+      ['指標', '數值', '單位', '備註'],
+      ['即時需量',       fmt(kpi.demandKw, 1),           'kW',   ''],
+      ['契約容量',       kpi.contractDemandKw,           'kW',   ''],
+      ['需量使用率',     fmt(kpi.demandRatioPct, 1),     '%',    kpi.demandRatioPct >= 80 ? '接近上限' : '正常'],
+      ['今日累計用電',   kpi.todayKwh,                   'kWh',  ''],
+      ['今日電費試算',   Math.round(kpi.todayKwh * electricityCostPerKwh), 'NT$', `@${electricityCostPerKwh} 元/kWh`],
+      ['本月累計用電',   monthlyKwh,                     'kWh',  `已計算 ${monthlyDays.length} 日`],
+      ['本月電費試算',   Math.round(monthlyCost),         'NT$',  ''],
+      ['本月平均日用電', avgDay,                          'kWh/天', ''],
+      ['本月峰值日用電', peakDay,                         'kWh',  ''],
+      ['本月碳排放',     fmt(monthlyCo2T, 3),             'tCO₂', `係數 ${CO2_FACTOR} kg/kWh`],
+      ['碳配額使用率',   fmt(co2BudgetRatio, 1),          '%',    `年配額 ${ANNUAL_BUDGET_T} tCO₂`],
+    ])
+    ws1['!cols'] = [{ wch: 18 }, { wch: 18 }, { wch: 10 }, { wch: 24 }]
+    XLSX.utils.book_append_sheet(wb, ws1, 'KPI彙總')
+
+    // Sheet 2 — 建築用電
+    const ws2 = XLSX.utils.aoa_to_sheet([
+      ['建築名稱', '即時功率(kW)', '用電佔比(%)', '日用電估算(kWh)', '日電費估算(NT$)', '月電費估算(NT$)'],
+      ...bldgPower.map(b => [
+        b.name,
+        b.kw,
+        totalKW > 0 ? fmt(b.kw / totalKW * 100, 1) : 0,
+        Math.round(b.kw * 24),
+        Math.round(b.kw * 24 * electricityCostPerKwh),
+        Math.round(b.kw * 24 * electricityCostPerKwh * 30),
+      ]),
+      ['合計', totalKW, 100,
+        Math.round(totalKW * 24),
+        Math.round(totalKW * 24 * electricityCostPerKwh),
+        Math.round(totalKW * 24 * electricityCostPerKwh * 30)],
+    ])
+    ws2['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 13 }, { wch: 16 }, { wch: 16 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, ws2, '建築用電')
+
+    // Sheet 3 — 類別能耗
+    const ws3 = XLSX.utils.aoa_to_sheet([
+      ['設備類別', '即時功率(kW)', '用電佔比(%)', '日用電估算(kWh)', '日電費估算(NT$)', '月電費估算(NT$)'],
+      ...catPower.map(c => {
+        const dKwh  = Math.round(c.value * 24)
+        const dCost = Math.round(dKwh * electricityCostPerKwh)
+        return [c.name, c.value, totalKW > 0 ? fmt(c.value / totalKW * 100, 1) : 0, dKwh, dCost, dCost * 30]
+      }),
+    ])
+    ws3['!cols'] = [{ wch: 12 }, { wch: 14 }, { wch: 13 }, { wch: 16 }, { wch: 16 }, { wch: 16 }]
+    XLSX.utils.book_append_sheet(wb, ws3, '類別能耗')
+
+    // Sheet 4 — 每日用電
+    const ws4Rows = monthlyDays.map((kwh, i) => {
+      const d = new Date(date.getFullYear(), date.getMonth(), i + 1)
+      return [
+        `${d.getMonth() + 1}/${d.getDate()}`,
+        kwh,
+        Math.round(kwh * electricityCostPerKwh),
+        fmt(kwh * CO2_FACTOR, 1),
+        kwh - avgDay,
+      ]
+    })
+    const ws4 = XLSX.utils.aoa_to_sheet([
+      ['日期', '用電量(kWh)', '電費(NT$)', '碳排放(kgCO₂)', '與均值差異(kWh)'],
+      ...ws4Rows,
+      ['合計/均值', monthlyKwh, Math.round(monthlyCost), fmt(monthlyCo2Kg, 1), ''],
+    ])
+    ws4['!cols'] = [{ wch: 10 }, { wch: 13 }, { wch: 12 }, { wch: 15 }, { wch: 17 }]
+    XLSX.utils.book_append_sheet(wb, ws4, '每日用電')
+
+    // Sheet 5 — 48h 需量趨勢（峰谷分析）
+    const ws5 = XLSX.utils.aoa_to_sheet([
+      ['時間', '實際需量(kW)', '基準線(kW)', '預測(kW)', '與基準差異(kW)', '備註'],
+      ...ENERGY_TREND.map(h => {
+        const diff = h.demand - h.baseline
+        return [
+          h.time,
+          h.demand,
+          h.baseline,
+          h.forecast ?? '',
+          diff,
+          diff > 50 ? '高峰' : diff < -50 ? '谷底' : '',
+        ]
+      }),
+    ])
+    ws5['!cols'] = [{ wch: 10 }, { wch: 14 }, { wch: 12 }, { wch: 10 }, { wch: 14 }, { wch: 8 }]
+    XLSX.utils.book_append_sheet(wb, ws5, '48h需量趨勢')
+
+    XLSX.writeFile(wb, `energy_report_${date.toISOString().slice(0, 10)}.xlsx`)
   }
 
   // ── 各棟建築用電 ────────────────────────────────────────────
@@ -42,7 +212,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
     return BUILDINGS.map(b => ({
       name: b.name,
       kw: Math.round(map[b.id] ?? 0),
-      color: b.id === 'bldg-a' ? '#06b6d4' : b.id === 'bldg-b' ? '#38bdf8' : '#818cf8',
+      color: '#06b6d4',
     }))
   }, [allDevices])
 
@@ -160,14 +330,25 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
     }],
   }), [bldgPower])
 
-  // ── 本月每日估算 ─────────────────────────────────────────
+  // ── 本月每日用電（優先使用 DB 資料，fallback 模擬估算）──────────────
   const monthlyDays = useMemo(() => {
     const today = new Date()
+    const ym = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
+    if (dailyEnergy && dailyEnergy.length > 0) {
+      return dailyEnergy
+        .filter(d => d.date.startsWith(ym))
+        .map(d => Math.round(d.total_kwh))
+    }
+    // Fallback: seeded RNG
+    const seed = today.getFullYear() * 100 + today.getMonth()
+    let s = seed | 0
+    const rng = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff }
+    const base = kpi.todayKwh
     return Array.from({ length: today.getDate() }, (_, i) => {
-      const mult = 0.85 + Math.sin(i * 0.7) * 0.18 + (Math.random() - 0.5) * 0.1
-      return Math.round(kpi.todayKwh * mult)
+      const mult = 0.85 + Math.sin(i * 0.7) * 0.18 + (rng() - 0.5) * 0.1
+      return Math.round(base * mult)
     })
-  }, [kpi.todayKwh])
+  }, [dailyEnergy, kpi.todayKwh])
 
   const monthlyKwh  = monthlyDays.reduce((s, v) => s + v, 0)
   const monthlyCost = monthlyKwh * electricityCostPerKwh
@@ -252,13 +433,29 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, onClos
           ))}
         </div>
 
-        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8 }}>
-          <button onClick={handleExportPDF} disabled={exporting} style={{
-            padding: '5px 14px',
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'center' }}>
+          {/* Excel 匯出 */}
+          <button onClick={handleExportExcel} disabled={!!exportingType} style={{
+            padding: '5px 16px',
+            background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.35)',
+            borderRadius: 5, color: '#10b981', fontSize: 11, fontWeight: 600,
+            cursor: exportingType ? 'default' : 'pointer', opacity: exportingType ? 0.5 : 1,
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <span style={{ fontSize: 12 }}>⬇</span>
+            {exportingType === 'excel' ? '匯出中…' : 'Excel'}
+          </button>
+          {/* PDF 匯出 */}
+          <button onClick={handleExportPDF} disabled={!!exportingType} style={{
+            padding: '5px 16px',
             background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.3)',
-            borderRadius: 5, color: '#fbbf24', fontSize: 11, cursor: exporting ? 'default' : 'pointer',
-            opacity: exporting ? 0.6 : 1,
-          }}>{exporting ? '匯出中…' : '↓ 匯出 PDF'}</button>
+            borderRadius: 5, color: '#fbbf24', fontSize: 11, fontWeight: 600,
+            cursor: exportingType ? 'default' : 'pointer', opacity: exportingType ? 0.5 : 1,
+            display: 'flex', alignItems: 'center', gap: 5,
+          }}>
+            <span style={{ fontSize: 12 }}>⬇</span>
+            {exportingType === 'pdf' ? '匯出中…' : 'PDF'}
+          </button>
           <button onClick={onClose} style={{
             padding: '5px 14px',
             background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',

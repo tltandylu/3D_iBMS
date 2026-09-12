@@ -8,6 +8,8 @@ interface Props {
   isSelected: boolean
   isCritical: boolean
   onClick: (device: Device) => void
+  overrideColor?: string
+  blinkOnAlarm?: boolean
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -25,14 +27,18 @@ const CATEGORY_BASE_COLORS: Record<string, string> = {
   IT:       '#1d4ed8',   // 深藍
 }
 
-export function EquipmentMesh({ device, isSelected, isCritical, onClick }: Props) {
+export function EquipmentMesh({ device, isSelected, isCritical, onClick, overrideColor, blinkOnAlarm }: Props) {
   const meshRef = useRef<THREE.Mesh>(null)
   const glowRef = useRef<THREE.Mesh>(null)
   const pillarRef = useRef<THREE.Mesh>(null)
+  const blinkRef = useRef<THREE.Mesh>(null)
   const phaseOffset = useMemo(() => Math.random() * Math.PI * 2, [])
 
   const statusColor = STATUS_COLORS[device.status] ?? '#6b7280'
   const baseColor = CATEGORY_BASE_COLORS[device.category] ?? '#334155'
+  const indicatorColor = (device.status === 'critical' || device.status === 'warning')
+    ? statusColor
+    : (overrideColor ?? statusColor)
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime + phaseOffset
@@ -50,6 +56,9 @@ export function EquipmentMesh({ device, isSelected, isCritical, onClick }: Props
       } else if (isSelected) {
         mat.emissiveIntensity = 0.4
         mat.emissive.set('#06b6d4')
+      } else if (overrideColor) {
+        mat.emissiveIntensity = 0.12
+        mat.emissive.set(overrideColor)
       } else {
         mat.emissiveIntensity = 0.05
       }
@@ -69,6 +78,17 @@ export function EquipmentMesh({ device, isSelected, isCritical, onClick }: Props
         const mat = pillarRef.current.material as THREE.MeshStandardMaterial
         mat.emissiveIntensity = pulse * 0.8
         mat.opacity = 0.15 + pulse * 0.2
+      }
+    }
+
+    // DI 警報閃爍環（blink_on_alarm）
+    if (blinkRef.current) {
+      blinkRef.current.visible = !!blinkOnAlarm
+      if (blinkOnAlarm) {
+        const blink = Math.sin(t * 8) > 0 ? 1 : 0
+        const mat = blinkRef.current.material as THREE.MeshStandardMaterial
+        mat.opacity = blink * 0.85
+        mat.emissiveIntensity = blink * 2.0
       }
     }
   })
@@ -103,9 +123,9 @@ export function EquipmentMesh({ device, isSelected, isCritical, onClick }: Props
       <mesh position={[0, 0.5, 0.3]}>
         <sphereGeometry args={[0.08, 8, 8]} />
         <meshStandardMaterial
-          color={statusColor}
-          emissive={statusColor}
-          emissiveIntensity={device.status === 'critical' ? 2.0 : device.status === 'offline' ? 0 : 1.0}
+          color={indicatorColor}
+          emissive={indicatorColor}
+          emissiveIntensity={device.status === 'critical' ? 2.0 : device.status === 'offline' ? 0 : 1.2}
         />
       </mesh>
 
@@ -118,6 +138,19 @@ export function EquipmentMesh({ device, isSelected, isCritical, onClick }: Props
           emissiveIntensity={1.5}
           transparent
           opacity={0.8}
+        />
+      </mesh>
+
+      {/* DI 警報閃爍環 */}
+      <mesh ref={blinkRef} visible={false} position={[0, 0, 0]}>
+        <torusGeometry args={[0.85, 0.06, 8, 32]} />
+        <meshStandardMaterial
+          color="#ef4444"
+          emissive="#ef4444"
+          emissiveIntensity={2.0}
+          transparent
+          opacity={0.85}
+          depthWrite={false}
         />
       </mesh>
 

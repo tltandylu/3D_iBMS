@@ -207,8 +207,8 @@ export function AIAnalysisPanel({ devices, alerts }: Props) {
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 2 }}>
           <LegendDot color="#06b6d4" label="實測" />
           <LegendDash color="#f59e0b" label="AI預測" />
-          <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.6)', fontSize: 8 }}>
-            MAPE 4.2%
+          <span style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.45)', fontSize: 8 }}>
+            MAPE ~4%（模擬）
           </span>
         </div>
       </div>

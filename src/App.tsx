@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
+﻿import { useState, useRef, useCallback, useEffect, useMemo, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AppShell } from './components/layout/AppShell'
 import { LeftPanel } from './components/layout/LeftPanel'
@@ -6,67 +6,93 @@ import { RightPanel } from './components/layout/RightPanel'
 import { BottomAlarmTicker } from './components/layout/BottomAlarmTicker'
 import { Scene3D } from './components/scene3d/Scene3D'
 import type { Scene3DRef } from './components/scene3d/Scene3D'
-import { DeviceDetailDrawer } from './components/ui/DeviceDetailDrawer'
 import { NLQueryBar } from './components/ui/NLQueryBar'
-import { KGBrowser } from './components/ui/KGBrowser'
-import { BIMViewer } from './components/ui/BIMViewer'
-import { BIMModelManager } from './components/ui/BIMModelManager'
-import { getStoredApiKey } from './components/ui/ClaudeSettings'
-import { SystemSettings } from './components/ui/SystemSettings'
-import { WorkOrderCenter } from './components/ui/WorkOrderCenter'
-import { DeviceInventory } from './components/ui/DeviceInventory'
-import { EnergyReport } from './components/ui/EnergyReport'
-import { AlertCenter } from './components/ui/AlertCenter'
-import { GlobalSearch } from './components/ui/GlobalSearch'
 import { AlertToast } from './components/ui/AlertToast'
-import { DemandShedPanel } from './components/ui/DemandShedPanel'
-import { AlertRuleEditor } from './components/ui/AlertRuleEditor'
-import { MaintenanceCalendar } from './components/ui/MaintenanceCalendar'
-import { AuditLog } from './components/ui/AuditLog'
-import { DashboardCustomizer } from './components/ui/DashboardCustomizer'
+import { getStoredApiKey } from './components/ui/ClaudeSettings'
+// ── Lazy-loaded modals (code-split per chunk) ─────────────────────────────
+const DeviceDetailDrawer  = lazy(() => import('./components/ui/DeviceDetailDrawer').then(m => ({ default: m.DeviceDetailDrawer })))
+const KGBrowser           = lazy(() => import('./components/ui/KGBrowser').then(m => ({ default: m.KGBrowser })))
+const BIMViewer           = lazy(() => import('./components/ui/BIMViewer').then(m => ({ default: m.BIMViewer })))
+const BIMModelManager     = lazy(() => import('./components/ui/BIMModelManager').then(m => ({ default: m.BIMModelManager })))
+const SystemSettings      = lazy(() => import('./components/ui/SystemSettings').then(m => ({ default: m.SystemSettings })))
+const WorkOrderCenter     = lazy(() => import('./components/ui/WorkOrderCenter').then(m => ({ default: m.WorkOrderCenter })))
+const DeviceInventory     = lazy(() => import('./components/ui/DeviceInventory').then(m => ({ default: m.DeviceInventory })))
+const EnergyReport        = lazy(() => import('./components/ui/EnergyReport').then(m => ({ default: m.EnergyReport })))
+const AlertCenter         = lazy(() => import('./components/ui/AlertCenter').then(m => ({ default: m.AlertCenter })))
+const GlobalSearch        = lazy(() => import('./components/ui/GlobalSearch').then(m => ({ default: m.GlobalSearch })))
+const DemandShedPanel     = lazy(() => import('./components/ui/DemandShedPanel').then(m => ({ default: m.DemandShedPanel })))
+const AlertRuleEditor     = lazy(() => import('./components/ui/AlertRuleEditor').then(m => ({ default: m.AlertRuleEditor })))
+const MaintenanceCalendar = lazy(() => import('./components/ui/MaintenanceCalendar').then(m => ({ default: m.MaintenanceCalendar })))
+const AuditLog            = lazy(() => import('./components/ui/AuditLog').then(m => ({ default: m.AuditLog })))
+const DashboardCustomizer = lazy(() => import('./components/ui/DashboardCustomizer').then(m => ({ default: m.DashboardCustomizer })))
+const OEEDashboard        = lazy(() => import('./components/ui/OEEDashboard').then(m => ({ default: m.OEEDashboard })))
+const DeviceTrendCompare  = lazy(() => import('./components/ui/DeviceTrendCompare').then(m => ({ default: m.DeviceTrendCompare })))
+const EquipmentPassport   = lazy(() => import('./components/ui/EquipmentPassport').then(m => ({ default: m.EquipmentPassport })))
+const FloorHeatmap        = lazy(() => import('./components/ui/FloorHeatmap').then(m => ({ default: m.FloorHeatmap })))
+const UserManagement      = lazy(() => import('./components/ui/UserManagement').then(m => ({ default: m.UserManagement })))
+const NotificationCenter  = lazy(() => import('./components/ui/NotificationCenter').then(m => ({ default: m.NotificationCenter })))
+const ShiftLogCenter           = lazy(() => import('./components/ui/ShiftLogCenter').then(m => ({ default: m.ShiftLogCenter })))
+const EquipmentHealthDashboard = lazy(() => import('./components/ui/EquipmentHealthDashboard').then(m => ({ default: m.EquipmentHealthDashboard })))
+const CarbonDashboard                  = lazy(() => import('./components/ui/CarbonDashboard').then(m => ({ default: m.CarbonDashboard })))
+const PredictiveMaintenanceScheduler   = lazy(() => import('./components/ui/PredictiveMaintenanceScheduler').then(m => ({ default: m.PredictiveMaintenanceScheduler })))
+const InspectionCenter                 = lazy(() => import('./components/ui/InspectionCenter').then(m => ({ default: m.InspectionCenter })))
+const AlertAnalyticsDashboard          = lazy(() => import('./components/ui/AlertAnalyticsDashboard').then(m => ({ default: m.AlertAnalyticsDashboard })))
+const SparePartsManager                = lazy(() => import('./components/ui/SparePartsManager').then(m => ({ default: m.SparePartsManager })))
+const PointBindingManager              = lazy(() => import('./components/ui/PointBindingManager').then(m => ({ default: m.PointBindingManager })))
+const FloorPlanSettings                = lazy(() => import('./components/ui/FloorPlanSettings').then(m => ({ default: m.FloorPlanSettings })))
 import { AIAssistant } from './components/ui/AIAssistant'
-import { OEEDashboard } from './components/ui/OEEDashboard'
-import { DeviceTrendCompare } from './components/ui/DeviceTrendCompare'
-import { EquipmentPassport } from './components/ui/EquipmentPassport'
-import { FloorHeatmap } from './components/ui/FloorHeatmap'
+import { FloorPlanMiniMap } from './components/ui/FloorPlanMiniMap'
 import { useSystemSettings } from './hooks/useSystemSettings'
 import type { DashboardSettings } from './hooks/useSystemSettings'
 import { useBackendWS } from './hooks/useBackendWS'
 import { useAlertRules } from './hooks/useAlertRules'
 import { useAuth } from './hooks/useAuth'
+import { usePointBindings } from './hooks/usePointBindings'
 import type { Feature, DemoUser } from './hooks/useAuth'
 import { LoginPage } from './components/ui/LoginPage'
 import { getStoredModel } from './components/ui/ClaudeSettings'
+import * as THREE from 'three'
 import { DEVICES } from './data/mockData'
 import type { Alert, Device, IFCBuildingGeom, BIMModelEntry, KPIData } from './types'
+import { IFCBackgroundLoader } from './components/scene3d/IFCBackgroundLoader'
+import { WalkthroughMiniMap } from './components/walkthrough/WalkthroughMiniMap'
+import { AlarmNavigationPanel } from './components/walkthrough/AlarmNavigationPanel'
+import { CollabPresenceSidebar, MOCK_ONLINE_USERS } from './components/collaboration/CollabPresenceLayer'
+import type { FPPos } from './components/walkthrough/WalkthroughMiniMap'
 
 const DEFAULT_BIM_MODELS: BIMModelEntry[] = [
   {
-    id: 'bim-a', label: '樂迦BIM A棟',
-    url: '/ifc/樂迦BIM_1130117-2d39iOo5n2vAz6rhM8T_DW.ifc',
-    buildingId: 'bldg-a', visible: true, loadState: 'unloaded', meshCount: 0,
-  },
-  {
-    id: 'bim-b', label: '樂迦BIM B棟',
-    url: '/ifc/樂迦BIM_1130117-0n6hI1bz57gwKuViOmXtXU.ifc',
-    buildingId: 'bldg-b', visible: true, loadState: 'unloaded', meshCount: 0,
-  },
-  {
-    id: 'bim-c', label: 'C棟機房',
-    url: '/ifc/C棟機房.ifc',
-    buildingId: 'bldg-c', visible: true, loadState: 'unloaded', meshCount: 0,
+    id: 'bim-locus', label: '樂迦大樓 BIM',
+    url: '/ifc/樂迦BIM_1130117.ifc',
+    buildingId: 'locus', visible: true, loadState: 'unloaded', meshCount: 0,
   },
 ]
+
+function LazyFallback() {
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(6,15,32,0.75)', backdropFilter: 'blur(4px)',
+    }}>
+      <div style={{ color: '#06b6d4', fontSize: 11, letterSpacing: '0.14em', opacity: 0.85 }}>載入中…</div>
+    </div>
+  )
+}
 
 export default function App() {
   const {
     devices, alerts, workOrders, kpi, lastEvent,
     acknowledgeAlert, updateWorkOrderStatus, createWorkOrder,
     controlDevice, fetchDeviceHistory,
-    backendConnected,
+    backendConnected, isReconnecting,
+    notifications, unreadCount, markNotificationRead, markAllNotificationsRead,
+    pointValues,
   } = useBackendWS()
   const { settings, update: updateSettings, reset: resetSettings } = useSystemSettings()
-  const { rules, addRule, updateRule, deleteRule, toggleRule, syntheticAlerts } = useAlertRules(devices)
+  const restBase = settings.connection.wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const { points: bindingPoints, bindings: deviceBindings } = usePointBindings(restBase, backendConnected)
+  const { rules, addRule, updateRule, deleteRule, toggleRule, syntheticAlerts, backendSynced: rulesSynced } = useAlertRules(devices)
   const { user, login, loginAs, logout, can } = useAuth()
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const [showKG, setShowKG] = useState(false)
@@ -81,7 +107,8 @@ export default function App() {
   const [showDemandPanel, setShowDemandPanel] = useState(false)
   const [showRuleEditor, setShowRuleEditor] = useState(false)
   const [showCalendar, setShowCalendar] = useState(false)
-  const [showAuditLog, setShowAuditLog] = useState(false)
+  const [showAuditLog,    setShowAuditLog]    = useState(false)
+  const [showUserManage,  setShowUserManage]  = useState(false)
   const [showDashCustomizer, setShowDashCustomizer] = useState(false)
   const [showOEE,       setShowOEE]       = useState(false)
   const [showTrend,     setShowTrend]     = useState(false)
@@ -89,6 +116,16 @@ export default function App() {
   const [passportDevice, setPassportDevice] = useState<Device | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth >= 768)
   const [showAI,      setShowAI]      = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showShiftLog,      setShowShiftLog]      = useState(false)
+  const [showHealth,        setShowHealth]        = useState(false)
+  const [showCarbon,        setShowCarbon]        = useState(false)
+  const [showPredMaint,     setShowPredMaint]     = useState(false)
+  const [showInspection,    setShowInspection]    = useState(false)
+  const [showAlertAnalytics, setShowAlertAnalytics] = useState(false)
+  const [showSpareParts,     setShowSpareParts]     = useState(false)
+  const [showPointBinding,   setShowPointBinding]   = useState(false)
+  const [showFloorPlanSettings, setShowFloorPlanSettings] = useState(false)
   const webhookSentRef = useRef<Map<string, number>>(new Map())
   const [apiKeyConfigured, setApiKeyConfigured] = useState(() => !!getStoredApiKey())
   const [aiRootCauses, setAiRootCauses] = useState<Map<string, string>>(new Map())
@@ -97,7 +134,26 @@ export default function App() {
   const [bimTargetUrl, setBimTargetUrl] = useState<string | undefined>(undefined)
   const [bimModels, setBimModels] = useState<BIMModelEntry[]>(DEFAULT_BIM_MODELS)
   const [ifcGeoms, setIfcGeoms] = useState<Map<string, IFCBuildingGeom>>(new Map())
+  const [ifcGroup,      setIfcGroup]      = useState<THREE.Group | null>(null)
+  const [ifcLoadPct,    setIfcLoadPct]    = useState(0)
+  const [ifcLoadStatus, setIfcLoadStatus] = useState('')
   const sceneRef = useRef<Scene3DRef>(null as unknown as Scene3DRef)
+  const fpPosRef = useRef<FPPos>({ x: 0, y: 1.7, z: 0, rotY: 0 })
+  const [navTarget,       setNavTarget]       = useState<Device | null>(null)
+  const [clickedAlert,    setClickedAlert]    = useState<Alert | null>(null)
+  const [showMiniMap,     setShowMiniMap]     = useState(false)
+  const [collabCollapsed, setCollabCollapsed] = useState(true)
+
+  // 任何功能面板/modal 開啟時，3D 場景不是主焦點
+  const anyModalOpen = !!(
+    selectedDevice || showKG || showBIM || showBIMManager || showSystemSettings ||
+    showWorkOrders || showDeviceInventory || showEnergyReport || showAlertCenter ||
+    showSearch || showDemandPanel || showRuleEditor || showCalendar || showAuditLog ||
+    showUserManage || showDashCustomizer || showOEE || showTrend || showHeatmap ||
+    passportDevice || showAI || showNotifications || showShiftLog || showHealth ||
+    showCarbon || showPredMaint || showInspection || showAlertAnalytics ||
+    showSpareParts || showPointBinding || showFloorPlanSettings
+  )
 
   // 根據 bimModels 可見性過濾 IFC 幾何（隱藏的棟別回退至方塊）
   const visibleIfcGeoms = useMemo(() => {
@@ -119,6 +175,7 @@ export default function App() {
   const handleAlertClick = useCallback((alert: Alert) => {
     const device = DEVICES.find(d => d.id === alert.assetId)
     if (device) {
+      setClickedAlert(alert)
       setSelectedDevice(device)
       sceneRef.current?.flyToDevice(device)
     }
@@ -127,6 +184,7 @@ export default function App() {
   // 關閉詳情：相機回全局
   const handleCloseDrawer = useCallback(() => {
     setSelectedDevice(null)
+    setClickedAlert(null)
     sceneRef.current?.flyToOverview()
   }, [])
 
@@ -225,6 +283,31 @@ export default function App() {
     enrichedAlerts.filter(a => a.severity === 'CRITICAL' && a.status === 'open').map(a => a.assetId),
     [enrichedAlerts]
   )
+
+  // color-mode 綁定 → FloorPlanMiniMap 標記顏色（選中設備；alarm 色優先）
+  const floorMapOverrideColor = useMemo(() => {
+    if (!selectedDevice) return undefined
+    const pointMap = new Map(bindingPoints.map(p => [p.point_id, p]))
+    let firstNormal: string | undefined
+    for (const b of deviceBindings) {
+      if (b.device_id !== selectedDevice.id || b.display_mode !== 'color' || !b.is_active) continue
+      const pt = pointMap.get(b.point_id)
+      const val = pointValues[b.point_id] ?? 0
+      let alarmed = false
+      if (pt) {
+        if (pt.point_type === 'DI' || pt.point_type === 'DO') {
+          alarmed = pt.alarm_value !== null && val === Number(pt.alarm_value)
+        } else {
+          if (pt.max_value !== null && val > pt.max_value) alarmed = true
+          if (pt.min_value !== null && val < pt.min_value) alarmed = true
+        }
+      }
+      if (alarmed) return b.alarm_color
+      if (!firstNormal) firstNormal = b.normal_color
+    }
+    return firstNormal
+  }, [selectedDevice, deviceBindings, bindingPoints, pointValues])
+
   const criticalCount     = criticalAlertDeviceIds.length
   const enabledRulesCount = rules.filter(r => r.enabled).length
 
@@ -334,6 +417,34 @@ export default function App() {
           )}
         </button>
 
+        {/* 通知中心鈴鐺 */}
+        {backendConnected && (
+          <button
+            onClick={() => setShowNotifications(v => !v)}
+            title="通知中心"
+            style={{
+              position: 'relative',
+              width: 34, height: 34, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: showNotifications ? 'rgba(6,182,212,0.15)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${showNotifications ? 'rgba(6,182,212,0.4)' : 'rgba(255,255,255,0.1)'}`,
+              borderRadius: 7, cursor: 'pointer', marginRight: 6,
+              color: showNotifications ? '#06b6d4' : 'rgba(255,255,255,0.6)',
+              fontSize: 16, transition: 'all 0.15s',
+            }}
+          >
+            🔔
+            {unreadCount > 0 && (
+              <span style={{
+                position: 'absolute', top: 3, right: 3,
+                width: 8, height: 8, borderRadius: '50%',
+                background: '#ef4444', boxShadow: '0 0 5px #ef4444',
+                animation: 'navBlink 1.5s infinite',
+              }} />
+            )}
+          </button>
+        )}
+
         <NavbarKPI
           kpi={kpi}
           contractCapacityKw={settings.energy.contractCapacityKw}
@@ -344,6 +455,7 @@ export default function App() {
           onDemandClick={() => setShowDemandPanel(true)}
           dashSettings={settings.dashboard}
           backendConnected={backendConnected}
+          isReconnecting={isReconnecting}
         />
         <UserMenu user={user} onLogout={logout} />
         </div>
@@ -371,6 +483,16 @@ export default function App() {
           onCalendar={() => setShowCalendar(true)}
           onCustomizer={() => setShowDashCustomizer(true)}
           onAuditLog={() => setShowAuditLog(true)}
+          onUserManage={() => setShowUserManage(true)}
+          onShiftLog={() => setShowShiftLog(true)}
+          onHealth={() => setShowHealth(true)}
+          onCarbon={() => setShowCarbon(true)}
+          onPredMaint={() => setShowPredMaint(true)}
+          onInspection={() => setShowInspection(true)}
+          onAlertAnalytics={() => setShowAlertAnalytics(true)}
+          onSpareParts={() => setShowSpareParts(true)}
+          onPointBinding={() => setShowPointBinding(true)}
+          onFloorPlanSettings={() => setShowFloorPlanSettings(true)}
           onSettings={() => { setShowSystemSettings(true); setApiKeyConfigured(!!getStoredApiKey()) }}
         />
       }
@@ -390,16 +512,62 @@ export default function App() {
 
         {/* 中央 3D 場景 */}
         <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+          {/* 背景 IFC 自動載入器（首頁掛載即開始，不需開啟 BIM 視圖）*/}
+          {!ifcGroup && ifcLoadPct < 100 && (
+            <IFCBackgroundLoader
+              url="/ifc/樂迦BIM_1130117.ifc"
+              onLoaded={setIfcGroup}
+              onProgress={(pct, status) => { setIfcLoadPct(pct); setIfcLoadStatus(status) }}
+              onError={(msg) => { console.warn('IFC 載入失敗:', msg); setIfcLoadPct(-1); setIfcLoadStatus('載入失敗') }}
+            />
+          )}
           <Scene3D
             selectedDeviceId={selectedDevice?.id ?? null}
             onDeviceClick={handleDeviceClick}
             criticalAlertIds={criticalAlertDeviceIds}
             sceneRef={sceneRef}
             ifcGeoms={visibleIfcGeoms}
+            ifcGroup={ifcGroup}
+            ifcLoadPct={ifcLoadPct}
+            ifcLoadStatus={ifcLoadStatus}
             sceneSettings={settings.scene}
             skySettings={settings.sky}
+            bindings={deviceBindings}
+            points={bindingPoints}
+            pointValues={pointValues}
+            fpPosRef={fpPosRef}
+            navTarget={navTarget}
+            onToggleMiniMap={() => setShowMiniMap(v => !v)}
+            onInteract={dev => setSelectedDevice(dev)}
+            sceneInFocus={!anyModalOpen}
           />
-          <NLQueryBar />
+          {/* 漫遊小地圖 */}
+          <WalkthroughMiniMap
+            fpPosRef={fpPosRef}
+            devices={devices}
+            alerts={enrichedAlerts}
+            navTarget={navTarget}
+            show={showMiniMap}
+            onToggle={() => setShowMiniMap(v => !v)}
+          />
+          {/* 告警導航面板 */}
+          <AlarmNavigationPanel
+            alerts={enrichedAlerts}
+            devices={devices}
+            fpPosRef={fpPosRef}
+            navTarget={navTarget}
+            onNavigateTo={dev => { setNavTarget(dev); sceneRef.current?.flyToDevice(dev) }}
+            onClearNav={() => setNavTarget(null)}
+          />
+          {/* 多人協作在線面板（僅在 3D 場景為主焦點時顯示）*/}
+          {!anyModalOpen && (
+            <CollabPresenceSidebar
+              users={MOCK_ONLINE_USERS}
+              collapsed={collabCollapsed}
+              onToggle={() => setCollabCollapsed(v => !v)}
+            />
+          )}
+          <NLQueryBar onBIMClick={handleOpenBIM} />
         </div>
 
         {/* 右側資料面板 */}
@@ -420,16 +588,22 @@ export default function App() {
       {/* 底部告警跑馬燈 */}
       <BottomAlarmTicker alerts={enrichedAlerts} onAlertClick={handleAlertClick} speed={settings.appearance.tickerSpeed} />
 
+      <Suspense fallback={<LazyFallback />}>
       {/* 設備詳情抽屜 */}
       <DeviceDetailDrawer
         device={selectedDevice}
         onClose={handleCloseDrawer}
+        alert={clickedAlert}
+        onAcknowledge={acknowledgeAlert}
         onOpenBIM={handleOpenBIM}
         onFocus3D={handleFocus3D}
         onPassport={dev => setPassportDevice(dev)}
-        onControlDevice={backendConnected ? controlDevice : undefined}
-        fetchHistory={backendConnected ? fetchDeviceHistory : undefined}
+        onControlDevice={controlDevice}
+        fetchHistory={fetchDeviceHistory}
         backendConnected={backendConnected}
+        bindings={deviceBindings}
+        points={bindingPoints}
+        pointValues={pointValues}
       />
 
       {/* KG 瀏覽器 Overlay */}
@@ -488,6 +662,7 @@ export default function App() {
           externalWOs={workOrders}
           backendConnected={backendConnected}
           onStatusUpdate={updateWorkOrderStatus}
+          onOpenBIM={dev => { setShowWorkOrders(false); handleOpenBIM(dev) }}
           onCreateWO={wo => createWorkOrder({
             woType: wo.woType, title: wo.title, priority: wo.priority,
             assetId: wo.assetId, assetName: wo.assetName,
@@ -503,6 +678,7 @@ export default function App() {
           devices={devices}
           onDeviceClick={dev => { setShowDeviceInventory(false); handleDeviceClick(dev) }}
           onPassport={dev => { setShowDeviceInventory(false); setPassportDevice(dev) }}
+          onOpenBIM={dev => { setShowDeviceInventory(false); handleOpenBIM(dev) }}
           onClose={() => setShowDeviceInventory(false)}
         />
       )}
@@ -513,6 +689,8 @@ export default function App() {
           kpi={kpi}
           devices={devices}
           electricityCostPerKwh={settings.energy.electricityCostPerKwh}
+          restBase={restBase}
+          backendConnected={backendConnected}
           onClose={() => setShowEnergyReport(false)}
         />
       )}
@@ -522,6 +700,7 @@ export default function App() {
         <AlertCenter
           alerts={enrichedAlerts}
           onAcknowledge={acknowledgeAlert}
+          onOpenBIM={dev => { setShowAlertCenter(false); handleOpenBIM(dev) }}
           onClose={() => setShowAlertCenter(false)}
         />
       )}
@@ -534,6 +713,8 @@ export default function App() {
             onClose={() => setShowSearch(false)}
             onDeviceClick={dev => { setShowSearch(false); handleDeviceClick(dev) }}
             onAlertClick={alert => { setShowSearch(false); handleAlertClick(alert) }}
+            onWorkOrderClick={() => { setShowSearch(false); setShowWorkOrders(true) }}
+            onBIMClick={dev => { setShowSearch(false); handleOpenBIM(dev) }}
           />
         )}
       </AnimatePresence>
@@ -546,6 +727,7 @@ export default function App() {
         <AlertRuleEditor
           rules={rules}
           devices={devices}
+          backendSynced={rulesSynced}
           onAdd={addRule}
           onUpdate={updateRule}
           onDelete={deleteRule}
@@ -567,10 +749,48 @@ export default function App() {
       {/* 稽核日誌 */}
       {showAuditLog && (
         <AuditLog
-          restBase="http://localhost:8000"
+          restBase={restBase}
           onClose={() => setShowAuditLog(false)}
         />
       )}
+
+      {/* 使用者管理 */}
+      <AnimatePresence>
+        {showUserManage && (
+          <UserManagement onClose={() => setShowUserManage(false)} />
+        )}
+      </AnimatePresence>
+
+      {/* 站內通知中心 */}
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showNotifications && (
+            <NotificationCenter
+              notifications={notifications}
+              unreadCount={unreadCount}
+              restBase={restBase}
+              onMarkRead={markNotificationRead}
+              onMarkAllRead={markAllNotificationsRead}
+              onClose={() => setShowNotifications(false)}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
+
+      {/* 值班日誌交接系統 */}
+      <Suspense fallback={null}>
+        <AnimatePresence>
+          {showShiftLog && (
+            <ShiftLogCenter
+              restBase={restBase}
+              kpi={kpi}
+              userName={user?.name ?? '操作員'}
+              canEdit={user?.role === 'admin' || user?.role === 'operator'}
+              onClose={() => setShowShiftLog(false)}
+            />
+          )}
+        </AnimatePresence>
+      </Suspense>
 
       {/* 儀表板個人化 */}
       <AnimatePresence>
@@ -579,6 +799,8 @@ export default function App() {
             settings={settings.dashboard}
             onUpdate={p => updateSettings('dashboard', p)}
             onClose={() => setShowDashCustomizer(false)}
+            restBase={restBase}
+            backendConnected={backendConnected}
           />
         )}
       </AnimatePresence>
@@ -588,14 +810,143 @@ export default function App() {
         <OEEDashboard
           devices={devices}
           onClose={() => setShowOEE(false)}
+          restBase={restBase}
+          backendConnected={backendConnected}
         />
       )}
+
+      {/* 設備健康中心 */}
+      <AnimatePresence>
+        {showHealth && (
+          <EquipmentHealthDashboard
+            devices={devices}
+            alerts={enrichedAlerts}
+            onDeviceClick={dev => { setShowHealth(false); handleDeviceClick(dev) }}
+            onClose={() => setShowHealth(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* ESG 碳排放追蹤儀表板 */}
+      <AnimatePresence>
+        {showCarbon && (
+          <CarbonDashboard
+            devices={devices}
+            kpi={kpi}
+            restBase={restBase}
+            backendConnected={backendConnected}
+            electricityCostPerKwh={settings.energy.electricityCostPerKwh}
+            onClose={() => setShowCarbon(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* AI 預測維護排程 */}
+      <AnimatePresence>
+        {showPredMaint && (
+          <PredictiveMaintenanceScheduler
+            devices={devices}
+            restBase={restBase}
+            backendConnected={backendConnected}
+            onCreateWO={(deviceId, deviceName) =>
+              createWorkOrder({
+                woType: 'PM', title: `[AI 預測] ${deviceName} 預防維護`,
+                priority: 'HIGH', assetId: deviceId, assetName: deviceName,
+                estimatedHours: 4,
+              })
+            }
+            onClose={() => setShowPredMaint(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 巡檢管理中心 */}
+      <AnimatePresence>
+        {showInspection && (
+          <InspectionCenter
+            devices={devices}
+            restBase={restBase}
+            backendConnected={backendConnected}
+            canEdit={user?.role === 'admin' || user?.role === 'operator'}
+            userName={user?.name ?? '操作員'}
+            onClose={() => setShowInspection(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 告警智能分析 */}
+      <AnimatePresence>
+        {showAlertAnalytics && (
+          <AlertAnalyticsDashboard
+            alerts={enrichedAlerts}
+            restBase={restBase}
+            backendConnected={backendConnected}
+            onClose={() => setShowAlertAnalytics(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 備品庫存管理 */}
+      <AnimatePresence>
+        {showSpareParts && (
+          <SparePartsManager
+            restBase={restBase}
+            backendConnected={backendConnected}
+            canEdit={user?.role === 'admin' || user?.role === 'operator'}
+            onClose={() => setShowSpareParts(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 樓層平面圖設定 */}
+      <AnimatePresence>
+        {showFloorPlanSettings && can('floorPlanSettings') && (
+          <Suspense fallback={<LazyFallback />}>
+            <FloorPlanSettings
+              canEdit={user?.role === 'admin'}
+              onClose={() => setShowFloorPlanSettings(false)}
+              ifcGroup={ifcGroup}
+            />
+          </Suspense>
+        )}
+      </AnimatePresence>
+
+      {/* 3D模型點位綁定管理 */}
+      <AnimatePresence>
+        {showPointBinding && (
+          <PointBindingManager
+            devices={devices}
+            restBase={restBase}
+            backendConnected={backendConnected}
+            canEdit={user?.role === 'admin' || user?.role === 'operator'}
+            onClose={() => setShowPointBinding(false)}
+            pointValues={pointValues}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 2D平面圖 Mini-Map（固定浮層，隨選中設備顯示） */}
+      <AnimatePresence>
+        {selectedDevice && (
+          <FloorPlanMiniMap
+            device={selectedDevice}
+            alerts={enrichedAlerts}
+            onClose={() => setSelectedDevice(null)}
+            overrideColor={floorMapOverrideColor}
+            allDevices={devices}
+            onDeviceClick={id => {
+              const d = DEVICES.find(dev => dev.id === id)
+              if (d) handleDeviceClick(d)
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* 設備歷史趨勢比較 */}
       {showTrend && (
         <DeviceTrendCompare
           devices={devices}
-          fetchHistory={backendConnected ? fetchDeviceHistory : undefined}
+          fetchHistory={fetchDeviceHistory}
           backendConnected={backendConnected}
           onClose={() => setShowTrend(false)}
         />
@@ -617,13 +968,14 @@ export default function App() {
           device={passportDevice}
           workOrders={workOrders}
           onClose={() => setPassportDevice(null)}
+          onOpenBIM={dev => { setPassportDevice(null); handleOpenBIM(dev) }}
         />
       )}
 
       {/* AI 需量卸載建議面板 */}
       {showDemandPanel && (
         <DemandShedPanel
-          restBase="http://localhost:8000"
+          restBase={restBase}
           onClose={() => setShowDemandPanel(false)}
         />
       )}
@@ -680,6 +1032,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      </Suspense>
 
       {/* 即時事件 Toast */}
       <EventToast message={lastEvent} />
@@ -702,10 +1055,11 @@ interface NavbarKPIProps {
   onDemandClick?: () => void
   dashSettings?: DashboardSettings
   backendConnected: boolean
+  isReconnecting?: boolean
 }
 function NavbarKPI({
   kpi, contractCapacityKw, demandWarningPct = 80, electricityCostPerKwh = 3.5,
-  peakHourStart = 9, peakHourEnd = 22, onDemandClick, dashSettings: ds, backendConnected,
+  peakHourStart = 9, peakHourEnd = 22, onDemandClick, dashSettings: ds, backendConnected, isReconnecting,
 }: NavbarKPIProps) {
   const contract   = contractCapacityKw ?? kpi.contractDemandKw
   const ratio      = contract > 0 ? (kpi.demandKw / contract) * 100 : kpi.demandRatioPct
@@ -769,13 +1123,13 @@ function NavbarKPI({
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 10px', flexShrink: 0 }}>
         <span style={{
           width: 6, height: 6, borderRadius: '50%',
-          background: backendConnected ? '#10b981' : '#f59e0b',
-          boxShadow: `0 0 5px ${backendConnected ? '#10b981' : '#f59e0b'}`,
+          background: backendConnected ? '#10b981' : isReconnecting ? '#06b6d4' : '#f59e0b',
+          boxShadow: `0 0 5px ${backendConnected ? '#10b981' : isReconnecting ? '#06b6d4' : '#f59e0b'}`,
           display: 'inline-block',
           animation: backendConnected ? 'none' : 'navBlink 1.5s infinite',
         }} />
-        <span style={{ color: backendConnected ? '#10b981' : '#f59e0b', fontSize: 9, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
-          {backendConnected ? 'LIVE' : 'SIM'}
+        <span style={{ color: backendConnected ? '#10b981' : isReconnecting ? '#06b6d4' : '#f59e0b', fontSize: 9, letterSpacing: '0.04em', whiteSpace: 'nowrap' }}>
+          {backendConnected ? 'LIVE' : isReconnecting ? '重連中' : 'SIM'}
         </span>
         <style>{`@keyframes navBlink{0%,100%{opacity:1}50%{opacity:0.2}}`}</style>
       </div>
@@ -1033,7 +1387,10 @@ interface SidebarNavProps {
   onBIM: () => void; onBIMManager: () => void; onKG: () => void; onHeatmap: () => void
   onOEE: () => void; onTrend: () => void; onEnergy: () => void
   onWorkOrders: () => void; onDemand: () => void; onCalendar: () => void
-  onCustomizer: () => void; onAuditLog: () => void; onSettings: () => void
+  onCustomizer: () => void; onAuditLog: () => void; onUserManage: () => void; onSettings: () => void
+  onShiftLog: () => void; onHealth: () => void; onCarbon: () => void
+  onPredMaint: () => void; onInspection: () => void; onAlertAnalytics: () => void
+  onSpareParts: () => void; onPointBinding: () => void; onFloorPlanSettings: () => void
 }
 function SidebarNav({
   criticalCount, enabledRulesCount, bimLoaded, apiKeyConfigured, can,
@@ -1041,7 +1398,9 @@ function SidebarNav({
   onBIM, onBIMManager, onKG, onHeatmap,
   onOEE, onTrend, onEnergy,
   onWorkOrders, onDemand, onCalendar,
-  onCustomizer, onAuditLog, onSettings,
+  onCustomizer, onAuditLog, onUserManage, onSettings,
+  onShiftLog, onHealth, onCarbon, onPredMaint, onInspection, onAlertAnalytics, onSpareParts,
+  onPointBinding, onFloorPlanSettings,
 }: SidebarNavProps) {
   const groupLabelStyle: React.CSSProperties = {
     padding: '18px 14px 8px 13px',
@@ -1062,6 +1421,7 @@ function SidebarNav({
         badge={criticalCount} badgeColor="#ef4444"                                       disabled={!can('alerts')} />
       <SidebarItem icon="🎯" label="規則引擎"         color="#f59e0b" onClick={onRules}
         badge={enabledRulesCount} badgeColor="#f59e0b"                                   disabled={!can('rules')} />
+      <SidebarItem icon="📊" label="告警分析"         color="#f87171" onClick={onAlertAnalytics} disabled={!can('alertAnalytics')} />
 
       {/* ── 空間視覺 ── */}
       <div style={groupLabelStyle}>🏛 空間視覺</div>
@@ -1076,19 +1436,28 @@ function SidebarNav({
       <SidebarItem icon="📊" label="OEE 效率"         color="#10b981" onClick={onOEE}        disabled={!can('oee')} />
       <SidebarItem icon="📈" label="趨勢比較"         color="#818cf8" onClick={onTrend}      disabled={!can('trend')} />
       <SidebarItem icon="⚡" label="能源報表"         color="#fbbf24" onClick={onEnergy}     disabled={!can('energy')} />
+      <SidebarItem icon="🏥" label="設備健康中心"     color="#22d3ee" onClick={onHealth}     disabled={!can('health')} />
+      <SidebarItem icon="🌱" label="碳排追蹤"         color="#34d399" onClick={onCarbon}     disabled={!can('carbon')} />
+      <SidebarItem icon="🔮" label="預測維護排程"     color="#a78bfa" onClick={onPredMaint}  disabled={!can('predictiveMaint')} />
 
       {/* ── 維運管理 ── */}
       <div style={groupLabelStyle}>🔧 維運管理</div>
       <SidebarItem icon="🔧" label="工單中心"         color="#fb923c" onClick={onWorkOrders} disabled={!can('workOrders')} />
       <SidebarItem icon="💡" label="需量卸載"         color="#f59e0b" onClick={onDemand}     disabled={!can('demand')} />
       <SidebarItem icon="📅" label="維護日曆"         color="#818cf8" onClick={onCalendar}   disabled={!can('calendar')} />
+      <SidebarItem icon="📔" label="值班日誌"         color="#fbbf24" onClick={onShiftLog}   disabled={!can('shiftLog')} />
+      <SidebarItem icon="🔍" label="巡檢管理"         color="#38bdf8" onClick={onInspection} disabled={!can('inspection')} />
+      <SidebarItem icon="📦" label="備品管理"         color="#4ade80" onClick={onSpareParts} disabled={!can('spareParts')} />
+      <SidebarItem icon="📌" label="點位綁定"         color="#38bdf8" onClick={onPointBinding} disabled={!can('pointBinding')} />
 
       {/* ── 系統 ── */}
       <div style={groupLabelStyle}>⚙ 系統</div>
-      <SidebarItem icon="🎨" label="儀表板個人化"     color="#818cf8" onClick={onCustomizer} disabled={!can('customizer')} />
-      <SidebarItem icon="📜" label="稽核日誌"         color="#06b6d4" onClick={onAuditLog}   disabled={!can('auditLog')} />
+      <SidebarItem icon="🎨" label="儀表板個人化"     color="#818cf8" onClick={onCustomizer}  disabled={!can('customizer')} />
+      <SidebarItem icon="📜" label="稽核日誌"         color="#06b6d4" onClick={onAuditLog}    disabled={!can('auditLog')} />
+      <SidebarItem icon="👥" label="使用者管理"       color="#a78bfa" onClick={onUserManage}  disabled={!can('userManage')} />
+      <SidebarItem icon="🗺" label="平面圖設定"       color="#38bdf8" onClick={onFloorPlanSettings} disabled={!can('floorPlanSettings')} />
       <SidebarItem icon="⚙" label="系統設定"         color="#94a3b8" onClick={onSettings}
-        dot={apiKeyConfigured} dotColor="#10b981"                                         disabled={!can('settings')} />
+        dot={apiKeyConfigured} dotColor="#10b981"                                          disabled={!can('settings')} />
     </nav>
   )
 }

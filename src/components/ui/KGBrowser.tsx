@@ -192,7 +192,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
     const devYMap: Record<string, number> = {}
 
     // ① 設備節點（依建築分組）
-    const startY: Record<string, number> = { 'bldg-a': 20, 'bldg-b': 0, 'bldg-c': 0 }
+    const startY: Record<string, number> = {}
     const cnt: Record<string, number> = {}
     // 先計算各建築起始 Y
     const bldgDevs: Record<string, Device[]> = {}
@@ -200,7 +200,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
       if (!bldgDevs[d.buildingId]) bldgDevs[d.buildingId] = []
       bldgDevs[d.buildingId].push(d)
     })
-    const BLDG_ORDER = ['bldg-a', 'bldg-b', 'bldg-c']
+    const BLDG_ORDER = Object.keys(bldgDevs)
     let bldgCursor = 20
     BLDG_ORDER.forEach(bId => {
       startY[bId] = bldgCursor

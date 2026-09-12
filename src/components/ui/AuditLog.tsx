@@ -1,4 +1,6 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
+import { getJwtToken } from '../../hooks/useAuth'
+import { downloadFromBackend } from '../../utils/csvExport'
 
 interface AuditEntry {
   id:          string
@@ -44,18 +46,23 @@ interface Props {
 }
 
 export function AuditLog({ restBase, onClose }: Props) {
-  const [entries, setEntries]     = useState<AuditEntry[]>([])
-  const [loading, setLoading]     = useState(true)
-  const [isMock, setIsMock]       = useState(false)
-  const [filterOp, setFilterOp]   = useState<string>('all')
-  const [countdown, setCountdown] = useState(30)
+  const [entries, setEntries]       = useState<AuditEntry[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [isMock, setIsMock]         = useState(false)
+  const [filterOp, setFilterOp]     = useState<string>('all')
+  const [filterResult, setFilterResult] = useState<string>('all')
+  const [countdown, setCountdown]   = useState(30)
+  const [exporting, setExporting]   = useState(false)
 
   const load = useCallback(() => {
     setLoading(true)
-    const url = filterOp !== 'all'
-      ? `${restBase}/api/audit?limit=100&operation=${filterOp}`
-      : `${restBase}/api/audit?limit=100`
-    fetch(url)
+    const params = new URLSearchParams({ limit: '100' })
+    if (filterOp     !== 'all') params.set('operation', filterOp)
+    if (filterResult !== 'all') params.set('result',    filterResult)
+    const token = getJwtToken()
+    const headers: Record<string, string> = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    fetch(`${restBase}/api/audit?${params}`, { headers })
       .then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json() })
       .then((data: AuditEntry[]) => { setEntries(data); setIsMock(false); setLoading(false); setCountdown(30) })
       .catch(() => {
@@ -63,7 +70,23 @@ export function AuditLog({ restBase, onClose }: Props) {
         const filtered = filterOp !== 'all' ? mock.filter(e => e.operation === filterOp) : mock
         setEntries(filtered); setIsMock(true); setLoading(false)
       })
-  }, [restBase, filterOp])
+  }, [restBase, filterOp, filterResult])
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const params = new URLSearchParams({ limit: '500' })
+      if (filterOp     !== 'all') params.set('operation', filterOp)
+      if (filterResult !== 'all') params.set('result',    filterResult)
+      const token = getJwtToken()
+      await downloadFromBackend(
+        `${restBase}/api/export/audit?${params}`,
+        `audit_log_${new Date().toISOString().slice(0,10)}.csv`,
+        token,
+      )
+    } catch (e) { console.error('export failed', e) }
+    finally { setExporting(false) }
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -111,10 +134,29 @@ export function AuditLog({ restBase, onClose }: Props) {
           ))}
         </div>
 
-        {/* 刷新狀態 */}
+        {/* 結果篩選 */}
+        <div style={{ marginLeft: 10, display: 'flex', gap: 5 }}>
+          {[['all', '全部結果'], ['success', '✓ 成功'], ['failed', '✕ 失敗']].map(([val, label]) => (
+            <button key={val} onClick={() => setFilterResult(val)}
+              style={{ padding: '3px 10px', background: filterResult === val ? 'rgba(6,182,212,0.12)' : 'rgba(255,255,255,0.03)', border: `1px solid ${filterResult === val ? 'rgba(6,182,212,0.35)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 3, color: filterResult === val ? '#67e8f9' : 'rgba(255,255,255,0.35)', fontSize: 10, cursor: 'pointer' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* 刷新 + 匯出 + 關閉 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
           {!isMock && <span style={{ color: 'rgba(255,255,255,0.62)', fontSize: 9 }}>{countdown}s 後刷新</span>}
           <button onClick={load} style={{ padding: '3px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 3, color: 'rgba(255,255,255,0.5)', fontSize: 10, cursor: 'pointer' }}>↻ 刷新</button>
+          {!isMock && (
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              style={{ padding: '3px 10px', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 3, color: '#6ee7b7', fontSize: 10, cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.6 : 1 }}
+            >
+              {exporting ? '匯出中…' : '⬇ CSV'}
+            </button>
+          )}
           <button onClick={onClose} style={{ padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
         </div>
       </div>

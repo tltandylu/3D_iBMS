@@ -10,7 +10,7 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 interface Props {
-  onLogin: (email: string, password: string) => boolean
+  onLogin: (email: string, password: string) => Promise<boolean>
   onLoginAs: (user: DemoUser) => void
 }
 
@@ -20,15 +20,16 @@ export function LoginPage({ onLogin, onLoginAs }: Props) {
   const [error,    setError]    = useState<string | null>(null)
   const [loading,  setLoading]  = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
     setLoading(true)
-    setTimeout(() => {
-      const ok = onLogin(email, password)
+    try {
+      const ok = await onLogin(email, password)
       if (!ok) setError('帳號或密碼錯誤，請再試一次')
+    } finally {
       setLoading(false)
-    }, 300)
+    }
   }
 
   const inputBase: React.CSSProperties = {

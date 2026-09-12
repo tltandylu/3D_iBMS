@@ -1,14 +1,15 @@
 ﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import * as THREE from 'three'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import type { Device, BIMModelEntry } from '../../types'
 import { DEVICES as ALL_DEVICES, BUILDINGS } from '../../data/mockData'
 import type { IFCBuildingGeom } from '../../types'
 import { AddEditModal } from './BIMModelManager'
 import type { SkySettings } from '../../hooks/useSystemSettings'
+import type { IFCStorey } from '../scene3d/IFCBackgroundLoader'
 
 const IFC_FILES: BIMModelEntry[] = [
-  { id: 'builtin-a', label: '樂迦BIM A棟', url: '/ifc/樂迦BIM_1130117-2d39iOo5n2vAz6rhM8T_DW.ifc', buildingId: 'bldg-a', visible: true, loadState: 'unloaded', meshCount: 0 },
-  { id: 'builtin-b', label: '樂迦BIM B棟', url: '/ifc/樂迦BIM_1130117-0n6hI1bz57gwKuViOmXtXU.ifc', buildingId: 'bldg-b', visible: true, loadState: 'unloaded', meshCount: 0 },
+  { id: 'builtin-locus', label: '樂迦大樓 BIM', url: '/ifc/樂迦BIM_1130117.ifc', buildingId: 'locus', visible: true, loadState: 'unloaded', meshCount: 0 },
 ]
 
 const STATUS_COLS: Record<string, number> = {
@@ -290,6 +291,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
   const origColorsRef    = useRef<Map<string, THREE.Color>>(new Map())
   const flyToDeviceRef   = useRef<Device | null | undefined>(flyToDevice)
   flyToDeviceRef.current = flyToDevice
+  const flyToRef         = useRef<((d: Device) => void) | null>(null)
   const onIFCLoadedRef   = useRef(onIFCLoaded)
   onIFCLoadedRef.current = onIFCLoaded
   // 天空球 refs（跨 loadIFC 呼叫持久存在）
@@ -313,6 +315,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
   const [meshCount, setMeshCount]     = useState(0)
   const [activeFloor, setActiveFloor] = useState<number | null>(null)
   const [floorCount, setFloorCount]   = useState(0)
+  const [storeys, setStoreys]         = useState<IFCStorey[]>([])
   const [sectionEnabled, setSectionEnabled] = useState(false)
   const [sectionX, setSectionX] = useState<SectionAxis>({ en: false, v: 0 })
   const [sectionY, setSectionY] = useState<SectionAxis>({ en: false, v: 0 })
@@ -321,8 +324,18 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
   const [showDoneToast, setShowDoneToast] = useState(false)
   const [heatmapMode, setHeatmapMode]   = useState(false)
   const [isProcedural, setIsProcedural] = useState(false)
+  const [selectedElement, setSelectedElement] = useState<{
+    name: string; position: [number,number,number]; size: [number,number,number]; color: string; index: number
+  } | null>(null)
+  const modelMeshesRef = useRef<THREE.Mesh[]>([])
   const [showPins, setShowPins]         = useState(true)
   showPinsRef.current = showPins
+
+  // flyToDevice prop 改變時（模型已載入）立即飛越
+  useEffect(() => {
+    if (loadState === 'done' && flyToDevice) flyToRef.current?.(flyToDevice)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyToDevice])
 
   // 模型載入完成後顯示 Toast，5 秒後自動關閉
   useEffect(() => {
@@ -410,14 +423,18 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
     setStatusLabel('初始化…')
     setErrorMsg('')
     setSelectedDev(null)
+    setSelectedElement(null)
+    modelMeshesRef.current = []
     setMeshCount(0)
     setFloorCount(0)
     setActiveFloor(null)
+    setStoreys([])
     setSectionEnabled(false)
     setModelBounds(null)
     setShowDoneToast(false)
     setIsProcedural(false)
     resetCameraRef.current = null
+    flyToRef.current       = null
     floorMeshesRef.current = new Map()
     clipPlanesRef.current  = null
     helperMeshRef.current  = null
@@ -589,6 +606,27 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
         if (hits.length > 0) {
           const hit = markerMeshes.find(m => m.mesh === hits[0].object)
           if (hit) setSelectedDev(hit.device)
+        } else {
+          const modelHits = raycaster.intersectObjects(modelMeshesRef.current, false)
+          if (modelHits.length > 0) {
+            const hitMesh = modelHits[0].object as THREE.Mesh
+            const bbox = new THREE.Box3().setFromObject(hitMesh)
+            const size = bbox.getSize(new THREE.Vector3())
+            const pos = hitMesh.position
+            const mat = hitMesh.material as THREE.MeshLambertMaterial
+            const col = mat.color ? '#' + mat.color.getHexString() : '#888888'
+            const idx = modelMeshesRef.current.indexOf(hitMesh)
+            setSelectedElement({
+              name: `元件 #${idx + 1}`,
+              position: [+pos.x.toFixed(2), +pos.y.toFixed(2), +pos.z.toFixed(2)],
+              size: [+size.x.toFixed(2), +size.y.toFixed(2), +size.z.toFixed(2)],
+              color: col,
+              index: idx,
+            })
+            setSelectedDev(null)
+          } else {
+            setSelectedElement(null)
+          }
         }
       }
       canvas.addEventListener('click', onDevClick)
@@ -602,124 +640,330 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
 
       // geoCache shared — stays empty for procedural path, filled for IFC path
       const geoCache = new Map<number, THREE.BufferGeometry | null>()
-      let modelGroup: THREE.Group
+      let modelGroup: THREE.Group | undefined
+      let loadedStoreys: IFCStorey[] = []
 
-      // ── 下載 IFC 檔案（404 時 fallback 程序化建築）─────────────
-      setStatusLabel('下載 IFC 檔案…')
-      const resp = await fetch(url)
+      // ── 判斷模型類型（副檔名）────────────────────────────────────
+      const isGLTF = /\.(gltf|glb)$/i.test(url)
 
-      if (!resp.ok) {
-        // ── 程序化建築 fallback ──────────────────────────────────
-        setStatusLabel('IFC 不可用，載入程序化建築模型…')
-        setProgress(90)
-        setIsProcedural(true)
-        modelGroup = buildProceduralGroup(matClipPlanes)
+      // ── 解析為 Blob URL（支援 http/https 與 blob: 本地上傳）───────
+      let objectURL = ''
+      if (url.startsWith('blob:')) {
+        // 本地上傳：blob URL 直接使用（fetch 不支援 blob: 協定）
+        objectURL = url
+      } else {
+        // 網路檔案：先 fetch 下載為 blob
+        setStatusLabel(isGLTF ? '下載 3D 模型…' : '下載 IFC 檔案…')
+        const resp = await fetch(url)
+        if (!resp.ok) {
+          setStatusLabel(isGLTF ? '3D 模型不可用，載入程序化建築模型…' : 'IFC 不可用，載入程序化建築模型…')
+          setProgress(90)
+          setIsProcedural(true)
+          modelGroup = buildProceduralGroup(matClipPlanes)
+        } else {
+          const blob = await resp.blob()
+          objectURL = URL.createObjectURL(blob)
+        }
+      }
+
+      // ── GLTF / GLB 載入路徑 ───────────────────────────────────
+      if (isGLTF) {
+        if (!modelGroup) {
+          setStatusLabel('解析 GLTF/GLB…')
+          setProgress(30)
+
+          let loaded: THREE.Group
+          try {
+            loaded = await new Promise<THREE.Group>((resolve, reject) => {
+              const loader = new GLTFLoader()
+              loader.load(
+                objectURL,
+                (gltf) => {
+                  console.log('[BIMViewer] GLTFLoader 成功，節點數:', gltf.scene.children.length)
+                  resolve(gltf.scene)
+                },
+                (xhr) => {
+                  if (xhr.lengthComputable && xhr.total > 0) {
+                    setProgress(30 + Math.round((xhr.loaded / xhr.total) * 60))
+                  }
+                },
+                (err) => {
+                  console.error('[BIMViewer] GLTFLoader 錯誤:', err)
+                  reject(err)
+                },
+              )
+            })
+          } catch (gltfErr) {
+            console.error('[BIMViewer] GLB 載入失敗，改用程序化建築:', gltfErr)
+            modelGroup = buildProceduralGroup(matClipPlanes)
+            setIsProcedural(true)
+            setStatusLabel('3D 模型解析失敗，載入程序化建築…')
+            setProgress(100)
+            return
+          }
+
+          // Blob URL 僅在網址模式需要釋放；blob: 模式由瀏覽器自行管理
+          if (!url.startsWith('blob:')) URL.revokeObjectURL(objectURL)
+
+          // 遍歷所有 Mesh：啟用 DoubleSide 與剖面剪切（與 IFC 行為一致）
+          loaded.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              const mat = child.material as THREE.Material
+              if (Array.isArray(mat)) {
+                mat.forEach(m => { m.side = THREE.DoubleSide; (m as THREE.MeshStandardMaterial).clippingPlanes = matClipPlanes })
+              } else {
+                mat.side = THREE.DoubleSide; (mat as THREE.MeshStandardMaterial).clippingPlanes = matClipPlanes
+              }
+            }
+          })
+
+          modelGroup = loaded
+          setProgress(95)
+        }
       } else {
         // ── IFC 解析路徑 ─────────────────────────────────────────
-        const contentLength = Number(resp.headers.get('Content-Length') ?? 0)
-        const reader = resp.body!.getReader()
-        const chunks: Uint8Array[] = []
-        let received = 0
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          chunks.push(value)
-          received += value.length
-          if (contentLength) setProgress(Math.round((received / contentLength) * 80))
-        }
+        if (!modelGroup) {
+          // blob URL 模式：直接讀取為 ArrayBuffer
+          if (url.startsWith('blob:')) {
+            setStatusLabel('讀取 IFC 檔案…')
+            setProgress(30)
+            const resp = await fetch(url)
+            if (!resp.ok) {
+              setStatusLabel('IFC 不可用，載入程序化建築模型…')
+              setProgress(90)
+              setIsProcedural(true)
+              modelGroup = buildProceduralGroup(matClipPlanes)
+            } else {
+              const arrayBuffer = await resp.arrayBuffer()
+              const merged = new Uint8Array(arrayBuffer)
+              setProgress(50)
+              setStatusLabel('初始化 WASM 解析器…')
+              const { IfcAPI } = await import('web-ifc')
+              const api = new IfcAPI()
+              await api.Init((path) => '/' + path, true)
+              setStatusLabel('開啟 IFC 模型…')
+              setProgress(60)
+              const modelID = api.OpenModel(merged, {
+                COORDINATE_TO_ORIGIN: true,
+                CIRCLE_SEGMENTS: 8,
+              })
+              if (modelID < 0) throw new Error(`OpenModel 失敗 (id=${modelID})，IFC 格式可能不支援`)
+              setProgress(70)
+              setStatusLabel('解析 IFC 幾何資料…')
+              await new Promise(r => setTimeout(r, 50))
+              modelGroup = new THREE.Group()
+              const placementMatrix = new THREE.Matrix4()
 
-        setProgress(82)
-        setStatusLabel('合併資料…')
-        const merged = new Uint8Array(received)
-        let off = 0
-        for (const chunk of chunks) { merged.set(chunk, off); off += chunk.length }
-
-        setProgress(84)
-        setStatusLabel('初始化 WASM 解析器…')
-        const { IfcAPI } = await import('web-ifc')
-        const api = new IfcAPI()
-        await api.Init((path) => '/' + path, true)
-
-        setProgress(86)
-        setStatusLabel('開啟 IFC 模型…')
-        const modelID = api.OpenModel(merged, {
-          COORDINATE_TO_ORIGIN: true,
-          CIRCLE_SEGMENTS: 8,
-        })
-        if (modelID < 0) throw new Error(`OpenModel 失敗 (id=${modelID})，IFC 格式可能不支援`)
-
-        setProgress(88)
-        setStatusLabel('解析 IFC 幾何資料（大型模型約需 30–60 秒）…')
-        await new Promise(r => setTimeout(r, 50))
-
-        modelGroup = new THREE.Group()
-        const placementMatrix = new THREE.Matrix4()
-
-        api.StreamAllMeshes(modelID, (flatMesh) => {
-          const geoCount = flatMesh.geometries.size()
-          for (let gi = 0; gi < geoCount; gi++) {
-            const placed = flatMesh.geometries.get(gi)
-            const { geometryExpressID, flatTransformation, color } = placed
-
-            let bufGeo = geoCache.get(geometryExpressID)
-            if (bufGeo === undefined) {
-              const ifcGeo = api.GetGeometry(modelID, geometryExpressID)
-              const vSize = ifcGeo.GetVertexDataSize()
-              const iSize = ifcGeo.GetIndexDataSize()
-              if (vSize > 0 && iSize > 0) {
-                const vData = api.GetVertexArray(ifcGeo.GetVertexData(), vSize).slice()
-                const iData = api.GetIndexArray(ifcGeo.GetIndexData(), iSize).slice()
-                ifcGeo.delete?.()
-                const vertCount = vData.length / 6
-                const positions = new Float32Array(vertCount * 3)
-                const normals   = new Float32Array(vertCount * 3)
-                for (let j = 0; j < vertCount; j++) {
-                  positions[j * 3]     = vData[j * 6]
-                  positions[j * 3 + 1] = vData[j * 6 + 1]
-                  positions[j * 3 + 2] = vData[j * 6 + 2]
-                  normals[j * 3]       = vData[j * 6 + 3]
-                  normals[j * 3 + 1]   = vData[j * 6 + 4]
-                  normals[j * 3 + 2]   = vData[j * 6 + 5]
-                }
-                bufGeo = new THREE.BufferGeometry()
-                bufGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-                bufGeo.setAttribute('normal',   new THREE.BufferAttribute(normals,   3))
-                bufGeo.setIndex(new THREE.BufferAttribute(iData, 1))
-              } else {
-                ifcGeo.delete?.()
-                bufGeo = null
+              try {
+                api.StreamAllMeshes(modelID, (flatMesh) => {
+                  const geoCount = flatMesh.geometries.size()
+                  for (let gi = 0; gi < geoCount; gi++) {
+                    const placed = flatMesh.geometries.get(gi)
+                    const { geometryExpressID, flatTransformation, color } = placed
+                    let bufGeo = geoCache.get(geometryExpressID)
+                    if (bufGeo === undefined) {
+                      const ifcGeo = api.GetGeometry(modelID, geometryExpressID)
+                      const vSize = ifcGeo.GetVertexDataSize()
+                      const iSize = ifcGeo.GetIndexDataSize()
+                      if (vSize > 0 && iSize > 0) {
+                        const vData = api.GetVertexArray(ifcGeo.GetVertexData(), vSize).slice()
+                        const iData = api.GetIndexArray(ifcGeo.GetIndexData(), iSize).slice()
+                        ifcGeo.delete?.()
+                        const vertCount = vData.length / 6
+                        const positions = new Float32Array(vertCount * 3)
+                        const normals   = new Float32Array(vertCount * 3)
+                        for (let j = 0; j < vertCount; j++) {
+                          positions[j * 3]     = vData[j * 6]
+                          positions[j * 3 + 1] = vData[j * 6 + 1]
+                          positions[j * 3 + 2] = vData[j * 6 + 2]
+                          normals[j * 3]       = vData[j * 6 + 3]
+                          normals[j * 3 + 1]   = vData[j * 6 + 4]
+                          normals[j * 3 + 2]   = vData[j * 6 + 5]
+                        }
+                        bufGeo = new THREE.BufferGeometry()
+                        bufGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+                        bufGeo.setAttribute('normal',   new THREE.BufferAttribute(normals,   3))
+                        bufGeo.setIndex(new THREE.BufferAttribute(iData, 1))
+                      } else {
+                        ifcGeo.delete?.(); bufGeo = null
+                      }
+                      geoCache.set(geometryExpressID, bufGeo)
+                    }
+                    if (!bufGeo) continue
+                    const { x, y, z, w } = color
+                    const mat = new THREE.MeshLambertMaterial({
+                      color: new THREE.Color(x, y, z),
+                      transparent: w < 0.99,
+                      opacity: Math.max(0.1, w),
+                      side: THREE.DoubleSide,
+                      clippingPlanes: matClipPlanes,
+                    })
+                    const mesh3 = new THREE.Mesh(bufGeo, mat)
+                    placementMatrix.fromArray(flatTransformation)
+                    placementMatrix.decompose(mesh3.position, mesh3.quaternion, mesh3.scale)
+                    modelGroup!.add(mesh3)
+                  }
+                  flatMesh.delete?.()
+                })
+              } catch (wasmErr) {
+                console.warn('[BIMViewer] StreamAllMeshes WASM 錯誤，改用程序化建築:', wasmErr)
+                modelGroup = buildProceduralGroup(matClipPlanes)
+                setIsProcedural(true)
               }
-              geoCache.set(geometryExpressID, bufGeo)
+              modelGroup!.updateMatrixWorld(true)
+              const bimPreBox = new THREE.Box3().setFromObject(modelGroup!)
+              try {
+                const webifc = await import('web-ifc')
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const STOREY_TYPE = (webifc as any).IFCBUILDINGSTOREY ?? 3124254112
+                const ids = api.GetLineIDsWithType(modelID, STOREY_TYPE)
+                const raw: { name: string; elev: number }[] = []
+                for (let si = 0; si < ids.size(); si++) {
+                  try {
+                    const line = api.GetLine(modelID, ids.get(si), false)
+                    if (!line) continue
+                    const name = (line.Name?.value ?? line.LongName?.value ?? '').trim()
+                    const elev = line.Elevation?.value
+                    if (name && typeof elev === 'number') raw.push({ name, elev })
+                  } catch { /* skip */ }
+                }
+                if (raw.length >= 2) {
+                  raw.sort((a, b) => a.elev - b.elev)
+                  const eMin = raw[0].elev, eMax = raw[raw.length - 1].elev
+                  const eRange = eMax - eMin
+                  const geoH = bimPreBox.max.y - bimPreBox.min.y
+                  const scale = eRange > geoH * 5 ? 0.01 : 1.0
+                  const yOff  = (bimPreBox.min.y + bimPreBox.max.y) / 2 - ((eMin + eMax) * scale / 2)
+                  loadedStoreys = raw.map(s => ({ name: s.name, y: +(s.elev * scale + yOff).toFixed(2) }))
+                }
+              } catch (e) { console.warn('[BIMViewer] 樓層讀取失敗:', e) }
+              api.CloseModel(modelID)
+              setProgress(90)
+              if (onIFCLoadedRef.current && buildingId) {
+                const geomData = extractIFCGeom(modelGroup, buildingId, label)
+                onIFCLoadedRef.current(geomData)
+              }
             }
-
-            if (!bufGeo) continue
-
-            const { x, y, z, w } = color
-            const mat = new THREE.MeshLambertMaterial({
-              color: new THREE.Color(x, y, z),
-              transparent: w < 0.99,
-              opacity: Math.max(0.1, w),
-              side: THREE.DoubleSide,
-              clippingPlanes: matClipPlanes,
-            })
-            const mesh3 = new THREE.Mesh(bufGeo, mat)
-            placementMatrix.fromArray(flatTransformation)
-            placementMatrix.decompose(mesh3.position, mesh3.quaternion, mesh3.scale)
-            modelGroup.add(mesh3)
+          } else {
+            // 網址模式：原有用 fetch + streaming 邏輯（保持不變）
+            setStatusLabel('下載 IFC 檔案…')
+            const resp = await fetch(url)
+            if (!resp.ok) {
+              setStatusLabel('IFC 不可用，載入程序化建築模型…')
+              setProgress(90)
+              setIsProcedural(true)
+              modelGroup = buildProceduralGroup(matClipPlanes)
+            } else {
+              const contentLength = Number(resp.headers.get('Content-Length') ?? 0)
+              const reader = resp.body!.getReader()
+              const chunks: Uint8Array[] = []
+              let received = 0
+              while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                chunks.push(value); received += value.length
+                if (contentLength) setProgress(Math.round((received / contentLength) * 80))
+              }
+              setProgress(82); setStatusLabel('合併資料…')
+              const merged = new Uint8Array(received); let off = 0
+              for (const chunk of chunks) { merged.set(chunk, off); off += chunk.length }
+              setProgress(84); setStatusLabel('初始化 WASM 解析器…')
+              const { IfcAPI } = await import('web-ifc')
+              const api = new IfcAPI()
+              await api.Init((path) => '/' + path, true)
+              setProgress(86); setStatusLabel('開啟 IFC 模型…')
+              const modelID = api.OpenModel(merged, { COORDINATE_TO_ORIGIN: true, CIRCLE_SEGMENTS: 8 })
+              if (modelID < 0) throw new Error(`OpenModel 失敗 (id=${modelID})，IFC 格式可能不支援`)
+              setProgress(88); setStatusLabel('解析 IFC 幾何資料（大型模型約需 30–60 秒）…')
+              await new Promise(r => setTimeout(r, 50))
+              modelGroup = new THREE.Group()
+              const placementMatrix = new THREE.Matrix4()
+              try {
+                api.StreamAllMeshes(modelID, (flatMesh) => {
+                  const geoCount = flatMesh.geometries.size()
+                  for (let gi = 0; gi < geoCount; gi++) {
+                    const placed = flatMesh.geometries.get(gi)
+                    const { geometryExpressID, flatTransformation, color } = placed
+                    let bufGeo = geoCache.get(geometryExpressID)
+                    if (bufGeo === undefined) {
+                      const ifcGeo = api.GetGeometry(modelID, geometryExpressID)
+                      const vSize = ifcGeo.GetVertexDataSize(); const iSize = ifcGeo.GetIndexDataSize()
+                      if (vSize > 0 && iSize > 0) {
+                        const vData = api.GetVertexArray(ifcGeo.GetVertexData(), vSize).slice()
+                        const iData = api.GetIndexArray(ifcGeo.GetIndexData(), iSize).slice()
+                        ifcGeo.delete?.()
+                        const vertCount = vData.length / 6
+                        const positions = new Float32Array(vertCount * 3); const normals = new Float32Array(vertCount * 3)
+                        for (let j = 0; j < vertCount; j++) {
+                          positions[j * 3] = vData[j * 6]; positions[j * 3 + 1] = vData[j * 6 + 1]; positions[j * 3 + 2] = vData[j * 6 + 2]
+                          normals[j * 3] = vData[j * 6 + 3]; normals[j * 3 + 1] = vData[j * 6 + 4]; normals[j * 3 + 2] = vData[j * 6 + 5]
+                        }
+                        bufGeo = new THREE.BufferGeometry()
+                        bufGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+                        bufGeo.setAttribute('normal',   new THREE.BufferAttribute(normals,   3))
+                        bufGeo.setIndex(new THREE.BufferAttribute(iData, 1))
+                      } else { ifcGeo.delete?.(); bufGeo = null }
+                      geoCache.set(geometryExpressID, bufGeo)
+                    }
+                    if (!bufGeo) continue
+                    const { x, y, z, w } = color
+                    const mat = new THREE.MeshLambertMaterial({
+                      color: new THREE.Color(x, y, z), transparent: w < 0.99, opacity: Math.max(0.1, w),
+                      side: THREE.DoubleSide, clippingPlanes: matClipPlanes,
+                    })
+                    const mesh3 = new THREE.Mesh(bufGeo, mat)
+                    placementMatrix.fromArray(flatTransformation)
+                    placementMatrix.decompose(mesh3.position, mesh3.quaternion, mesh3.scale)
+                    modelGroup!.add(mesh3)
+                  }
+                  flatMesh.delete?.()
+                })
+              } catch (wasmErr) {
+                console.warn('[BIMViewer] StreamAllMeshes WASM 錯誤，改用程序化建築:', wasmErr)
+                modelGroup = buildProceduralGroup(matClipPlanes)
+                setIsProcedural(true)
+              }
+              modelGroup!.updateMatrixWorld(true)
+              const bimPreBox = new THREE.Box3().setFromObject(modelGroup!)
+              try {
+                const webifc = await import('web-ifc')
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const STOREY_TYPE = (webifc as any).IFCBUILDINGSTOREY ?? 3124254112
+                const ids = api.GetLineIDsWithType(modelID, STOREY_TYPE)
+                const raw: { name: string; elev: number }[] = []
+                for (let si = 0; si < ids.size(); si++) {
+                  try {
+                    const line = api.GetLine(modelID, ids.get(si), false)
+                    if (!line) continue
+                    const name = (line.Name?.value ?? line.LongName?.value ?? '').trim()
+                    const elev = line.Elevation?.value
+                    if (name && typeof elev === 'number') raw.push({ name, elev })
+                  } catch { /* skip */ }
+                }
+                if (raw.length >= 2) {
+                  raw.sort((a, b) => a.elev - b.elev)
+                  const eMin = raw[0].elev, eMax = raw[raw.length - 1].elev
+                  const eRange = eMax - eMin; const geoH = bimPreBox.max.y - bimPreBox.min.y
+                  const scale = eRange > geoH * 5 ? 0.01 : 1.0
+                  const yOff  = (bimPreBox.min.y + bimPreBox.max.y) / 2 - ((eMin + eMax) * scale / 2)
+                  loadedStoreys = raw.map(s => ({ name: s.name, y: +(s.elev * scale + yOff).toFixed(2) }))
+                }
+              } catch (e) { console.warn('[BIMViewer] 樓層讀取失敗:', e) }
+              api.CloseModel(modelID)
+              if (onIFCLoadedRef.current && buildingId) {
+                const geomData = extractIFCGeom(modelGroup, buildingId, label)
+                onIFCLoadedRef.current(geomData)
+              }
+            }
           }
-          flatMesh.delete?.()
-        })
-
-        api.CloseModel(modelID)
-
-        // 萃取幾何並通知父元件（Scene3D 可用此資料取代建築盒）
-        if (onIFCLoadedRef.current && buildingId) {
-          const geomData = extractIFCGeom(modelGroup, buildingId, label)
-          onIFCLoadedRef.current(geomData)
         }
       }
 
       scene.add(modelGroup)
+      modelMeshesRef.current = []
+      modelGroup.traverse(obj => {
+        if (obj instanceof THREE.Mesh) modelMeshesRef.current.push(obj as THREE.Mesh)
+      })
       setMeshCount(modelGroup.children.length)
 
       // ── 相機自動對準 + 樓層分組 ──────────────────────────────
@@ -737,18 +981,36 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
         camera.updateProjectionMatrix()
         updateCamera()
 
-        // 依 Y 軸將 IFC mesh 分配到 6 個樓層切片
-        const sliceH = size.y / NUM_FLOORS
+        // 依 IFC 樓層高度將 mesh 分配到對應樓層；無樓層資料時回落等分切片
         const newFloorMeshes = new Map<number, THREE.Mesh[]>()
-        modelGroup.children.forEach(child => {
-          if (!(child instanceof THREE.Mesh)) return
-          const fi = Math.min(NUM_FLOORS - 1, Math.max(0, Math.floor((child.position.y - box.min.y) / sliceH)))
-          const arr = newFloorMeshes.get(fi) ?? []
-          arr.push(child as THREE.Mesh)
-          newFloorMeshes.set(fi, arr)
-        })
-        floorMeshesRef.current = newFloorMeshes
-        setFloorCount(NUM_FLOORS)
+        if (loadedStoreys.length >= 2) {
+          modelGroup.children.forEach(child => {
+            if (!(child instanceof THREE.Mesh)) return
+            const wy = child.position.y
+            // 找最靠近且不超過 mesh Y 的樓層（即所屬樓層）
+            let fi = 0
+            for (let k = loadedStoreys.length - 1; k >= 0; k--) {
+              if (wy >= loadedStoreys[k].y - 0.5) { fi = k; break }
+            }
+            const arr = newFloorMeshes.get(fi) ?? []
+            arr.push(child as THREE.Mesh)
+            newFloorMeshes.set(fi, arr)
+          })
+          floorMeshesRef.current = newFloorMeshes
+          setFloorCount(loadedStoreys.length)
+          setStoreys(loadedStoreys)
+        } else {
+          const sliceH = size.y / NUM_FLOORS
+          modelGroup.children.forEach(child => {
+            if (!(child instanceof THREE.Mesh)) return
+            const fi = Math.min(NUM_FLOORS - 1, Math.max(0, Math.floor((child.position.y - box.min.y) / sliceH)))
+            const arr = newFloorMeshes.get(fi) ?? []
+            arr.push(child as THREE.Mesh)
+            newFloorMeshes.set(fi, arr)
+          })
+          floorMeshesRef.current = newFloorMeshes
+          setFloorCount(NUM_FLOORS)
+        }
 
         // 捕捉當前視角以供「還原全局」按鈕使用
         const snapTheta = theta, snapPhi = phi, snapRadius = radius
@@ -759,15 +1021,18 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
           updateCamera()
         }
 
-        // 若有指定飛越設備，載入完成後自動定位（bimLocation 單位 = scene 座標，*0.08 換算 IFC 空間）
-        const ftd = flyToDeviceRef.current
-        if (ftd) {
-          const { x, y, z } = ftd.bimLocation
+        // 讓外部可在模型載入後即時飛越至指定設備（bimLocation * 0.08 換算 IFC 空間）
+        flyToRef.current = (device: Device) => {
+          const { x, y, z } = device.bimLocation
           const SCALE = 0.08
           targetX = x * SCALE; targetY = y * SCALE + 1; targetZ = z * SCALE
           radius  = maxDim * 0.18
           updateCamera()
         }
+
+        // 若有指定飛越設備，載入完成後自動定位
+        const ftd = flyToDeviceRef.current
+        if (ftd) flyToRef.current(ftd)
 
         // ── 三軸剖面 — 初始化滑桿範圍並建立輔助視覺面 ──────────
         setModelBounds({
@@ -1165,6 +1430,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             borderRadius: 8, padding: '8px 6px',
             backdropFilter: 'blur(10px)',
             boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+            maxHeight: 'calc(100vh - 120px)', overflowY: 'auto',
           }}>
             <div style={{
               color: 'rgba(255,255,255,0.62)', fontSize: 8,
@@ -1172,14 +1438,21 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
               marginBottom: 2, fontWeight: 600,
             }}>LEVEL</div>
             <FloorBtn label="全局" active={activeFloor === null} onClick={() => setActiveFloor(null)} />
-            {Array.from({ length: floorCount }, (_, i) => (
-              <FloorBtn
-                key={i}
-                label={`L${i + 1}`}
-                active={activeFloor === i}
-                onClick={() => setActiveFloor(prev => prev === i ? null : i)}
-              />
-            ))}
+            {Array.from({ length: floorCount }, (_, ri) => {
+              const i      = floorCount - 1 - ri   // reverse: top floor shown first
+              const storey = storeys[i]
+              const label  = storey?.name ?? `L${i + 1}`
+              const yLabel = storey ? `${storey.y.toFixed(1)} m` : undefined
+              return (
+                <FloorBtn
+                  key={i}
+                  label={label}
+                  yLabel={yLabel}
+                  active={activeFloor === i}
+                  onClick={() => setActiveFloor(prev => prev === i ? null : i)}
+                />
+              )
+            })}
           </div>
         )}
 
@@ -1508,6 +1781,54 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
             <DevInfo device={selectedDev} />
           </div>
         )}
+
+        {selectedElement && !selectedDev && (
+          <div style={{
+            position: 'absolute', right: 0, top: 0, bottom: 0, width: 260, zIndex: 15,
+            background: 'rgba(4,10,24,0.94)', borderLeft: '1px solid rgba(255,255,255,0.08)',
+            padding: '16px 14px', overflowY: 'auto', backdropFilter: 'blur(12px)',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ color: '#06b6d4', fontSize: 11, fontWeight: 700 }}>元件屬性</span>
+              <button onClick={() => setSelectedElement(null)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontSize: 14 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ padding: '8px 10px', background: 'rgba(6,182,212,0.06)', borderRadius: 6, border: '1px solid rgba(6,182,212,0.15)' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginBottom: 2 }}>元件名稱</div>
+                <div style={{ color: '#e2e8f0', fontSize: 12, fontWeight: 600 }}>{selectedElement.name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 9, marginTop: 2 }}>索引：{selectedElement.index}</div>
+              </div>
+              <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginBottom: 6 }}>位置 (X / Y / Z)</div>
+                {(['X', 'Y', 'Z'] as const).map((axis, i) => (
+                  <div key={axis} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10 }}>{axis}</span>
+                    <span style={{ color: '#e2e8f0', fontSize: 10, fontFamily: 'monospace' }}>{selectedElement.position[i]}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginBottom: 6 }}>尺寸 W / H / D (m)</div>
+                {(['W', 'H', 'D'] as const).map((dim, i) => (
+                  <div key={dim} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 10 }}>{dim}</span>
+                    <span style={{ color: '#e2e8f0', fontSize: 10, fontFamily: 'monospace' }}>{selectedElement.size[i]}</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: 6, border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, marginBottom: 6 }}>材質</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ width: 20, height: 20, borderRadius: 3, background: selectedElement.color, display: 'inline-block', border: '1px solid rgba(255,255,255,0.2)' }} />
+                  <span style={{ color: '#e2e8f0', fontSize: 10, fontFamily: 'monospace' }}>{selectedElement.color.toUpperCase()}</span>
+                </div>
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 9, textAlign: 'center', marginTop: 4 }}>
+                點擊設備標記可查看設備資訊
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── 模型選擇畫面（idle 狀態時覆蓋 3D 容器） ── */}
@@ -1731,22 +2052,38 @@ function SectionAxisRow({
 }
 
 // ── 樓層按鈕元件 ─────────────────────────────────────────────
-function FloorBtn({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function floorAccent(name: string): string {
+  if (/^B\d|^BF|地下/i.test(name))            return '#fb923c'  // basement → orange
+  if (/^R[LF1-9]|RRL|RF|屋頂/i.test(name))   return '#a78bfa'  // roof     → purple
+  if (/^GL|^GF|^G$|^1F/i.test(name))          return '#34d399'  // ground   → green
+  return '#06b6d4'                                                // normal   → cyan
+}
+
+function FloorBtn({
+  label, yLabel, active, onClick,
+}: { label: string; yLabel?: string; active: boolean; onClick: () => void }) {
+  const accent = floorAccent(label)
+  const col    = active ? accent : 'rgba(255,255,255,0.32)'
   return (
     <button
       onClick={onClick}
       style={{
-        padding: '5px 0', width: 48,
-        background: active ? 'rgba(6,182,212,0.22)' : 'transparent',
-        border: `1px solid ${active ? 'rgba(6,182,212,0.55)' : 'rgba(255,255,255,0.1)'}`,
+        padding: '5px 4px', width: 62,
+        background: active ? `${accent}22` : 'transparent',
+        border: `1px solid ${active ? `${accent}88` : 'rgba(255,255,255,0.1)'}`,
         borderRadius: 4,
-        color: active ? '#06b6d4' : 'rgba(255,255,255,0.32)',
-        fontSize: 9, fontWeight: active ? 700 : 400,
-        cursor: 'pointer', letterSpacing: '0.04em',
+        color: col,
+        cursor: 'pointer',
         transition: 'all 0.15s',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
       }}
     >
-      {label}
+      <span style={{ fontSize: 9, fontWeight: active ? 700 : 400, letterSpacing: '0.04em' }}>{label}</span>
+      {yLabel && (
+        <span style={{ fontSize: 7, color: active ? `${accent}cc` : 'rgba(255,255,255,0.22)', fontFamily: 'monospace', letterSpacing: 0 }}>
+          {yLabel}
+        </span>
+      )}
     </button>
   )
 }

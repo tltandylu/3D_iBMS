@@ -23,6 +23,7 @@ interface Props {
   onWOsChange?: (wos: WorkOrder[]) => void
   onStatusUpdate?: (id: string, status: WorkOrder['status']) => void
   onCreateWO?: (wo: WorkOrder) => void
+  onOpenBIM?: (device: Device) => void
   backendConnected?: boolean
 }
 
@@ -46,6 +47,8 @@ function fmtAgo(iso: string) {
 }
 
 function genMonthlyData() {
+  let s = 20260521
+  const rng = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff }
   const labels: string[] = []
   const em: number[] = []
   const cm: number[] = []
@@ -54,9 +57,9 @@ function genMonthlyData() {
     const d = new Date()
     d.setMonth(d.getMonth() - i)
     labels.push(`${d.getMonth() + 1}月`)
-    em.push(Math.floor(Math.random() * 4 + 1))
-    cm.push(Math.floor(Math.random() * 6 + 2))
-    pm.push(Math.floor(Math.random() * 8 + 4))
+    em.push(Math.floor(rng() * 4 + 1))
+    cm.push(Math.floor(rng() * 6 + 2))
+    pm.push(Math.floor(rng() * 8 + 4))
   }
   return { labels, em, cm, pm }
 }
@@ -172,7 +175,7 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
   )
 }
 
-export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStatusUpdate, onCreateWO, backendConnected }: Props) {
+export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStatusUpdate, onCreateWO, onOpenBIM, backendConnected }: Props) {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterType,   setFilterType]   = useState<FilterType>('all')
   const [filterPri,    setFilterPri]    = useState<FilterPri>('all')
@@ -321,13 +324,14 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
         <button
           onClick={() => {
             const headers = ['工單編號', '標題', '類型', '優先級', '狀態', '設備', '指派人員', '估計工時(h)', '建立時間']
+            const sample = ['(範例) WO-202600001', '空調箱異常噪音排查', 'CM', '高', '處理中', 'AHU-01 A棟3F', '張工程師', '2', '2026-05-01']
             const rows = filtered.map(w => [
               w.woNumber, w.title, w.woType,
               PRI_LABELS[w.priority], STATUS_LABELS[w.status],
               w.assetName, w.assignedTo ?? '',
               w.estimatedHours ?? '', w.createdAt.slice(0, 10),
             ])
-            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows])
+            const ws = XLSX.utils.aoa_to_sheet([headers, sample, ...rows])
             const wb = XLSX.utils.book_new()
             XLSX.utils.book_append_sheet(wb, ws, '工單清單')
             XLSX.writeFile(wb, `workorders_${new Date().toISOString().slice(0, 10)}.xlsx`)
@@ -390,7 +394,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
                 無符合條件的工單
               </div>
             ) : filtered.map(wo => (
-              <WOCard key={wo.id} wo={wo} onStatusChange={updateStatus} />
+              <WOCard key={wo.id} wo={wo} onStatusChange={updateStatus} onOpenBIM={onOpenBIM} />
             ))}
           </div>
         </div>
@@ -451,10 +455,15 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
   )
 }
 
-function WOCard({ wo, onStatusChange }: { wo: WorkOrder; onStatusChange: (id: string, s: WorkOrder['status']) => void }) {
-  const typeCol = TYPE_COLORS[wo.woType]
-  const priCol  = PRI_COLORS[wo.priority]
-  const stCol   = STATUS_COLORS[wo.status]
+function WOCard({ wo, onStatusChange, onOpenBIM }: {
+  wo: WorkOrder
+  onStatusChange: (id: string, s: WorkOrder['status']) => void
+  onOpenBIM?: (device: Device) => void
+}) {
+  const typeCol     = TYPE_COLORS[wo.woType]
+  const priCol      = PRI_COLORS[wo.priority]
+  const stCol       = STATUS_COLORS[wo.status]
+  const linkedDevice = DEVICES.find(d => d.id === wo.assetId)
 
   const nextStatus: Record<WorkOrder['status'], WorkOrder['status'] | null> = {
     pending: 'in_progress', in_progress: 'completed', completed: null,
@@ -511,6 +520,13 @@ function WOCard({ wo, onStatusChange }: { wo: WorkOrder; onStatusChange: (id: st
             border: '1px solid rgba(255,255,255,0.12)', borderRadius: 3,
             color: 'rgba(255,255,255,0.5)', fontSize: 9, cursor: 'pointer',
           }}>→ {nextLabel[wo.status]}</button>
+        )}
+        {linkedDevice && onOpenBIM && (
+          <button onClick={() => onOpenBIM(linkedDevice)} style={{
+            padding: '2px 10px', background: 'rgba(16,185,129,0.1)',
+            border: '1px solid rgba(16,185,129,0.3)', borderRadius: 3,
+            color: '#10b981', fontSize: 9, fontWeight: 600, cursor: 'pointer',
+          }}>🏢 BIM 定位</button>
         )}
       </div>
     </div>

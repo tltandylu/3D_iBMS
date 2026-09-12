@@ -8,6 +8,8 @@ interface Props {
   onClose: () => void
   onDeviceClick?: (device: Device) => void
   onAlertClick?: (alert: Alert) => void
+  onWorkOrderClick?: () => void
+  onBIMClick?: (device: Device) => void
 }
 
 type ResultKind = 'device' | 'alert' | 'workorder'
@@ -28,7 +30,7 @@ const WO_TYPE_COLORS: Record<string, string> = { EM: '#ef4444', CM: '#f97316', P
 const KIND_LABELS: Record<ResultKind, string> = { device: '設備', alert: '告警', workorder: '工單' }
 const KIND_ICONS: Record<ResultKind, string> = { device: '⚙', alert: '⚠', workorder: '🔧' }
 
-export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: Props) {
+export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick, onWorkOrderClick, onBIMClick }: Props) {
   const [query, setQuery] = useState('')
   const [cursor, setCursor] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -128,9 +130,11 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
       onDeviceClick?.(item.data as Device)
     } else if (item.kind === 'alert') {
       onAlertClick?.(item.data as Alert)
+    } else if (item.kind === 'workorder') {
+      onWorkOrderClick?.()
     }
     onClose()
-  }, [onDeviceClick, onAlertClick, onClose])
+  }, [onDeviceClick, onAlertClick, onWorkOrderClick, onClose])
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Escape') { onClose(); return }
@@ -299,6 +303,23 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick }: P
                             background: `${item.badgeColor}1a`, color: item.badgeColor,
                             border: `1px solid ${item.badgeColor}3a`,
                           }}>{item.badge}</span>
+                        )}
+                        {isSelected && item.kind === 'device' && onBIMClick && (
+                          <button
+                            onClick={e => {
+                              e.stopPropagation()
+                              onBIMClick(item.data as Device)
+                              onClose()
+                            }}
+                            title="在 BIM 模型中定位"
+                            style={{
+                              padding: '3px 8px', borderRadius: 4, fontSize: 9, fontWeight: 600,
+                              background: 'rgba(6,182,212,0.15)',
+                              border: '1px solid rgba(6,182,212,0.4)',
+                              color: '#06b6d4', cursor: 'pointer', flexShrink: 0,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >🏢 BIM 定位</button>
                         )}
                         {isSelected && (
                           <span style={{ color: '#06b6d4', fontSize: 11, flexShrink: 0, opacity: 0.7 }}>↵</span>

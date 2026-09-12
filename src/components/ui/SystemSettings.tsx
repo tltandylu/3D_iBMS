@@ -1,8 +1,10 @@
-﻿import { useState, useCallback } from 'react'
+﻿import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SystemSettingsData, SceneSettings, AlertSettings, ConnectionSettings, AppearanceSettings, AISettingsData, EnergySettings, SkySettings, SkyPreset, WebhookSettings } from '../../hooks/useSystemSettings'
-import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
+import { DEFAULT_SYSTEM_SETTINGS, getSystemSettings } from '../../hooks/useSystemSettings'
+import { getJwtToken } from '../../hooks/useAuth'
 import { LS_API_KEY, LS_MODEL, DEFAULT_MODEL, getStoredApiKey } from './ClaudeSettings'
+import { usePushNotifications } from '../../hooks/usePushNotifications'
 
 const MODELS = [
   { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5  (快速 · 低成本)' },
@@ -10,7 +12,7 @@ const MODELS = [
   { id: 'claude-opus-4-7',           label: 'Opus 4.7   (最強 · 最慢)' },
 ]
 
-type TabId = 'scene' | 'alert' | 'connection' | 'ai' | 'appearance' | 'energy' | 'sky' | 'webhook'
+type TabId = 'scene' | 'alert' | 'connection' | 'ai' | 'appearance' | 'energy' | 'sky' | 'webhook' | 'report'
 
 const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'scene',      icon: '🧊', label: '3D 場景' },
@@ -21,6 +23,7 @@ const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'energy',     icon: '⚡', label: '能源管理' },
   { id: 'sky',        icon: '🌌', label: 'BIM 天空' },
   { id: 'webhook',    icon: '🔗', label: 'Webhook' },
+  { id: 'report',     icon: '📊', label: '排程報表' },
 ]
 
 interface Props {
@@ -204,6 +207,42 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
     update({ desktopNotify: perm === 'granted' })
   }
 
+  const wsUrl = getSystemSettings().connection.wsUrl
+  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const push = usePushNotifications(restBase)
+
+  // Email SMTP 狀態
+  const [emailStatus, setEmailStatus] = useState<{ configured: boolean; smtp_host: string | null; recipients: string[] } | null>(null)
+  const [emailTesting, setEmailTesting] = useState(false)
+  const [emailMsg, setEmailMsg] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    const token = getJwtToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    fetch(`${restBase}/api/notifications/email-status`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setEmailStatus(d as { configured: boolean; smtp_host: string | null; recipients: string[] }))
+      .catch(() => {/* backend not available */})
+  }, [restBase])
+
+  const sendTestEmail = async () => {
+    setEmailTesting(true)
+    setEmailMsg(null)
+    try {
+      const token = getJwtToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(`${restBase}/api/notifications/test-email`, { method: 'POST', headers })
+      const data = await res.json() as { ok: boolean; message: string }
+      setEmailMsg({ ok: data.ok, text: data.message })
+    } catch {
+      setEmailMsg({ ok: false, text: '無法連線至後端' })
+    } finally {
+      setEmailTesting(false)
+    }
+  }
+
   const SEV_COLORS: Record<string, string> = {
     CRITICAL: '#ef4444', ALARM: '#f97316', WARNING: '#f59e0b', INFO: '#06b6d4',
   }
@@ -214,7 +253,7 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
       <Row label="CRITICAL 告警音效" hint="新 CRITICAL 告警出現時播放提示音">
         <Toggle value={s.soundEnabled} onChange={v => update({ soundEnabled: v })} />
       </Row>
-      <Row label="桌面推播通知" hint="需要瀏覽器授權才能啟用">
+      <Row label="前景桌面通知" hint="頁面開啟時新 CRITICAL/ALARM 告警自動彈窗">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {s.desktopNotify
             ? <span style={{ color: '#10b981', fontSize: 10 }}>● 已授權</span>
@@ -232,6 +271,81 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
             )
           }
           <Toggle value={s.desktopNotify} onChange={v => update({ desktopNotify: v })} />
+        </div>
+      </Row>
+
+      <Row label="背景 Web Push" hint={push.isSupported ? '關閉頁面後仍可收到 CRITICAL/ALARM 推播' : '此瀏覽器不支援 Web Push'}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {push.error && (
+            <span style={{ color: '#f87171', fontSize: 10 }}>{push.error}</span>
+          )}
+          {push.isSupported && !push.isLoading && (
+            push.isSubscribed
+              ? <span style={{ color: '#10b981', fontSize: 10 }}>● 已訂閱</span>
+              : null
+          )}
+          {push.isLoading && (
+            <span style={{ color: '#94a3b8', fontSize: 10 }}>處理中…</span>
+          )}
+          {push.isSupported && (
+            <button
+              disabled={push.isLoading}
+              onClick={() => push.isSubscribed ? push.unsubscribe() : push.subscribe()}
+              style={{
+                padding: '3px 10px', fontSize: 10,
+                cursor: push.isLoading ? 'default' : 'pointer',
+                opacity: push.isLoading ? 0.5 : 1,
+                background: push.isSubscribed ? 'rgba(239,68,68,0.12)' : 'rgba(6,182,212,0.12)',
+                border: `1px solid ${push.isSubscribed ? 'rgba(239,68,68,0.3)' : 'rgba(6,182,212,0.3)'}`,
+                borderRadius: 4,
+                color: push.isSubscribed ? '#fca5a5' : '#67e8f9',
+              }}
+            >
+              {push.isSubscribed ? '取消訂閱' : '訂閱推播'}
+            </button>
+          )}
+        </div>
+      </Row>
+
+      <GroupLabel>Email SMTP 告警</GroupLabel>
+      <Row label="Email 通知開關" hint="CRITICAL / ALARM 告警自動發送電子郵件（需後端 SMTP 設定）">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {emailStatus !== null && (
+            emailStatus.configured
+              ? <span style={{ color: '#10b981', fontSize: 10 }}>● SMTP 已設定</span>
+              : <span style={{ color: '#f59e0b', fontSize: 10 }}>⚠ SMTP 未設定</span>
+          )}
+          <Toggle value={s.emailNotify} onChange={v => update({ emailNotify: v })} />
+        </div>
+      </Row>
+      {emailStatus?.configured && (
+        <Row label="收件人" hint="後端 SMTP_TO 環境變數">
+          <span style={{ color: '#94a3b8', fontSize: 11 }}>
+            {emailStatus.recipients.join(', ') || '—'}
+          </span>
+        </Row>
+      )}
+      <Row label="發送測試郵件" hint="Admin 專用：驗證 SMTP 設定是否正確">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {emailMsg && (
+            <span style={{ color: emailMsg.ok ? '#10b981' : '#f87171', fontSize: 10 }}>
+              {emailMsg.text}
+            </span>
+          )}
+          <button
+            disabled={emailTesting || !emailStatus?.configured}
+            onClick={sendTestEmail}
+            style={{
+              padding: '3px 10px', fontSize: 10,
+              cursor: (emailTesting || !emailStatus?.configured) ? 'default' : 'pointer',
+              opacity: (emailTesting || !emailStatus?.configured) ? 0.45 : 1,
+              background: 'rgba(6,182,212,0.12)',
+              border: '1px solid rgba(6,182,212,0.3)',
+              borderRadius: 4, color: '#67e8f9',
+            }}
+          >
+            {emailTesting ? '發送中…' : '發送測試'}
+          </button>
         </div>
       </Row>
 
@@ -733,18 +847,64 @@ function SkyPage({ s, update }: { s: SkySettings; update: (p: Partial<SkySetting
 function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<WebhookSettings>) => void }) {
   const [testState, setTestState] = useState<'idle' | 'sending' | 'ok' | 'fail'>('idle')
   const [testMsg,   setTestMsg]   = useState('')
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'ok' | 'fail'>('idle')
+  const [lastStatus, setLastStatus] = useState<{ at: string | null; status: string | null }>({ at: null, status: null })
+
+  const wsUrl    = getSystemSettings().connection.wsUrl
+  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+
+  // 載入後端 Webhook 設定
+  useEffect(() => {
+    const token = getJwtToken()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    fetch(`${restBase}/api/webhook/config`, { headers })
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { enabled: boolean; url: string; min_severity: string; cooldown_minutes: number; last_triggered_at: string | null; last_status: string | null } | null) => {
+        if (!d) return
+        update({
+          enabled:         d.enabled,
+          url:             d.url,
+          minSeverity:     d.min_severity as WebhookSettings['minSeverity'],
+          cooldownMinutes: d.cooldown_minutes,
+        })
+        setLastStatus({ at: d.last_triggered_at, status: d.last_status })
+      })
+      .catch(() => {/* backend not available */})
+  }, [restBase])
+
+  const saveToBackend = async () => {
+    setSaveState('saving')
+    try {
+      const token = getJwtToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res = await fetch(`${restBase}/api/webhook/config`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          enabled: s.enabled, url: s.url,
+          min_severity: s.minSeverity, cooldown_minutes: s.cooldownMinutes,
+        }),
+      })
+      setSaveState(res.ok ? 'ok' : 'fail')
+    } catch {
+      setSaveState('fail')
+    }
+    setTimeout(() => setSaveState('idle'), 2500)
+  }
 
   const testWebhook = async () => {
     if (!s.url) { setTestMsg('請先填入 Webhook URL'); setTestState('fail'); return }
     setTestState('sending')
     try {
-      await fetch(s.url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ test: true, source: '3D監控管理平台', timestamp: new Date().toISOString() }),
-        mode: 'no-cors',
-      })
-      setTestState('ok'); setTestMsg('已送出測試訊息（no-cors）')
+      const token = getJwtToken()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) headers['Authorization'] = `Bearer ${token}`
+      const res  = await fetch(`${restBase}/api/webhook/test`, { method: 'POST', headers })
+      const data = await res.json() as { ok: boolean; message: string }
+      setTestState(data.ok ? 'ok' : 'fail')
+      setTestMsg(data.message)
     } catch (e) {
       setTestState('fail'); setTestMsg(String(e))
     }
@@ -803,6 +963,34 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
         />
       </Row>
 
+      <GroupLabel>後端設定同步</GroupLabel>
+      <Row label="儲存至後端" hint="Webhook 設定持久化到資料庫，伺服器重啟後仍有效">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {saveState === 'ok'   && <span style={{ color: '#10b981', fontSize: 10 }}>✓ 已儲存</span>}
+          {saveState === 'fail' && <span style={{ color: '#f87171', fontSize: 10 }}>✗ 儲存失敗</span>}
+          <button
+            onClick={saveToBackend}
+            disabled={saveState === 'saving'}
+            style={{
+              padding: '3px 10px', fontSize: 10,
+              cursor: saveState === 'saving' ? 'default' : 'pointer',
+              opacity: saveState === 'saving' ? 0.5 : 1,
+              background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)',
+              borderRadius: 4, color: '#67e8f9',
+            }}
+          >
+            {saveState === 'saving' ? '儲存中…' : '儲存'}
+          </button>
+        </div>
+      </Row>
+      {lastStatus.at && (
+        <Row label="最後推送" hint="後端最近一次 Webhook 觸發記錄">
+          <span style={{ fontSize: 10, color: lastStatus.status === 'ok' ? '#10b981' : '#f87171' }}>
+            {lastStatus.status === 'ok' ? '✓ 成功' : '✗ 失敗'} · {lastStatus.at.slice(0, 19).replace('T', ' ')}
+          </span>
+        </Row>
+      )}
+
       <GroupLabel>測試</GroupLabel>
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', paddingTop: 4 }}>
         <button
@@ -814,7 +1002,7 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
             borderRadius: 4, color: '#67e8f9',
           }}
         >
-          {testState === 'sending' ? '傳送中…' : '傳送測試訊息'}
+          {testState === 'sending' ? '傳送中…' : '後端發送測試'}
         </button>
         {testMsg && (
           <span style={{ color: testState === 'ok' ? '#10b981' : '#f87171', fontSize: 10 }}>
@@ -822,6 +1010,167 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
           </span>
         )}
       </div>
+    </>
+  )
+}
+
+// ── Report Schedule Page ────────────────────────────────────
+
+const WEEKDAY_LABELS = ['週一','週二','週三','週四','週五','週六','週日']
+
+function ReportPage() {
+  const wsUrl    = getSystemSettings().connection.wsUrl
+  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+
+  const [cfg, setCfg] = useState<{
+    enabled: boolean; frequency: 'daily' | 'weekly'; weekday: number
+    hour: number; recipients: string
+    last_sent_at: string | null; last_status: string | null
+    smtp_configured: boolean
+  } | null>(null)
+  const [saving,   setSaving]   = useState(false)
+  const [sending,  setSending]  = useState(false)
+  const [msg,      setMsg]      = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    const token = getJwtToken()
+    const h: Record<string, string> = {}
+    if (token) h['Authorization'] = `Bearer ${token}`
+    fetch(`${restBase}/api/reports/schedule`, { headers: h })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setCfg(d as typeof cfg))
+      .catch(() => {})
+  }, [restBase])
+
+  const update = (patch: Partial<NonNullable<typeof cfg>>) =>
+    setCfg(prev => prev ? { ...prev, ...patch } : prev)
+
+  const save = async () => {
+    if (!cfg) return
+    setSaving(true); setMsg(null)
+    try {
+      const token = getJwtToken()
+      const h: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) h['Authorization'] = `Bearer ${token}`
+      const res = await fetch(`${restBase}/api/reports/schedule`, {
+        method: 'PUT', headers: h,
+        body: JSON.stringify({
+          enabled: cfg.enabled, frequency: cfg.frequency,
+          weekday: cfg.weekday, hour: cfg.hour, recipients: cfg.recipients,
+        }),
+      })
+      setMsg({ ok: res.ok, text: res.ok ? '排程設定已儲存' : '儲存失敗' })
+    } catch { setMsg({ ok: false, text: '無法連線至後端' }) }
+    setSaving(false)
+  }
+
+  const sendNow = async () => {
+    setSending(true); setMsg(null)
+    try {
+      const token = getJwtToken()
+      const h: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (token) h['Authorization'] = `Bearer ${token}`
+      const res  = await fetch(`${restBase}/api/reports/send-now`, { method: 'POST', headers: h })
+      const data = await res.json() as { ok: boolean; message: string }
+      setMsg({ ok: data.ok, text: data.message })
+    } catch { setMsg({ ok: false, text: '無法連線至後端' }) }
+    setSending(false)
+  }
+
+  if (!cfg) return (
+    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 11, padding: '24px 0', textAlign: 'center' }}>
+      載入中…（需後端連線）
+    </div>
+  )
+
+  return (
+    <>
+      <div style={{ padding: '8px 12px', marginBottom: 12, background: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.2)', borderRadius: 6, color: 'rgba(255,255,255,0.78)', fontSize: 10, lineHeight: 1.7 }}>
+        💡 在指定時間自動發送 HTML 格式的 KPI 日報至指定收件人（需 SMTP 設定）。
+      </div>
+
+      {!cfg.smtp_configured && (
+        <div style={{ padding: '8px 12px', marginBottom: 12, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 6, color: '#fcd34d', fontSize: 10 }}>
+          ⚠ SMTP 尚未設定，請先在「告警通知」頁面確認 Email 設定。
+        </div>
+      )}
+
+      <GroupLabel>排程設定</GroupLabel>
+      <Row label="啟用排程報表" hint="在指定時間自動寄送 KPI 摘要郵件">
+        <Toggle value={cfg.enabled} onChange={v => update({ enabled: v })} />
+      </Row>
+      <Row label="頻率">
+        <RadioGroup
+          value={cfg.frequency}
+          options={[
+            { value: 'daily',  label: '每日' },
+            { value: 'weekly', label: '每週' },
+          ]}
+          onChange={v => update({ frequency: v as 'daily' | 'weekly' })}
+        />
+      </Row>
+      {cfg.frequency === 'weekly' && (
+        <Row label="星期幾">
+          <RadioGroup
+            value={String(cfg.weekday) as never}
+            options={WEEKDAY_LABELS.map((l, i) => ({ value: String(i), label: l }))}
+            onChange={v => update({ weekday: Number(v) })}
+          />
+        </Row>
+      )}
+      <Row label="發送時間（整點）" hint="0–23，例如 8 = 早上 8:00">
+        <RadioGroup
+          value={String(cfg.hour) as never}
+          options={[
+            { value: '6',  label: '06:00' },
+            { value: '8',  label: '08:00' },
+            { value: '9',  label: '09:00' },
+            { value: '18', label: '18:00' },
+          ]}
+          onChange={v => update({ hour: Number(v) })}
+        />
+      </Row>
+
+      <GroupLabel>收件人</GroupLabel>
+      <Row label="額外收件人" hint="逗號分隔；空白則使用 SMTP_TO 環境變數">
+        <textarea
+          value={cfg.recipients}
+          onChange={e => update({ recipients: e.target.value })}
+          placeholder="ops@company.com, manager@company.com"
+          rows={2}
+          style={{
+            width: 230, padding: '4px 8px', fontSize: 10, resize: 'vertical',
+            background: 'rgba(255,255,255,0.07)',
+            border: '1px solid rgba(255,255,255,0.15)',
+            borderRadius: 4, color: '#e2e8f0', outline: 'none', fontFamily: 'inherit',
+          }}
+        />
+      </Row>
+
+      <GroupLabel>操作</GroupLabel>
+      <Row label="儲存設定">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {msg && <span style={{ color: msg.ok ? '#10b981' : '#f87171', fontSize: 10 }}>{msg.text}</span>}
+          <button onClick={save} disabled={saving}
+            style={{ padding: '3px 10px', fontSize: 10, cursor: saving ? 'default' : 'pointer', opacity: saving ? 0.5 : 1, background: 'rgba(6,182,212,0.12)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: 4, color: '#67e8f9' }}>
+            {saving ? '儲存中…' : '儲存'}
+          </button>
+        </div>
+      </Row>
+      <Row label="立即發送" hint="Admin 專用：不受排程限制，立即發送一次報表">
+        <button onClick={sendNow} disabled={sending || !cfg.smtp_configured}
+          style={{ padding: '3px 10px', fontSize: 10, cursor: (sending || !cfg.smtp_configured) ? 'default' : 'pointer', opacity: (sending || !cfg.smtp_configured) ? 0.45 : 1, background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)', borderRadius: 4, color: '#6ee7b7' }}>
+          {sending ? '發送中…' : '立即發送報表'}
+        </button>
+      </Row>
+
+      {cfg.last_sent_at && (
+        <Row label="最後發送">
+          <span style={{ fontSize: 10, color: cfg.last_status === 'ok' ? '#10b981' : '#f87171' }}>
+            {cfg.last_status === 'ok' ? '✓ 成功' : '✗ 失敗'} · {cfg.last_sent_at.slice(0, 16).replace('T', ' ')}
+          </span>
+        </Row>
+      )}
     </>
   )
 }
@@ -949,6 +1298,7 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
                 {activeTab === 'energy'     && <EnergyPage     s={settings.energy}     update={updateSection('energy')}     />}
                 {activeTab === 'sky'        && <SkyPage        s={settings.sky}        update={updateSection('sky')}        />}
                 {activeTab === 'webhook'    && <WebhookPage    s={settings.webhook}    update={updateSection('webhook')}    />}
+                {activeTab === 'report'     && <ReportPage />}
               </motion.div>
             </AnimatePresence>
           </div>

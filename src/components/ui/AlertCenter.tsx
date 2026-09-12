@@ -1,11 +1,13 @@
 ﻿import { useState, useMemo } from 'react'
+import { downloadCSV } from '../../utils/csvExport'
 import ReactECharts from 'echarts-for-react'
-import type { Alert } from '../../types'
-import { BUILDINGS } from '../../data/mockData'
+import type { Alert, Device } from '../../types'
+import { BUILDINGS, DEVICES } from '../../data/mockData'
 
 interface Props {
   alerts: Alert[]
   onAcknowledge?: (id: string) => void
+  onOpenBIM?: (device: Device) => void
   onClose: () => void
 }
 
@@ -25,7 +27,7 @@ function fmtAgo(iso: string) {
   return `${Math.floor(m / 1440)}天前`
 }
 
-export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
+export function AlertCenter({ alerts, onAcknowledge, onOpenBIM, onClose }: Props) {
   const [filterSev,   setFilterSev]   = useState<FilterSev>('all')
   const [filterStat,  setFilterStat]  = useState<FilterStat>('open')
   const [filterBldg,  setFilterBldg]  = useState('all')
@@ -184,6 +186,19 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
           }}>✓ 批次確認（{filtered.filter(a => a.status === 'open').length}）</button>
         )}
 
+        <button
+          onClick={() => downloadCSV(
+            `alerts_${new Date().toISOString().slice(0,10)}.csv`,
+            ['告警ID', '設備名稱', '標題', '描述', '嚴重度', '狀態', '發生時間', '樓層', '棟別'],
+            filtered.map(a => [a.id, a.assetName, a.title, a.description ?? '', a.severity, a.status, a.occurredAt, a.floor, a.buildingId]),
+          )}
+          style={{
+            padding: '5px 12px', background: 'rgba(16,185,129,0.08)',
+            border: '1px solid rgba(16,185,129,0.25)', borderRadius: 5,
+            color: '#6ee7b7', fontSize: 10, cursor: 'pointer',
+          }}
+        >⬇ 匯出 CSV</button>
+
         <button onClick={onClose} style={{
           marginLeft: stats.open > 0 ? 0 : 'auto',
           padding: '5px 14px', background: 'rgba(255,255,255,0.04)',
@@ -244,6 +259,7 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
                 expanded={expanded === alert.id}
                 onToggle={() => setExpanded(expanded === alert.id ? null : alert.id)}
                 onAck={() => handleAck(alert.id)}
+                onOpenBIM={onOpenBIM}
               />
             ))}
           </div>
@@ -290,12 +306,14 @@ export function AlertCenter({ alerts, onAcknowledge, onClose }: Props) {
   )
 }
 
-function AlertCard({ alert, expanded, onToggle, onAck }: {
+function AlertCard({ alert, expanded, onToggle, onAck, onOpenBIM }: {
   alert: Alert & { status: Alert['status'] }
   expanded: boolean; onToggle: () => void; onAck: () => void
+  onOpenBIM?: (device: Device) => void
 }) {
   const sevCol  = SEV_COLORS[alert.severity]  ?? '#6b7280'
   const statCol = STAT_COLORS[alert.status]   ?? '#6b7280'
+  const linkedDevice = DEVICES.find(d => d.id === alert.assetId)
 
   return (
     <div style={{
@@ -321,6 +339,16 @@ function AlertCard({ alert, expanded, onToggle, onAck }: {
           <span style={{ marginLeft: 'auto', padding: '1px 6px', borderRadius: 3, fontSize: 8, background: `${statCol}18`, color: statCol, border: `1px solid ${statCol}30` }}>
             {STAT_LABELS[alert.status] ?? alert.status}
           </span>
+          {linkedDevice && onOpenBIM && (
+            <button
+              onClick={e => { e.stopPropagation(); onOpenBIM(linkedDevice) }}
+              style={{
+                padding: '2px 8px', borderRadius: 3, fontSize: 9, fontWeight: 600,
+                background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.3)',
+                color: '#10b981', cursor: 'pointer', flexShrink: 0,
+              }}
+            >🏢 BIM</button>
+          )}
           <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9 }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </div>
@@ -343,13 +371,22 @@ function AlertCard({ alert, expanded, onToggle, onAck }: {
               <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, lineHeight: 1.5 }}>{alert.aiActionSuggestion}</div>
             </div>
           )}
-          {alert.status === 'open' && (
-            <button onClick={e => { e.stopPropagation(); onAck() }} style={{
-              padding: '4px 12px', background: 'rgba(245,158,11,0.12)',
-              border: '1px solid rgba(245,158,11,0.35)', borderRadius: 3,
-              color: '#f59e0b', fontSize: 10, cursor: 'pointer', fontWeight: 600,
-            }}>✓ 確認告警</button>
-          )}
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            {alert.status === 'open' && (
+              <button onClick={e => { e.stopPropagation(); onAck() }} style={{
+                padding: '4px 12px', background: 'rgba(245,158,11,0.12)',
+                border: '1px solid rgba(245,158,11,0.35)', borderRadius: 3,
+                color: '#f59e0b', fontSize: 10, cursor: 'pointer', fontWeight: 600,
+              }}>✓ 確認告警</button>
+            )}
+            {linkedDevice && onOpenBIM && (
+              <button onClick={e => { e.stopPropagation(); onOpenBIM(linkedDevice) }} style={{
+                padding: '4px 12px', background: 'rgba(16,185,129,0.1)',
+                border: '1px solid rgba(16,185,129,0.3)', borderRadius: 3,
+                color: '#10b981', fontSize: 10, cursor: 'pointer', fontWeight: 600,
+              }}>🏢 BIM 定位</button>
+            )}
+          </div>
         </div>
       )}
     </div>

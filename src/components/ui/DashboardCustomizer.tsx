@@ -1,11 +1,14 @@
-﻿import { useState } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { DashboardSettings } from '../../hooks/useSystemSettings'
+import { getJwtToken } from '../../hooks/useAuth'
 
 interface Props {
   settings: DashboardSettings
   onUpdate: (patch: Partial<DashboardSettings>) => void
   onClose:  () => void
+  restBase?: string
+  backendConnected?: boolean
 }
 
 type Tab = 'left' | 'right' | 'kpi'
@@ -38,8 +41,38 @@ const KPI_SECTIONS: SectionDef[] = [
   { key: 'kpiShowMaintenance',  label: '維護績效',  icon: '🔧' },
 ]
 
-export function DashboardCustomizer({ settings: s, onUpdate, onClose }: Props) {
+export function DashboardCustomizer({ settings: s, onUpdate, onClose, restBase, backendConnected }: Props) {
   const [tab, setTab] = useState<Tab>('left')
+  const readyToSync = useRef(false)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // On mount: load preferences from backend
+  useEffect(() => {
+    if (!restBase || !backendConnected) { readyToSync.current = true; return }
+    const token = getJwtToken()
+    fetch(`${restBase}/api/users/me/preferences`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.ok ? r.json() as Promise<Record<string, unknown>> : null)
+      .then(data => { if (data && Object.keys(data).length > 0) onUpdate(data as Partial<DashboardSettings>) })
+      .catch(() => {})
+      .finally(() => { setTimeout(() => { readyToSync.current = true }, 50) })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Debounce-sync settings changes to backend
+  useEffect(() => {
+    if (!restBase || !backendConnected || !readyToSync.current) return
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      const token = getJwtToken()
+      fetch(`${restBase}/api/users/me/preferences`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ data: s }),
+      }).catch(() => {})
+    }, 800)
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+  }, [s, restBase, backendConnected]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (key: keyof DashboardSettings) => {
     onUpdate({ [key]: !s[key] } as Partial<DashboardSettings>)

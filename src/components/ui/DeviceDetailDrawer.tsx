@@ -1,11 +1,14 @@
 import { useEffect, useState, useRef, useMemo, type ReactNode } from 'react'
+import type { BindingForScene, PointMeta } from '../../hooks/usePointBindings'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
 import type { EChartsOption } from 'echarts'
-import type { Device, WorkOrder } from '../../types'
+import type { Alert, Device, WorkOrder } from '../../types'
 import { WORK_ORDERS } from '../../data/mockData'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import { getSystemSettings } from '../../hooks/useSystemSettings'
+import { getJwtToken } from '../../hooks/useAuth'
 
 // ── 確定性亂數 ────────────────────────────────────────────────
 function seededRng(seed: number) {
@@ -498,32 +501,113 @@ function Label({ children }: { children: ReactNode }) {
   )
 }
 
+// ── 統計分析型別 & 面板 ───────────────────────────────────────
+interface AnalyticsData {
+  data_points:      number
+  avg_power_kw:     number
+  max_power_kw:     number
+  min_power_kw:     number
+  power_trend:      'rising' | 'falling' | 'stable'
+  power_change_pct: number
+  peak_power_time:  string | null
+  avg_temperature:  number | null
+  max_temperature:  number | null
+  avg_ai_score:     number | null
+}
+
+function AnalyticsPanel({ data }: { data: AnalyticsData }) {
+  const trendIcon  = data.power_trend === 'rising' ? '↑' : data.power_trend === 'falling' ? '↓' : '→'
+  const trendColor = data.power_trend === 'rising' ? '#ef4444' : data.power_trend === 'falling' ? '#10b981' : '#94a3b8'
+  const trendLabel = data.power_trend === 'rising' ? '上升中' : data.power_trend === 'falling' ? '下降中' : '平穩'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 5 }}>
+        {([
+          { label: '平均功率', value: `${data.avg_power_kw} kW`, color: '#06b6d4' },
+          { label: '最高功率', value: `${data.max_power_kw} kW`, color: '#f59e0b' },
+          { label: '最低功率', value: `${data.min_power_kw} kW`, color: '#10b981' },
+        ] as const).map(({ label, value, color }) => (
+          <div key={label} style={{
+            padding: '7px 6px', background: `${color}0d`,
+            border: `1px solid ${color}22`, borderRadius: 5, textAlign: 'center',
+          }}>
+            <div style={{ color, fontSize: 11, fontWeight: 700, fontFamily: 'monospace', letterSpacing: '-0.02em' }}>{value}</div>
+            <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: 8, marginTop: 2 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 5 }}>
+        <div style={{
+          flex: 1, padding: '6px 10px', borderRadius: 5,
+          background: `${trendColor}0d`, border: `1px solid ${trendColor}28`,
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <span style={{ color: trendColor, fontSize: 20, fontWeight: 700, lineHeight: 1 }}>{trendIcon}</span>
+          <div>
+            <div style={{ color: trendColor, fontSize: 11, fontWeight: 700 }}>
+              {trendLabel} &nbsp;{Math.abs(data.power_change_pct).toFixed(1)}%
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 8 }}>功率趨勢（24h）</div>
+          </div>
+        </div>
+        {data.peak_power_time && (
+          <div style={{
+            padding: '6px 10px', borderRadius: 5, textAlign: 'center',
+            background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.2)',
+          }}>
+            <div style={{ color: '#f59e0b', fontSize: 12, fontWeight: 700 }}>{data.peak_power_time}</div>
+            <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 8 }}>峰值時刻</div>
+          </div>
+        )}
+        {data.avg_temperature !== null && (
+          <div style={{
+            padding: '6px 10px', borderRadius: 5, textAlign: 'center',
+            background: 'rgba(239,68,68,0.07)', border: '1px solid rgba(239,68,68,0.2)',
+          }}>
+            <div style={{ color: '#ef4444', fontSize: 12, fontWeight: 700 }}>{data.avg_temperature}°C</div>
+            <div style={{ color: 'rgba(255,255,255,0.38)', fontSize: 8 }}>均溫</div>
+          </div>
+        )}
+      </div>
+      <div style={{ color: 'rgba(255,255,255,0.22)', fontSize: 8, textAlign: 'right' }}>
+        {data.data_points} 個採樣點 · 過去 24 小時
+      </div>
+    </div>
+  )
+}
+
 // ── 主元件 Props ──────────────────────────────────────────────
 interface Props {
   device: Device | null
   onClose: () => void
+  alert?: Alert | null
+  onAcknowledge?: (id: string) => void
   onOpenBIM?: (device: Device) => void
   onFocus3D?: (device: Device) => void
   onPassport?: (device: Device) => void
   onControlDevice?: (id: string, cmd: 'restart' | 'emergency_stop') => Promise<{ok: boolean; message: string}>
   fetchHistory?: (id: string) => Promise<{time: string; power_kw: number; temperature?: number}[]>
   backendConnected?: boolean
+  bindings?: BindingForScene[]
+  points?: PointMeta[]
+  pointValues?: Record<string, number>
 }
 
 const STATUS_COLORS = { normal: '#10b981', warning: '#f59e0b', critical: '#ef4444', offline: '#6b7280' }
 const STATUS_LABELS = { normal: '正常運行', warning: '警示狀態', critical: '嚴重故障', offline: '通訊離線' }
 const LIFECYCLE_LABELS: Record<string, string> = { operational: '運行中', maintenance: '維護中', install: '安裝中', retire: '已退役' }
 
-type TabKey = 'overview' | 'twin' | 'history'
+type TabKey = 'overview' | 'twin' | 'history' | 'points'
 
 // ── DeviceDetailDrawer ────────────────────────────────────────
-export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPassport, onControlDevice, fetchHistory, backendConnected }: Props) {
+export function DeviceDetailDrawer({ device, onClose, alert, onAcknowledge, onOpenBIM, onFocus3D, onPassport, onControlDevice, fetchHistory, backendConnected, bindings = [], points = [], pointValues = {} }: Props) {
   const [tab, setTab]               = useState<TabKey>('overview')
   const [showCreateWO, setShowCreateWO] = useState(false)
   const [localWOs, setLocalWOs]     = useState<WorkOrder[]>([])
   const [confirmCmd, setConfirmCmd] = useState<{cmd: 'restart' | 'emergency_stop'; label: string} | null>(null)
   const [cmdResult, setCmdResult]   = useState<{ok: boolean; message: string} | null>(null)
-  const [historyData, setHistoryData] = useState<{power: number[]; temp: number[]}>({ power: [], temp: [] })
+  const [historyData,   setHistoryData]   = useState<{power: number[]; temp: number[]}>({ power: [], temp: [] })
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
 
   useEffect(() => {
     setTab('overview')
@@ -531,6 +615,7 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
     setShowCreateWO(false)
     setConfirmCmd(null)
     setCmdResult(null)
+    setAnalyticsData(null)
   }, [device?.id])
 
   useEffect(() => {
@@ -550,6 +635,18 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
         temp:  device.temperature ? genHistory(device.id + '_t', device.temperature) : [],
       })
     }
+  }, [device?.id, backendConnected])
+
+  useEffect(() => {
+    if (!device || !backendConnected) return
+    const restBase = getSystemSettings().connection.wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+    const token = getJwtToken()
+    fetch(`${restBase}/api/devices/${device.id}/analytics?hours=24`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.ok ? r.json() as Promise<AnalyticsData> : null)
+      .then(d => setAnalyticsData(d))
+      .catch(() => setAnalyticsData(null))
   }, [device?.id, backendConnected])
 
   useEffect(() => {
@@ -619,6 +716,48 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
               {device.aiScore !== undefined && <AiScoreBar score={device.aiScore} />}
             </div>
 
+            {/* ── 告警確認 Banner ── */}
+            {alert && alert.status === 'open' && (
+              <div style={{
+                margin: '0 12px 8px',
+                padding: '10px 12px',
+                background: 'rgba(239,68,68,0.08)',
+                border: '1px solid rgba(239,68,68,0.3)',
+                borderRadius: 6,
+                flexShrink: 0,
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                  <span style={{ color: '#ef4444', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em' }}>
+                    {alert.severity}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 10, fontWeight: 600, flex: 1 }}>
+                    {alert.title}
+                  </span>
+                </div>
+                {alert.description && (
+                  <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 9, lineHeight: 1.5, marginBottom: 8 }}>
+                    {alert.description}
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={() => { onAcknowledge?.(alert.id); onClose() }}
+                    style={{
+                      flex: 1, padding: '5px 0', borderRadius: 4, cursor: 'pointer', fontSize: 10, fontWeight: 700,
+                      background: 'rgba(239,68,68,0.18)', border: '1px solid rgba(239,68,68,0.45)', color: '#f87171',
+                    }}
+                  >✓ 確認告警</button>
+                  <button
+                    onClick={onClose}
+                    style={{
+                      flex: 1, padding: '5px 0', borderRadius: 4, cursor: 'pointer', fontSize: 10,
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.6)',
+                    }}
+                  >✕ 取消</button>
+                </div>
+              </div>
+            )}
+
             {/* ── Tab 列 ── */}
             <div style={{
               display: 'flex', flexShrink: 0,
@@ -629,6 +768,7 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
                 { key: 'overview' as TabKey, icon: '📋', label: '概覽' },
                 { key: 'twin'     as TabKey, icon: '🧬', label: '孿生診斷' },
                 { key: 'history'  as TabKey, icon: '🔧', label: `維修歷程 (${allWOs.length})` },
+                { key: 'points'   as TabKey, icon: '📡', label: `點位 (${bindings.filter(b => b.device_id === device?.id).length})` },
               ]).map(({ key, icon, label }) => {
                 const active = tab === key
                 const accent = STATUS_COLORS[device.status]
@@ -682,6 +822,12 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
                     )}
                   </div>
                 </Section>
+
+                {analyticsData && (
+                  <Section title="24h 統計摘要">
+                    <AnalyticsPanel data={analyticsData} />
+                  </Section>
+                )}
 
                 <Section title="設備資訊">
                   <InfoTable rows={[
@@ -855,6 +1001,52 @@ export function DeviceDetailDrawer({ device, onClose, onOpenBIM, onFocus3D, onPa
           </AnimatePresence>
         </>
       )}
+
+              {/* ── 點位 Tab ── */}
+              {tab === 'points' && device && (() => {
+                const devBindings = bindings.filter(b => b.device_id === device.id)
+                const pointMap = new Map<string, PointMeta>(points.map(p => [p.point_id, p]))
+                const PT_COLOR: Record<string, string> = { DI:'#10b981', DO:'#38bdf8', AI:'#f59e0b', AO:'#a78bfa' }
+                const MODE_LABEL: Record<string, string> = { value_panel:'數值', color:'顏色', control_panel:'控制' }
+                if (devBindings.length === 0) return (
+                  <div style={{ textAlign:'center', color:'rgba(255,255,255,0.3)', padding:40, fontSize:12 }}>
+                    此設備尚無點位綁定
+                  </div>
+                )
+                return devBindings.map(b => {
+                  const pt = pointMap.get(b.point_id)
+                  const val = pointValues[b.point_id] ?? 0
+                  let alarmed = false
+                  if (pt) {
+                    if (pt.point_type === 'DI' || pt.point_type === 'DO') {
+                      alarmed = pt.alarm_value !== null && val === Number(pt.alarm_value)
+                    } else {
+                      if (pt.max_value !== null && val > pt.max_value) alarmed = true
+                      if (pt.min_value !== null && val < pt.min_value) alarmed = true
+                    }
+                  }
+                  const valColor = alarmed ? b.alarm_color : b.normal_color
+                  const valStr = (pt?.point_type === 'DI' || pt?.point_type === 'DO')
+                    ? (val === 1 ? '● ON' : '○ OFF')
+                    : `${val.toFixed(1)}${pt?.unit ? ' ' + pt.unit : ''}`
+                  return (
+                    <div key={b.id} style={{ padding:'10px 12px', background:'rgba(255,255,255,0.03)', border:`1px solid ${valColor}28`, borderLeft:`3px solid ${valColor}`, borderRadius:6 }}>
+                      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+                        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                          <span style={{ padding:'1px 5px', borderRadius:4, fontSize:8, fontWeight:700, color: PT_COLOR[b.point_type] ?? '#94a3b8', background:`${PT_COLOR[b.point_type] ?? '#94a3b8'}18` }}>{b.point_type}</span>
+                          <span style={{ color:'rgba(255,255,255,0.7)', fontSize:11 }}>{pt?.point_name ?? b.point_id}</span>
+                        </div>
+                        <span style={{ padding:'1px 6px', borderRadius:3, fontSize:8, background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.45)' }}>{MODE_LABEL[b.display_mode] ?? b.display_mode}</span>
+                      </div>
+                      <div style={{ display:'flex', alignItems:'baseline', gap:6 }}>
+                        <span style={{ color: valColor, fontWeight:700, fontSize:16, fontFamily:'monospace' }}>{valStr}</span>
+                        {alarmed && <span style={{ color: b.alarm_color, fontSize:9, fontWeight:700 }}>⚠ 警報</span>}
+                      </div>
+                      <div style={{ color:'rgba(255,255,255,0.3)', fontSize:8, marginTop:3, fontFamily:'monospace' }}>{b.point_id}</div>
+                    </div>
+                  )
+                })
+              })()}
     </AnimatePresence>
   )
 }

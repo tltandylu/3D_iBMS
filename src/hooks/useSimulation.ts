@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { DEVICES, ALERTS, KPI_DATA } from '../data/mockData'
-import type { Device, Alert, KPIData, DeviceStatus, AlertSeverity } from '../types'
+import { DEVICES, ALERTS, KPI_DATA, WORK_ORDERS } from '../data/mockData'
+import type { Device, Alert, KPIData, WorkOrder, DeviceStatus, AlertSeverity } from '../types'
 
 // ── 輔助函式 ───────────────────────────────────────────────
 function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)) }
@@ -24,12 +24,21 @@ const RANDOM_ALERT_TEMPLATES = [
 ]
 
 // ── 主 Hook ────────────────────────────────────────────────
+// 確定性偽隨機（seed-based），用於歷史趨勢生成
+function seededRng(seed: number) {
+  let s = seed | 0
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 0xffffffff }
+}
+
 export function useSimulation() {
   const [devices, setDevices] = useState<Device[]>(() =>
     DEVICES.map(d => ({ ...d }))
   )
   const [alerts, setAlerts] = useState<Alert[]>(() =>
     ALERTS.map(a => ({ ...a }))
+  )
+  const [workOrders, setWorkOrders] = useState<WorkOrder[]>(() =>
+    WORK_ORDERS.map(w => ({ ...w }))
   )
   const [kpi, setKpi] = useState<KPIData>({ ...KPI_DATA })
   const [lastEvent, setLastEvent] = useState<string | null>(null)
@@ -174,7 +183,7 @@ export function useSimulation() {
     return () => clearInterval(id)
   }, [])
 
-  // ── 強制飛越某設備（供外部觸發 Fly-to） ──
+  // ── 告警確認 ──────────────────────────────────────────────
   const acknowledgeAlert = useCallback((alertId: string) => {
     setAlerts(prev => prev.map(a =>
       a.id === alertId ? { ...a, status: 'acknowledged' as const } : a
@@ -182,5 +191,88 @@ export function useSimulation() {
     setKpi(prev => ({ ...prev, openAlerts: Math.max(0, prev.openAlerts - 1) }))
   }, [])
 
-  return { devices, alerts, kpi, lastEvent, acknowledgeAlert }
+  // ── 遠端控制（SIM 模式：模擬重啟 / 緊急停機）─────────────────
+  const controlDevice = useCallback(async (
+    deviceId: string,
+    command: 'restart' | 'emergency_stop',
+  ): Promise<{ ok: boolean; message: string }> => {
+    if (command === 'emergency_stop') {
+      setDevices(prev => prev.map(d =>
+        d.id === deviceId ? { ...d, status: 'offline' as const } : d
+      ))
+      const dev = DEVICES.find(d => d.id === deviceId)
+      setLastEvent(`🔴 緊急停機：${dev?.assetCode ?? deviceId}`)
+      return { ok: true, message: '緊急停機指令已執行（SIM 模式）' }
+    }
+    // restart：先 offline，3 秒後恢復 normal
+    setDevices(prev => prev.map(d =>
+      d.id === deviceId ? { ...d, status: 'offline' as const } : d
+    ))
+    const dev = DEVICES.find(d => d.id === deviceId)
+    setLastEvent(`🔄 重啟指令已送出：${dev?.assetCode ?? deviceId}`)
+    setTimeout(() => {
+      setDevices(prev => prev.map(d =>
+        d.id === deviceId ? { ...d, status: 'normal' as const } : d
+      ))
+      setLastEvent(`✅ ${dev?.assetCode ?? deviceId} 重啟完成`)
+    }, 3000)
+    return { ok: true, message: '重啟指令已送出，3 秒後恢復上線（SIM 模式）' }
+  }, [])
+
+  // ── 新增工單 ───────────────────────────────────────────────
+  const createWorkOrder = useCallback(async (
+    wo: Omit<WorkOrder, 'id' | 'woNumber' | 'status' | 'createdAt'>
+  ) => {
+    const ts = Date.now()
+    const newWO: WorkOrder = {
+      ...wo,
+      id:        `wo-sim-${ts}`,
+      woNumber:  `WO-SIM-${String(ts).slice(-6)}`,
+      status:    'pending',
+      createdAt: new Date().toISOString(),
+    }
+    setWorkOrders(prev => [newWO, ...prev])
+    setKpi(prev => ({ ...prev, pendingWorkOrders: prev.pendingWorkOrders + 1 }))
+    setLastEvent(`📋 新工單建立：${newWO.woNumber} — ${newWO.title}`)
+  }, [])
+
+  // ── 更新工單狀態 ───────────────────────────────────────────
+  const updateWorkOrderStatus = useCallback(async (
+    id: string, status: WorkOrder['status']
+  ) => {
+    setWorkOrders(prev => prev.map(w => w.id === id ? { ...w, status } : w))
+    setKpi(prev => {
+      const delta = status === 'in_progress' ? { pendingWorkOrders: Math.max(0, prev.pendingWorkOrders - 1), inProgressWorkOrders: prev.inProgressWorkOrders + 1 }
+        : status === 'completed'   ? { inProgressWorkOrders: Math.max(0, prev.inProgressWorkOrders - 1), todayCompletedWorkOrders: prev.todayCompletedWorkOrders + 1 }
+        : {}
+      return { ...prev, ...delta }
+    })
+  }, [])
+
+  // ── 設備歷史趨勢（SIM 模式：依設備 ID 生成 24h 確定性資料）──
+  const fetchDeviceHistory = useCallback(async (
+    deviceId: string
+  ): Promise<{ time: string; power_kw: number; temperature?: number }[]> => {
+    const dev  = DEVICES.find(d => d.id === deviceId)
+    const base = Math.abs(dev?.currentPowerKw ?? 50)
+    const temp = dev?.temperature
+    const rng  = seededRng(deviceId.split('').reduce((a, c) => a + c.charCodeAt(0), 0))
+    const now  = Date.now()
+    return Array.from({ length: 24 }, (_, i) => {
+      const t   = new Date(now - (23 - i) * 3600000)
+      const hour = t.getHours()
+      const curve = 0.65 + 0.35 * Math.sin((hour - 6) * Math.PI / 12)
+      const pw  = Math.max(base * 0.2, base * curve * (0.88 + rng() * 0.24))
+      return {
+        time:        t.toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+        power_kw:    Math.round(pw * 10) / 10,
+        temperature: temp != null ? Math.round((temp + (rng() - 0.5) * 4) * 10) / 10 : undefined,
+      }
+    })
+  }, [])
+
+  return {
+    devices, alerts, workOrders, kpi, lastEvent,
+    acknowledgeAlert, controlDevice, createWorkOrder, updateWorkOrderStatus, fetchDeviceHistory,
+  }
 }

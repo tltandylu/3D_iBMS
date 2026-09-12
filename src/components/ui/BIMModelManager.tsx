@@ -136,12 +136,14 @@ export function AddEditModal({
   const [dragOver,   setDragOver]   = useState(false)
 
   const handleFile = (file: File | null | undefined) => {
-    if (!file || !file.name.toLowerCase().endsWith('.ifc')) return
+    if (!file) return
+    const ext = file.name.toLowerCase()
+    if (!ext.endsWith('.ifc') && !ext.endsWith('.gltf') && !ext.endsWith('.glb')) return
     const blobUrl = URL.createObjectURL(file)
     setUrl(blobUrl)
     setFileName(file.name)
     setFileSize(file.size)
-    if (!label.trim()) setLabel(file.name.replace(/\.ifc$/i, ''))
+    if (!label.trim()) setLabel(file.name.replace(/\.(ifc|gltf|glb)$/i, ''))
   }
 
   const switchMode = (m: UploadMode) => {
@@ -243,7 +245,7 @@ export function AddEditModal({
             >
               <input
                 type="file"
-                accept=".ifc"
+                accept=".ifc,.gltf,.glb"
                 style={{ display: 'none' }}
                 onChange={e => handleFile(e.target.files?.[0])}
               />
@@ -261,10 +263,10 @@ export function AddEditModal({
                 <>
                   <span style={{ fontSize: 24, opacity: 0.35 }}>📂</span>
                   <span style={{ color: 'rgba(255,255,255,0.78)', fontSize: 11 }}>
-                    拖曳或點擊選擇 .ifc 檔案
+                    拖曳或點擊選擇模型檔案
                   </span>
                   <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9 }}>
-                    支援任意大小 IFC 2x3 / IFC 4
+                    支援 IFC 2x3/4 · GLTF · GLB
                   </span>
                 </>
               )}
@@ -272,16 +274,16 @@ export function AddEditModal({
           </div>
         )}
 
-        {/* IFC 來源：URL 路徑 */}
+        {/* 模型來源：URL 路徑 */}
         {mode === 'url' && (
           <div style={{ marginBottom: 14 }}>
             <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: 9, letterSpacing: '0.08em', marginBottom: 5 }}>
-              IFC 檔案路徑
+              模型檔案路徑
             </div>
             <input
               value={url}
               onChange={e => setUrl(e.target.value)}
-              placeholder="/ifc/building.ifc"
+              placeholder="/ifc/building.ifc 或 /models/building.glb"
               style={inputStyle}
             />
           </div>

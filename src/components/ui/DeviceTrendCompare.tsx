@@ -59,10 +59,15 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
 
     const load = async () => {
       for (const dev of selectedDevices) {
-        if (metric === 'power' && fetchHistory && backendConnected) {
+        if (fetchHistory && backendConnected && (metric === 'power' || metric === 'temperature')) {
           try {
             const data = await fetchHistory(dev.id)
-            if (!cancelled) newMap.set(dev.id, data.slice(-rangeOpt.points).map(d => d.power_kw))
+            if (!cancelled) {
+              newMap.set(dev.id, metric === 'power'
+                ? data.slice(-rangeOpt.points).map(d => d.power_kw)
+                : data.slice(-rangeOpt.points).map(d => d.temperature ?? dev.temperature ?? 25)
+              )
+            }
             continue
           } catch { /* fall through */ }
         }
@@ -167,6 +172,12 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
             </button>
           ))}
         </div>
+        {!backendConnected && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 9px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 4 }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
+            <span style={{ color: '#f59e0b', fontSize: 9, fontWeight: 600 }}>SIM 模式</span>
+          </div>
+        )}
         <button onClick={onClose} style={{ marginLeft: 'auto', padding: '5px 14px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 5, color: 'rgba(255,255,255,0.8)', fontSize: 11, cursor: 'pointer' }}>✕ 關閉</button>
       </div>
 
