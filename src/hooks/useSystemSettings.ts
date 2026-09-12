@@ -120,7 +120,7 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
     severityFilter: ['CRITICAL', 'ALARM', 'WARNING', 'INFO'],
   },
   connection: {
-    wsUrl: 'ws://localhost:8000/ws',
+    wsUrl: 'ws://localhost:8001/ws',
     forceMode: 'auto',
     reconnectIntervalSec: 3,
   },
@@ -179,6 +179,10 @@ export function getSystemSettings(): SystemSettingsData {
     const raw = localStorage.getItem(SETTINGS_LS_KEY)
     if (!raw) return DEFAULT_SYSTEM_SETTINGS
     const parsed = JSON.parse(raw) as Partial<SystemSettingsData>
+    // 舊設定遷移：後端已改跑 8001（8000 埠被其他服務佔用）
+    if (parsed.connection?.wsUrl === 'ws://localhost:8000/ws') {
+      parsed.connection = { ...parsed.connection, wsUrl: DEFAULT_SYSTEM_SETTINGS.connection.wsUrl }
+    }
     return {
       scene:      { ...DEFAULT_SYSTEM_SETTINGS.scene,      ...parsed.scene },
       alert:      { ...DEFAULT_SYSTEM_SETTINGS.alert,      ...parsed.alert },

@@ -1,6 +1,6 @@
 /**
  * useBackendWS — Phase 3
- * 連接後端 WebSocket (ws://localhost:8000/ws)
+ * 連接後端 WebSocket (ws://localhost:8001/ws)
  * 接收 snapshot + 增量更新；未連線時 fallback 到 useSimulation
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -13,7 +13,7 @@ const WS_URL        = _conn.wsUrl
 const RECONNECT_MS  = _conn.reconnectIntervalSec * 1000
 const FORCE_MOCK    = _conn.forceMode === 'mock'
 
-// REST base URL (same host, port 8000)
+// REST base URL (same host, port 8001)
 const REST_BASE = WS_URL.replace(/^ws/, 'http').replace('/ws', '')
 
 // ── snake_case → camelCase converters ─────────────────────────────────────
