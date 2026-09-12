@@ -126,3 +126,72 @@ export interface IFCBuildingGeom {
   indices: Uint32Array
   meshCount: number
 }
+
+// ── AMR / AGV 機器人即時追蹤（規格書 §4.2 遙測封包）─────────────────
+export type RobotState =
+  | 'IDLE' | 'RUNNING' | 'CHARGING' | 'BLOCKED' | 'ERROR' | 'OFFLINE'
+  | 'SIGNAL_LOST'   // 前端判定：超過心跳門檻未收到位姿報文（§8.2）
+
+export interface RobotPose {
+  x: number; y: number; z: number
+  yaw: number; pitch?: number; roll?: number
+}
+
+/** 後端 / 閘道推播的原始遙測封包（原生導航坐標系） */
+export interface RobotTelemetryPacket {
+  version?: string
+  msg_type?: string
+  device_id: string
+  device_name?: string
+  timestamp: number
+  floor_id: string
+  model?: string
+  pose: RobotPose
+  motion?: { linear_velocity?: number; angular_velocity?: number }
+  status?: {
+    state?: RobotState
+    battery_pct?: number
+    alarm_level?: number
+    current_task_id?: string | null
+    target_station?: string | null
+    mileage_m?: number
+  }
+}
+
+/** 前端運行時狀態（含心跳判定與漂移統計） */
+export interface RobotRuntimeState {
+  id: string
+  name: string
+  model: string
+  floorId: string
+  pose: RobotPose          // 原生坐標，未套用校準矩陣
+  state: RobotState
+  battery: number
+  alarmLevel: number
+  taskId: string | null
+  targetStation: string | null
+  linearV: number
+  angularV: number
+  mileage: number
+  packetTs: number         // 封包時間戳（ms, Unix epoch）
+  lastUpdate: number       // 本地接收時間（performance.now()）
+  driftRejects: number     // 因位置跳躍被捨棄的幀數
+}
+
+/** 坐標校準 profile（規格書 §5，對應後端 calibration_profiles.json） */
+export interface RobotCalibrationProfile {
+  profile_id: string
+  name: string
+  site_id: string
+  axis_convention: 'ROS_ZUP' | 'THREE_YUP'
+  translation: number[]
+  yaw_deg: number
+  scale: number
+  rmse_m: number
+  anchors: { name: string; robot: number[]; world: number[] }[]
+  floor_elevations: Record<string, number>
+  matrix: number[]         // 16 元素 column-major，供 THREE.Matrix4.fromArray
+  updated_at?: string
+}
+
+export type RobotViewMode = 'global' | 'chase' | 'fpv'

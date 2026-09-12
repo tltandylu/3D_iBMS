@@ -34,6 +34,7 @@ from app.routers import shift_logs as shift_logs_router
 from app.routers import inspections as inspections_router
 from app.routers import spare_parts as spare_parts_router
 from app.routers import point_bindings as point_bindings_router
+from app.routers import robots as robots_router
 from app.push_service import load_or_generate_keys
 from app.db.engine import engine, AsyncSessionLocal
 from app.db.models import Base
@@ -142,7 +143,12 @@ async def lifespan(app: FastAPI):
     app.state.session_factory    = AsyncSessionLocal
     app.state.simulator          = sim
 
+    from app.robot_simulator import RobotFleet
+    robot_fleet = RobotFleet(manager, store)
+    app.state.robot_fleet        = robot_fleet
+
     sim_task = asyncio.create_task(sim.start())
+    robot_task = asyncio.create_task(robot_fleet.start())
 
     from app.scheduler import run_report_scheduler
     sched_task = asyncio.create_task(run_report_scheduler(app.state))
@@ -166,7 +172,7 @@ async def lifespan(app: FastAPI):
 
     yield  # ── 服務中 ──
 
-    for task in (sim_task, sched_task, persist_task):
+    for task in (sim_task, robot_task, sched_task, persist_task):
         task.cancel()
         try:
             await task
@@ -235,6 +241,7 @@ app.include_router(shift_logs_router.router)
 app.include_router(inspections_router.router)
 app.include_router(spare_parts_router.router)
 app.include_router(point_bindings_router.router)
+app.include_router(robots_router.router)
 
 
 @app.get("/api/health")

@@ -40,6 +40,7 @@ const AlertAnalyticsDashboard          = lazy(() => import('./components/ui/Aler
 const SparePartsManager                = lazy(() => import('./components/ui/SparePartsManager').then(m => ({ default: m.SparePartsManager })))
 const PointBindingManager              = lazy(() => import('./components/ui/PointBindingManager').then(m => ({ default: m.PointBindingManager })))
 const FloorPlanSettings                = lazy(() => import('./components/ui/FloorPlanSettings').then(m => ({ default: m.FloorPlanSettings })))
+const RobotFleetPanel                  = lazy(() => import('./components/ui/RobotFleetPanel').then(m => ({ default: m.RobotFleetPanel })))
 import { AIAssistant } from './components/ui/AIAssistant'
 import { FloorPlanMiniMap } from './components/ui/FloorPlanMiniMap'
 import { useSystemSettings } from './hooks/useSystemSettings'
@@ -48,6 +49,8 @@ import { useBackendWS } from './hooks/useBackendWS'
 import { useAlertRules } from './hooks/useAlertRules'
 import { useAuth } from './hooks/useAuth'
 import { usePointBindings } from './hooks/usePointBindings'
+import { useRobotCalibration, useRobotFleetSource } from './hooks/useRobotFleet'
+import type { RobotViewMode } from './types'
 import type { Feature, DemoUser } from './hooks/useAuth'
 import { LoginPage } from './components/ui/LoginPage'
 import { getStoredModel } from './components/ui/ClaudeSettings'
@@ -94,6 +97,9 @@ export default function App() {
   const { points: bindingPoints, bindings: deviceBindings } = usePointBindings(restBase, backendConnected)
   const { rules, addRule, updateRule, deleteRule, toggleRule, syntheticAlerts, backendSynced: rulesSynced } = useAlertRules(devices)
   const { user, login, loginAs, logout, can } = useAuth()
+  // AMR 車隊：後端連線時吃真實遙測，離線自動切本地模擬；校準 profile 由後端熱加載
+  useRobotFleetSource()
+  const { profile: robotProfile, reload: reloadRobotCalib } = useRobotCalibration(restBase, backendConnected, user?.id ?? '')
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const [showKG, setShowKG] = useState(false)
   const [showBIM, setShowBIM] = useState(false)
@@ -126,6 +132,14 @@ export default function App() {
   const [showSpareParts,     setShowSpareParts]     = useState(false)
   const [showPointBinding,   setShowPointBinding]   = useState(false)
   const [showFloorPlanSettings, setShowFloorPlanSettings] = useState(false)
+  // ── AMR / AGV 車隊追蹤 ──────────────────────────────────
+  const [showRobots,       setShowRobots]       = useState(false)
+  const [robotSelectedId,  setRobotSelectedId]  = useState<string | null>(null)
+  const [robotViewMode,    setRobotViewMode]    = useState<RobotViewMode>('global')
+  const [robotFollowId,    setRobotFollowId]    = useState<string | null>(null)
+  const [robotTrails,      setRobotTrails]      = useState(true)
+  const [robotLabels,      setRobotLabels]      = useState(true)
+  const [robotFloorFilter, setRobotFloorFilter] = useState<Set<string> | null>(null)
   const webhookSentRef = useRef<Map<string, number>>(new Map())
   const [apiKeyConfigured, setApiKeyConfigured] = useState(() => !!getStoredApiKey())
   const [aiRootCauses, setAiRootCauses] = useState<Map<string, string>>(new Map())
@@ -152,7 +166,7 @@ export default function App() {
     showUserManage || showDashCustomizer || showOEE || showTrend || showHeatmap ||
     passportDevice || showAI || showNotifications || showShiftLog || showHealth ||
     showCarbon || showPredMaint || showInspection || showAlertAnalytics ||
-    showSpareParts || showPointBinding || showFloorPlanSettings
+    showSpareParts || showPointBinding || showFloorPlanSettings || showRobots
   )
 
   // 根據 bimModels 可見性過濾 IFC 幾何（隱藏的棟別回退至方塊）
@@ -493,6 +507,7 @@ export default function App() {
           onSpareParts={() => setShowSpareParts(true)}
           onPointBinding={() => setShowPointBinding(true)}
           onFloorPlanSettings={() => setShowFloorPlanSettings(true)}
+          onRobots={() => setShowRobots(true)}
           onSettings={() => { setShowSystemSettings(true); setApiKeyConfigured(!!getStoredApiKey()) }}
         />
       }
@@ -540,6 +555,17 @@ export default function App() {
             onToggleMiniMap={() => setShowMiniMap(v => !v)}
             onInteract={dev => setSelectedDevice(dev)}
             sceneInFocus={!anyModalOpen}
+            robots={{
+              enabled: can('robotFleet'),
+              profile: robotProfile,
+              selectedId: robotSelectedId,
+              onSelect: id => setRobotSelectedId(prev => (prev === id ? null : id)),
+              viewMode: robotViewMode,
+              followId: robotFollowId,
+              showTrails: robotTrails,
+              showLabels: robotLabels,
+              floorFilter: robotFloorFilter,
+            }}
           />
           {/* 漫遊小地圖 */}
           <WalkthroughMiniMap
@@ -921,6 +947,37 @@ export default function App() {
             canEdit={user?.role === 'admin' || user?.role === 'operator'}
             onClose={() => setShowPointBinding(false)}
             pointValues={pointValues}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* AMR / AGV 車隊追蹤面板 */}
+      <AnimatePresence>
+        {showRobots && can('robotFleet') && (
+          <RobotFleetPanel
+            restBase={restBase}
+            backendConnected={backendConnected}
+            canEdit={can('robotCalibration')}
+            profile={robotProfile}
+            onProfileChange={reloadRobotCalib}
+            selectedId={robotSelectedId}
+            onSelect={setRobotSelectedId}
+            viewMode={robotViewMode}
+            onViewMode={(mode, targetId) => {
+              setRobotViewMode(mode)
+              setRobotFollowId(mode === 'global' ? null : targetId)
+              if (mode !== 'global' && targetId) {
+                setRobotSelectedId(targetId)
+                setShowRobots(false)   // 切換視角時收起面板，讓 3D 場景成為主畫面
+              }
+            }}
+            showTrails={robotTrails}
+            onToggleTrails={setRobotTrails}
+            showLabels={robotLabels}
+            onToggleLabels={setRobotLabels}
+            floorFilter={robotFloorFilter}
+            onFloorFilter={setRobotFloorFilter}
+            onClose={() => setShowRobots(false)}
           />
         )}
       </AnimatePresence>
@@ -1391,6 +1448,7 @@ interface SidebarNavProps {
   onShiftLog: () => void; onHealth: () => void; onCarbon: () => void
   onPredMaint: () => void; onInspection: () => void; onAlertAnalytics: () => void
   onSpareParts: () => void; onPointBinding: () => void; onFloorPlanSettings: () => void
+  onRobots: () => void
 }
 function SidebarNav({
   criticalCount, enabledRulesCount, bimLoaded, apiKeyConfigured, can,
@@ -1400,7 +1458,7 @@ function SidebarNav({
   onWorkOrders, onDemand, onCalendar,
   onCustomizer, onAuditLog, onUserManage, onSettings,
   onShiftLog, onHealth, onCarbon, onPredMaint, onInspection, onAlertAnalytics, onSpareParts,
-  onPointBinding, onFloorPlanSettings,
+  onPointBinding, onFloorPlanSettings, onRobots,
 }: SidebarNavProps) {
   const groupLabelStyle: React.CSSProperties = {
     padding: '18px 14px 8px 13px',
@@ -1422,6 +1480,7 @@ function SidebarNav({
       <SidebarItem icon="🎯" label="規則引擎"         color="#f59e0b" onClick={onRules}
         badge={enabledRulesCount} badgeColor="#f59e0b"                                   disabled={!can('rules')} />
       <SidebarItem icon="📊" label="告警分析"         color="#f87171" onClick={onAlertAnalytics} disabled={!can('alertAnalytics')} />
+      <SidebarItem icon="🤖" label="機器人車隊"       color="#22d3ee" onClick={onRobots}     disabled={!can('robotFleet')} />
 
       {/* ── 空間視覺 ── */}
       <div style={groupLabelStyle}>🏛 空間視覺</div>

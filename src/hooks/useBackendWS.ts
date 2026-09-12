@@ -9,6 +9,8 @@ import { useSimulation } from './useSimulation'
 import { getSystemSettings } from './useSystemSettings'
 import { getJwtToken } from './useAuth'
 import { SIM_POINT_VALUES } from './usePointBindings'
+import { ingestRobotTelemetry } from './useRobotFleet'
+import type { RobotTelemetryPacket } from '../types'
 
 function showForegroundNotification(title: string, body: string): void {
   if (Notification.permission !== 'granted') return
@@ -260,6 +262,12 @@ export function useBackendWS() {
         if (msg.type === 'notification_new') {
           const n = msg.payload as unknown as InboxNotification
           setNotifications(prev => [n, ...prev].slice(0, 50))
+        }
+
+        // ── AMR / AGV 遙測（10~15 Hz，不進 React state 以免拖垮渲染）──
+        if (msg.type === 'robot_telemetry') {
+          const { robots } = msg.payload as unknown as { robots?: RobotTelemetryPacket[] }
+          if (robots?.length) ingestRobotTelemetry(robots)
         }
 
         // ── 點位即時數值（每 2 秒）─────────────────────────────

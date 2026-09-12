@@ -55,6 +55,7 @@
 | 全域搜尋 | `Ctrl+K` 快速搜尋設備與告警 |
 | 告警中心 | 分級告警管理（CRITICAL / ALARM / WARNING / INFO） |
 | 即時跑馬燈 | 底部告警無縫捲動，速度可調 |
+| AMR / AGV 車隊 | 自主移動機器人即時位置追蹤（10 Hz 遙測、平滑插值、軌跡殘影、跟隨/機載視角）→ 見下方專節 |
 
 ### AI 功能
 | 功能 | 入口 | 說明 |
@@ -107,6 +108,36 @@
 | **Excel 匯出** | 5 個工作表：KPI彙總 / 建築用電 / 類別能耗 / 每日用電 / 48h需量趨勢（峰谷標註），完整中文標頭與公式欄位 |
 | **PDF 匯出** | 專屬排版容器（含即時 KPI 標題列 + 4 圖表區域），html2canvas 2×縮放後輸出 A4 橫式 PDF |
 | **按鈕狀態** | 匯出中顯示 loading，兩個按鈕互鎖避免重複觸發 |
+
+### AMR / AGV 機器人即時追蹤
+
+依《3D 監控管理平台自主移動機器人（AMR/AGV）即時動態位置顯示模組規劃設計規格書 V1.0.0》
+（`docs/3D_Monitoring_Robot_Tracking_Module_Specification.md`）實作，側邊欄 **監控 → 🤖 機器人車隊**。
+
+| 規格章節 | 實作 |
+|---|---|
+| §4.1 通訊 | 沿用既有 WebSocket 通道，後端以 10 Hz 批次推播 `robot_telemetry`（可用 `ROBOT_TELEMETRY_HZ` 調整為 10~15 Hz） |
+| §4.2 封包 | `ROBOT_TELEMETRY` schema（pose / motion / status），另提供 `POST /api/robots/telemetry` 供 MQTT / ROSBridge 閘道注入真實遙測 |
+| §5 坐標校準 | ROS(z-up) → Three(y-up) 軸向轉換 + Yaw + 均勻縮放 + 平移，組成 4×4 `M_align`；參數存於 `backend/calibration_profiles.json`，依 mtime 熱加載 |
+| §5.3 現場標定 | 面板「坐標校準」頁可編輯錨點並最小平方求解（Umeyama 水平封閉解），輸出 RMSE 與逐點殘差，達標（≤ 0.15 m）才允許寫入 |
+| §6.2 平滑插值 | 位置 LERP、朝向 SLERP，皆採指數衰減阻尼 `α = 1 − e^(−12Δt)`，幀率浮動下收斂時間一致 |
+| §6.3 HUD | 車體上方 3D 看板（車號 / 電量條 / 狀態 / 速度）＋ 底盤呼吸光環，`alarm_level = 2` 時轉為紅色高頻閃爍 |
+| §6.4 軌跡殘影 | BufferGeometry 動態頂點，位移 ≥ 0.3 m 新增一點、上限 200 點，顏色由尾端漸暗 |
+| §7 視角 | 全局概覽（OrbitControls）／鎖定跟隨（車體後上方彈簧臂）／第一人稱（機載視角）＋ 樓層過濾 |
+| §8.1 效能 | 距離 LOD（>50 m 光點、15~50 m 精簡車體、<15 m 完整細節）＋ 視錐體剔除後才渲染 HUD |
+| §8.2 容錯 | 心跳逾時 3 秒 → `SIGNAL_LOST` 半透明 Ghost；瞬時速度 > 3.5 m/s 判定定位漂移並捨棄該幀（以採樣時間戳計算，避免訊息批次到達誤判） |
+| 告警聯動 | 機器人故障停機（`alarm_level = 2`）自動產生 ALARM 告警，進入既有告警中心 / 跑馬燈 / 通知流程 |
+
+樓板高程解析順序：已載入的 IFC 實際樓層 → 校準 profile 的 `floor_elevations` → 內建預設表。
+後端未連線時，前端以相同路線與狀態機在本地模擬 6 台車（後端遙測恢復後自動讓位）。
+
+| 車隊監控面板 | 坐標校準（錨點求解） |
+|---|---|
+| ![車隊面板](docs/screenshots/13a_robot_fleet_panel.png) | ![坐標校準](docs/screenshots/13b_robot_calibration.png) |
+
+| 鎖定跟隨視角 | 3D 場景 |
+|---|---|
+| ![跟隨視角](docs/screenshots/13c_robot_chase_view.png) | ![場景](docs/screenshots/13d_robot_scene.png) |
 
 ### 設備詳情抽屜（Phase 10 — 數位孿生名片）
 點擊任何設備後，右側滑出強化版詳情抽屜，分三個 Tab：
@@ -220,7 +251,13 @@ start.bat
 | `GET /api/ems/energy-trend` | 需量歷史趨勢（15 分鐘間距） |
 | `GET /api/ems/demand-shed-plan` | AI 需量卸載計畫 |
 | `GET /api/audit` | 操作稽核日誌 |
-| `WS /ws` | WebSocket（snapshot + 增量推播） |
+| `GET /api/robots` | AMR / AGV 車隊即時快照 |
+| `GET /api/robots/{id}` | 單台機器人快照 |
+| `GET /api/robots/calibration` | 坐標校準設定（熱加載） |
+| `POST /api/robots/calibration/solve` | 錨點最小平方求解（回傳矩陣與 RMSE） |
+| `PUT /api/robots/calibration` | 寫入 / 切換校準 profile（admin） |
+| `POST /api/robots/telemetry` | 外部閘道注入真實遙測（含漂移防護） |
+| `WS /ws` | WebSocket（snapshot + 增量推播 + `robot_telemetry` 10 Hz） |
 
 ### BIM 模型（選配）
 

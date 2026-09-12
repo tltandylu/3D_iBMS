@@ -18,6 +18,8 @@ import type { SceneSettings, SkySettings } from '../../hooks/useSystemSettings'
 import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
 import type { PointMeta, BindingForScene } from '../../hooks/usePointBindings'
 import { CollabAvatars, MOCK_ONLINE_USERS } from '../collaboration/CollabPresenceLayer'
+import { RobotFleetLayer } from './RobotFleet'
+import type { RobotCalibrationProfile, RobotViewMode } from '../../types'
 import type { FPPos } from '../walkthrough/WalkthroughMiniMap'
 
 // ── color-mode 綁定顏色解析（支援 4 閾值：alarm_low/warning_low/warning_high/alarm_high）──
@@ -613,6 +615,7 @@ function SceneContent({
   fpMode,
   onFPExit,
   onFPLock,
+  robots,
 }: {
   selectedDeviceId: string | null
   onDeviceClick: (device: Device) => void
@@ -641,6 +644,7 @@ function SceneContent({
   fpMode: boolean
   onFPExit: () => void
   onFPLock: () => void
+  robots?: RobotSceneProps
 }) {
 
   useFrame(({ camera }) => {
@@ -712,6 +716,22 @@ function SceneContent({
         <NavPathLine key={navTarget.id} navTarget={navTarget} fpPosRef={fpPosRef} />
       )}
 
+      {/* AMR / AGV 車隊即時動態圖層 */}
+      {robots?.enabled && (
+        <RobotFleetLayer
+          profile={robots.profile}
+          storeys={(ifcGroup?.userData?.storeys as IFCStorey[] | undefined) ?? null}
+          selectedId={robots.selectedId}
+          onSelect={robots.onSelect}
+          viewMode={robots.viewMode}
+          followId={robots.followId}
+          showTrails={robots.showTrails}
+          showLabels={robots.showLabels}
+          floorFilter={robots.floorFilter}
+          controlsRef={controlsRef}
+        />
+      )}
+
       {/* 相機動畫器 */}
       <CameraAnimator flyTarget={flyTarget} controlsRef={controlsRef} onDone={onFlyDone} />
 
@@ -739,6 +759,19 @@ export interface Scene3DRef {
   enterFPMode: () => void
 }
 
+/** AMR / AGV 車隊圖層設定（規格書 §6 / §7）*/
+export interface RobotSceneProps {
+  enabled: boolean
+  profile: RobotCalibrationProfile
+  selectedId: string | null
+  onSelect: (id: string) => void
+  viewMode: RobotViewMode
+  followId: string | null
+  showTrails: boolean
+  showLabels: boolean
+  floorFilter: Set<string> | null
+}
+
 interface Scene3DProps {
   selectedDeviceId: string | null
   onDeviceClick: (device: Device) => void
@@ -758,12 +791,13 @@ interface Scene3DProps {
   ifcGroup?: THREE.Group | null
   ifcLoadPct?: number
   ifcLoadStatus?: string
+  robots?: RobotSceneProps
 }
 
 const OVERVIEW_POS    = new THREE.Vector3(120, 150, 120)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 30, 0)
 
-export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sceneRef, ifcGeoms, sceneSettings, skySettings, bindings = [], points = [], pointValues = {}, fpPosRef, navTarget, onToggleMiniMap, onInteract, sceneInFocus = true, ifcGroup, ifcLoadPct = 0, ifcLoadStatus = '' }: Scene3DProps) {
+export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sceneRef, ifcGeoms, sceneSettings, skySettings, bindings = [], points = [], pointValues = {}, fpPosRef, navTarget, onToggleMiniMap, onInteract, sceneInFocus = true, ifcGroup, ifcLoadPct = 0, ifcLoadStatus = '', robots }: Scene3DProps) {
   const resolvedScene = sceneSettings ?? DEFAULT_SYSTEM_SETTINGS.scene
   const controlsRef    = useRef<OrbitControlsImpl | null>(null)
   const cameraDistRef  = useRef<number>(50)
@@ -973,6 +1007,7 @@ export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sce
           fpMode={fpMode}
           onFPExit={exitFP}
           onFPLock={() => setFpLocked(true)}
+          robots={robots}
           fpPosRef={fpPosRef}
           navTarget={navTarget}
         />
