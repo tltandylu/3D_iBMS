@@ -30,6 +30,14 @@
 
 ![抽屜維修歷程](docs/screenshots/10_drawer_history.png)
 
+| 能源報表（Excel / PDF 匯出） |
+|---|
+| ![能源報表](docs/screenshots/11_energy_report.png) |
+
+| 設備清單 | 設備履歷護照（QR Code / AI 健康趨勢 / PDF 匯出） |
+|---|---|
+| ![設備清單](docs/screenshots/12a_device_inventory.png) | ![設備履歷護照](docs/screenshots/12b_equipment_passport.png) |
+
 ---
 
 ## 功能概覽
@@ -80,13 +88,25 @@
 ### 數據分析
 - **OEE 效率儀表板**：可用率、效率、品質三率趨勢
 - **趨勢比較**：多設備歷史數據疊加對比
-- **能源報表**：日/月用電、電費試算、峰谷分析、Excel/PDF 匯出
+- **能源報表**：日/月用電、電費試算、峰谷分析、Excel/PDF 匯出（Phase 11）
 
 ### 維運管理
 - **工單中心**：CRUD、狀態追蹤（待指派 → 處理中 → 完成）
 - **維護日曆**：月曆視圖，工單排程視覺化
 - **需量卸載**：AI 卸載計畫面板（需後端連線）
 - **規則引擎**：自訂告警規則，支援 AND/OR 條件
+
+### 能源報表匯出（Phase 11）
+
+| 能源報表（含匯出按鈕） |
+|---|
+| ![能源報表](docs/screenshots/11_energy_report.png) |
+
+| 功能 | 說明 |
+|------|------|
+| **Excel 匯出** | 5 個工作表：KPI彙總 / 建築用電 / 類別能耗 / 每日用電 / 48h需量趨勢（峰谷標註），完整中文標頭與公式欄位 |
+| **PDF 匯出** | 專屬排版容器（含即時 KPI 標題列 + 4 圖表區域），html2canvas 2×縮放後輸出 A4 橫式 PDF |
+| **按鈕狀態** | 匯出中顯示 loading，兩個按鈕互鎖避免重複觸發 |
 
 ### 設備詳情抽屜（Phase 10 — 數位孿生名片）
 點擊任何設備後，右側滑出強化版詳情抽屜，分三個 Tab：
@@ -113,7 +133,24 @@
 - **儀表板個人化**：KPI 顯示項目開關、左右面板切換
 - **稽核日誌**：操作歷史查詢（需後端連線）
 - **系統設定**：能源參數、告警音效、桌面推播、Webhook 推送、Claude API 金鑰
-- **設備履歷護照**：設備完整生命週期記錄
+- **設備履歷護照**（Phase 12）：QR Code 資產識別、30 天 AI 健康趨勢圖表、真實工單費用累計（EM/CM/PM 時薪計算）、PDF 護照一鍵匯出
+
+---
+
+## 效能（Phase 13 優化後）
+
+| 指標 | 優化前 | 優化後 | 改善 |
+|------|--------|--------|------|
+| 初始 JS bundle（gzip） | 1,120 kB | **44 kB** | **-96%** |
+| 初始 JS bundle（raw） | 3,647 kB | **139 kB** | **-96%** |
+| 首屏需下載模組 | 全部元件 | App shell 只 | 按需載入 |
+| PWA 離線支援 | ✗ | ✅ Service Worker | — |
+| 可安裝至桌面 | ✗ | ✅ Web App Manifest | — |
+
+**Code-split 策略：**
+- 19 個 Modal 元件 → 各自獨立 chunk（5–39 kB），首次開啟才下載
+- `vendor-export`（xlsx + jspdf + html2canvas，877 kB）→ 僅在匯出功能使用時載入
+- `vendor-three`（960 kB）、`vendor-echarts`（1,052 kB）→ 獨立快取，版本升級不破壞其他 chunk 快取
 
 ---
 
@@ -127,11 +164,14 @@
 - framer-motion — 動畫
 - `@xyflow/react` — 知識圖譜
 - Anthropic SDK — Claude AI 整合
+- `vite-plugin-pwa` + Workbox — PWA / Service Worker
 
-**後端**（選配）
-- Python 3.x + FastAPI + Uvicorn
-- WebSocket 即時資料推送
-- 模擬 IoT 資料產生器
+**後端**（選配，Phase 14）
+- Python 3.10+ + FastAPI 0.115+ + Uvicorn — REST + WebSocket
+- WebSocket 即時資料推送（snapshot / device_update / kpi_update / alert_new / workorder_new）
+- 模擬 IoT 資料產生器（每秒功率/溫度波動、10 秒狀態切換、25 秒告警生成）
+- 完整 REST API：裝置、告警、工單、能源、稽核日誌
+- Python 3.14 相容（pydantic >= 2.10）
 
 ---
 
@@ -154,13 +194,33 @@ npm run build
 
 ```bash
 cd backend
-pip install -r requirements.txt
-python main.py
+pip install -r requirements.txt   # 需 Python 3.10+
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 # 或 Windows：
 start.bat
 ```
 
-後端預設監聽 `http://localhost:8000`，前端自動偵測連線狀態（Navbar 右側顯示 `LIVE · Backend` / `SIM · Frontend`）。
+後端預設監聽 `http://localhost:8000`，文件在 `http://localhost:8000/docs`。  
+前端自動偵測連線狀態（Navbar 右側顯示 `LIVE · Backend` / `SIM · Frontend`）。
+
+#### 後端 REST API 一覽
+
+| 端點 | 說明 |
+|------|------|
+| `GET /api/devices` | 裝置清單（含即時狀態） |
+| `GET /api/devices/{id}/history` | 24h 歷史趨勢（功率 + 溫度） |
+| `POST /api/devices/{id}/control` | 遠端控制（restart / emergency_stop） |
+| `GET /api/alerts` | 告警清單 |
+| `PATCH /api/alerts/{id}/acknowledge` | 確認告警 |
+| `PATCH /api/alerts/{id}/resolve` | 解除告警 |
+| `GET /api/workorders` | 工單清單 |
+| `POST /api/workorders` | 建立工單 |
+| `PATCH /api/workorders/{id}/status` | 更新工單狀態 |
+| `GET /api/ems/kpi` | 即時能源 KPI |
+| `GET /api/ems/energy-trend` | 需量歷史趨勢（15 分鐘間距） |
+| `GET /api/ems/demand-shed-plan` | AI 需量卸載計畫 |
+| `GET /api/audit` | 操作稽核日誌 |
+| `WS /ws` | WebSocket（snapshot + 增量推播） |
 
 ### BIM 模型（選配）
 

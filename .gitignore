@@ -24,3 +24,6 @@ yarn-error.log*
 __pycache__/
 *.pyc
 *.pyo
+
+# 大型 3D 模型（未被程式引用；GitHub 單檔上限 100MB）
+*.glb

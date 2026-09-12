@@ -2550,10 +2550,148 @@ AI 根因：冷媒充填量不足，建議補充 R410A
 
 ---
 
+## 19. 當前原型實作進度（Web Demo）
+
+> **更新日期：** 2026-05-23  
+> **實作狀態：** Phase 1–31 全部完成，TypeScript 零錯誤  
+> **技術棧：** React 18 + TypeScript + Vite 5 / FastAPI 0.136+ + SQLAlchemy 2.x async / PostgreSQL・MSSQL
+
+---
+
+### 19.1 Phase 完成清單（共 31 個 Phase）
+
+| Phase | 功能模組 | 關鍵元件 / 端點 | 狀態 |
+|-------|---------|----------------|------|
+| 1–5 | 3D 場景基礎、設備監控、告警管理、工單系統、規則引擎（前端）| Scene3D, AlertToast, WorkOrderCenter, AlertRuleEditor | ✅ |
+| 6 | OEE 效率、趨勢比較、設備護照、樓層熱力圖 | OEEDashboard, DeviceTrendCompare, EquipmentPassport, FloorHeatmap | ✅ |
+| 7 | RBAC 三角色認證（admin / operator / viewer）| useAuth.ts, LoginPage.tsx | ✅ |
+| 8 | BIM Viewer（Three.js + IFC）+ BIM Model Manager | BIMViewer.tsx, BIMModelManager.tsx | ✅ |
+| 9 | AI 運維助理 + NLQueryBar + AI 根因分析（Claude API）| AIAssistant.tsx, NLQueryBar.tsx | ✅ |
+| 10 | DeviceDetailDrawer（概覽 / 孿生診斷 / 維修歷程）| DeviceDetailDrawer.tsx | ✅ |
+| 11 | EnergyReport Excel（5 sheets）+ PDF A4 匯出 | EnergyReport.tsx | ✅ |
+| 12 | EquipmentPassport（QR Code、30天AI趨勢、費用統計、PDF）| EquipmentPassport.tsx | ✅ |
+| 13 | 效能優化 + PWA（bundle 3647→139 kB、19 modal lazy-load、Service Worker）| vite.config.ts | ✅ |
+| 14 | 後端核心（FastAPI + WebSocket + IoT 模擬器 12 設備）| main.py, iot_simulator.py | ✅ |
+| 15 | PostgreSQL/MSSQL 持久化 + Alembic 9 個遷移 | app/db/, alembic/versions/ | ✅ |
+| 16 | Web Push 推播通知（VAPID 金鑰、SW 訂閱）| push_service.py, usePushNotifications.ts | ✅ |
+| 17 | Webhook 整合（設定 DB、測試端點、告警自動觸發）| routers/webhook.py | ✅ |
+| 18 | 報表排程 + Email 自動寄送 | routers/reports.py, scheduler.py | ✅ |
+| 19 | Export 中心（CSV：devices / alerts / audit / kpi）| routers/export.py | ✅ |
+| 20 | 使用者管理後端（CRUD、密碼重設、DB seed）| routers/users.py | ✅ |
+| 21 | 儀表板個人化 + 後端偏好同步（debounce 800 ms）| DashboardCustomizer.tsx | ✅ |
+| 22 | 稽核日誌（前後端、audit_logs DB table）| AuditLog.tsx, routers/audit.py | ✅ |
+| 23 | BIM Model Manager（多棟 IFC 切換、可見性控制）| BIMModelManager.tsx | ✅ |
+| 24 | 全域快速搜尋（Ctrl+K、設備 / 告警 / 工單）| GlobalSearch.tsx | ✅ |
+| 25 | 使用者管理前端（建立 / 編輯 / 刪除 / 重設密碼）| UserManagement.tsx | ✅ |
+| 26 | 告警規則後端（alert_rules DB、前後端雙向同步）| routers/alert_rules.py, useAlertRules.ts | ✅ |
+| 27 | EMS DB 強化（daily-energy、oee-history 從 DB 計算）| routers/ems.py | ✅ |
+| 28 | 設備 Analytics / History JWT 保護 + User Preferences API | routers/devices.py | ✅ |
+| 29 | 站內即時通知中心（inbox_notifications DB、WS 廣播）| NotificationCenter.tsx, routers/notifications.py | ✅ |
+| 30 | 值班日誌交接系統（shift_logs DB、incidents JSON）| ShiftLogCenter.tsx, routers/shift_logs.py | ✅ |
+| 31 | 設備健康中心（複合健康評分：AI 指數 / 溫度 / RUL / 告警）| EquipmentHealthDashboard.tsx | ✅ |
+
+---
+
+### 19.2 後端資料庫架構（現狀）
+
+**12 張 DB Tables（SQLAlchemy ORM + Alembic 管理）**
+
+| Table | 用途 | Migration |
+|-------|------|-----------|
+| alerts | 告警持久化 | 0001 |
+| work_orders | 工單持久化 | 0001 |
+| users | 使用者帳號 | 0001 |
+| audit_logs | 稽核日誌（不可刪除）| 0001 |
+| push_subscriptions | Web Push 訂閱 | 0001 |
+| alert_rules | 告警規則引擎 | 0004 |
+| webhook_configs | Webhook 整合設定 | 0003 |
+| report_schedules | 報表排程設定 | 0005 |
+| device_metrics | 設備歷史指標（保留 7 天）| 0006 |
+| user_preferences | 儀表板個人化偏好 | 0007 |
+| inbox_notifications | 站內通知（保留 30 天）| 0008 |
+| shift_logs | 值班日誌交接 | 0009 |
+
+**REST API 路由（prefix `/api/`）**
+
+```
+auth         POST /login, GET /me
+devices      GET/PATCH 列表, GET/{id}, GET/{id}/analytics, /{id}/history
+alerts       GET 列表, PATCH /{id}/acknowledge, /{id}/resolve
+workorders   GET/POST 列表, GET/{id}/status
+ems          GET /kpi, /energy-trend, /daily-energy, /oee-history, /demand-shed-plan
+users        GET/POST 列表, PATCH /me/password, GET/PUT /me/preferences, PATCH/DELETE /{id}
+notifications GET /inbox, /inbox/unread-count, PATCH /inbox/{id}/read, POST /inbox/read-all
+shift-logs   GET/POST 列表, GET /active, PATCH /{id}/close, POST /{id}/incidents
+alert-rules  GET/POST/PATCH/DELETE 列表, PATCH /{id}/toggle, PUT /sync
+reports      GET/PUT /schedule, POST /send-now
+export       GET /devices, /alerts, /audit, /kpi（CSV）
+push         GET /vapid-key, POST /subscribe, DELETE /unsubscribe
+webhook      GET/PUT /config, POST /test
+audit        GET 列表
+```
+
+**WebSocket `/ws`**
+
+```
+Server → Client: snapshot（連線時）, device_update（1 s）, kpi_update（1 s）,
+                  alert_new（隨機）, notification_new（DB 觸發）, heartbeat（30 s）
+Client → Server: ping, acknowledge_alert, update_workorder_status, create_workorder
+```
+
+---
+
+### 19.3 前端架構（現狀）
+
+**側邊欄結構（5 群組，22 個功能入口）**
+
+```
+📡 監控      搜尋設備(⌘K) · 設備清單 · 告警中心[badge] · 規則引擎[badge]
+🏛 空間視覺  BIM 視圖 · 模型管理[dot] · KG 瀏覽器 · 樓層熱力圖
+📊 數據分析  OEE 效率 · 趨勢比較 · 能源報表 · 設備健康中心
+🔧 維運管理  工單中心 · 需量卸載 · 維護日曆 · 值班日誌
+⚙ 系統      儀表板個人化 · 稽核日誌 · 使用者管理 · 系統設定[dot:API]
+```
+
+**RBAC 權限矩陣（Feature 層級）**
+
+| Feature | admin | operator | viewer |
+|---------|:-----:|:--------:|:------:|
+| search / inventory / alerts | ✅ | ✅ | ✅ |
+| bim / kg / heatmap | ✅ | ✅ | ✅ |
+| oee / trend / energy / health | ✅ | ✅ | ✅ |
+| workOrders / calendar / shiftLog | ✅ | ✅ | ✅（唯讀）|
+| rules / bimManager / demand | ✅ | ✅ | ❌ |
+| customizer / auditLog | ✅ | ✅ | ❌ |
+| settings / userManage | ✅ | ❌ | ❌ |
+
+**Lazy-loaded Components（23 個，全部 code-split）**
+
+`DeviceDetailDrawer` · `KGBrowser` · `BIMViewer` · `BIMModelManager` · `SystemSettings` ·
+`WorkOrderCenter` · `DeviceInventory` · `EnergyReport` · `AlertCenter` · `GlobalSearch` ·
+`DemandShedPanel` · `AlertRuleEditor` · `MaintenanceCalendar` · `AuditLog` · `DashboardCustomizer` ·
+`OEEDashboard` · `DeviceTrendCompare` · `EquipmentPassport` · `FloorHeatmap` · `UserManagement` ·
+`NotificationCenter` · `ShiftLogCenter` · `EquipmentHealthDashboard`
+
+---
+
+### 19.4 已修正問題紀錄
+
+| # | 發現時間 | 問題描述 | 修正方式 |
+|---|---------|---------|---------|
+| 1 | Phase 31 審查 | `ShiftLogCenter` 的 `canEdit` 使用 `can('workOrders')`，但 viewer 角色也擁有 workOrders 讀取權，導致 viewer 可見寫入按鈕（後端仍會拒絕，但 UX 錯誤）| 改為 `user?.role === 'admin' \|\| user?.role === 'operator'` |
+| 2 | Phase 31 審查 | `📔 值班日誌` 側邊欄項目放置在 `⚙ 系統` 群組，語意不符（值班日誌是運維操作，非系統設定）| 移至 `🔧 維運管理` 群組（工單中心下方）|
+| 3 | Phase 31 審查 | `🏥 設備健康中心` 與 `📊 OEE 效率` 使用相同顏色 `#10b981`，hover 時視覺難以區分 | 設備健康中心改為 `#22d3ee`（cyan-400）|
+| 4 | Phase 29 實作 | `iot_simulator.py` 中 `notification_new` WS 廣播縮排錯誤，置於 `async with` 區塊外導致廣播未執行 | 重寫整個 `if self.session_factory:` 區塊，確保廣播在 `async with` 外、`try` 內 |
+| 5 | Phase 29 實作 | `useBackendWS.ts` 中 `notification_new` 型別強轉 `as InboxNotification` 導致 TS 錯誤 | 改為 `as unknown as InboxNotification` |
+| 6 | Phase 30 實作 | `ShiftLogCenter.tsx` 的 `authHeader()` 回傳聯合型別含 `Authorization?: undefined`，不符合 `HeadersInit` | 明確標注回傳型別 `Record<string, string>` |
+
+---
+
 > **文件維護說明**
 > 本文件 v4.0 整合企業完整平台規格（Web SCADA + EMS + BIM/DCIM + 派工巡檢 + 圖資 + EAM）
 > × AI 知識圖譜（v3.0）× 3D 數位孿生。
 > 每個 Phase Gate 前進行文件審查，Enterprise KG Schema 變更需全團隊同步。
+> Section 19 記錄當前 Web Demo 原型實作狀態，隨各 Phase 完成持續更新。
 >
 > **平台核心理念：**
 > 「單一平台、全域感知、知識驅動、預測運維。
