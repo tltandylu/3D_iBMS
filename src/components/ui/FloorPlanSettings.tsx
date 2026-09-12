@@ -80,19 +80,23 @@ function buildFloorScene(
   dir.position.set(0, 50, 0)
   scene.add(dir)
 
-  const gp  = ifcGroup.position
-  const margin = 3.0   // broad Y-filter to catch slanted/tall meshes; clipping planes do exact cut
+  // IFC 已在載入時合批（見 IFCBatcher），場景內是少量 Mesh / InstancedMesh 批次，
+  // 一批可能橫跨多層樓 —— 先用批次的世界包圍盒粗篩，精確切面仍交給裁切平面處理。
+  const margin = 3.0
+  const box = new THREE.Box3()
+  ifcGroup.updateMatrixWorld(true)
 
-  ifcGroup.children.forEach(child => {
-    if (!(child instanceof THREE.Mesh)) return
-    const wy = child.position.y + gp.y
-    if (wy + margin < floorY || wy - margin > nextY) return
+  ifcGroup.traverse(obj => {
+    const mesh = obj as THREE.Mesh
+    if (!mesh.isMesh) return
+    box.setFromObject(mesh)
+    if (box.isEmpty()) return
+    if (box.max.y + margin < floorY || box.min.y - margin > nextY) return
 
-    const m = new THREE.Mesh(child.geometry, child.material)
-    m.position.set(child.position.x + gp.x, child.position.y + gp.y, child.position.z + gp.z)
-    m.quaternion.copy(child.quaternion)
-    m.scale.copy(child.scale)
-    scene.add(m)
+    const clone = mesh.clone()            // 共用 geometry / material，僅複製節點
+    clone.matrixAutoUpdate = false
+    clone.matrix.copy(mesh.matrixWorld)   // 已含 ifcGroup 的置中位移
+    scene.add(clone)
   })
 
   return scene

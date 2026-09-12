@@ -268,6 +268,37 @@
 - `vendor-export`（xlsx + jspdf + html2canvas，877 kB）→ 僅在匯出功能使用時載入
 - `vendor-three`（960 kB）、`vendor-echarts`（1,052 kB）→ 獨立快取，版本升級不破壞其他 chunk 快取
 
+### 3D 場景合批（IFC instancing / merge / LOD）
+
+web-ifc 解析出的建築模型預設是「一個構件一個 Mesh、一個 Mesh 一個 Material」，
+樂迦大樓（24,906 個構件）因此每幀送出 26,408 個 draw call，主執行緒被 CPU 綁死。
+`IFCBatcher.ts` 在載入完成後把放置資料重新編排：
+
+| 手段 | 說明 |
+|---|---|
+| 材質共用 | 以（顏色, 透明度）為鍵分桶，24,906 個 Material → **54 個** |
+| InstancedMesh | 同一幾何重複 ≥ 8 次者改用實例化（實測 587 批） |
+| 合併幾何 | 其餘構件把放置矩陣烘進頂點後合併，單批頂點上限 30 萬以維持視錐剔除有效性（90 批） |
+| 尺寸 LOD | 對角線 < 1.2 m 的細部構件另成一組，相機距離 > 90 m 時整組隱藏（15 m 遲滯） |
+| 靜態最佳化 | 所有批次 `matrixAutoUpdate = false`，省下每幀兩萬多次矩陣運算 |
+
+實測（同一台機器、`node scripts/perf_scene.mjs --headed`）：
+
+| 指標 | 優化前（`?nobatch`） | 優化後 | 改善 |
+|---|---|---|---|
+| **FPS（真實 GPU）** | 4.5 | **59.2**（vsync 上限） | **13×** |
+| Draw calls | 26,408 | **470** | −98% |
+| 場景物件數 | 25,171 | **937** | −96% |
+| 三角形（俯視全景） | 5,477,856 | **3,659,556** | −33%（LOD 隱藏細部） |
+| Material 數 | 24,906 | **54** | −99.8% |
+
+網址加上 `?nobatch` 可還原未合批行為，用於前後對照；
+`node scripts/perf_scene.mjs [--headed] [--nobatch]` 會輸出上表指標
+（headless 為軟體渲染，FPS 不具參考性，請以 `--headed` 為準）。
+
+IndexedDB 快取同步改為 v7 格式（存幾何 + 放置矩陣，載入時再合批），
+第二次開啟由 51 秒縮短為 21 秒。
+
 ---
 
 ## 技術棧

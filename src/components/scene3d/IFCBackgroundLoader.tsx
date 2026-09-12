@@ -1,6 +1,8 @@
 import { useEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { loadFromCache, saveToCache } from './IFCGeometryCache'
+import { buildBatchedGroup } from './IFCBatcher'
+import type { IFCPlacement } from './IFCBatcher'
 
 interface Props {
   url:        string
@@ -148,11 +150,10 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
         onProgressRef.current(75, '解析幾何（大型模型需 30–60 秒）…')
         await new Promise(r => setTimeout(r, 20))
 
-        // ── 7. Stream all meshes ─────────────────────────────────────
-        const group    = new THREE.Group()
-        group.name     = 'ifc-locus'
-        const geoCache = new Map<number, THREE.BufferGeometry | null>()
-        const pm       = new THREE.Matrix4()
+        // ── 7. Stream all meshes（只收集放置資料，稍後合批）─────────────
+        const geoList:    THREE.BufferGeometry[] = []
+        const geoIndexOf  = new Map<number, number>()   // geometryExpressID → geoList index
+        const placements: IFCPlacement[] = []
 
         api.StreamAllMeshes(modelID, (flatMesh) => {
           const n = flatMesh.geometries.size()
@@ -160,8 +161,8 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
             const placed = flatMesh.geometries.get(gi)
             const { geometryExpressID, flatTransformation, color } = placed
 
-            let geo = geoCache.get(geometryExpressID)
-            if (geo === undefined) {
+            let idx = geoIndexOf.get(geometryExpressID)
+            if (idx === undefined) {
               const ifcGeo = api.GetGeometry(modelID, geometryExpressID)
               const vSize  = ifcGeo.GetVertexDataSize()
               const iSize  = ifcGeo.GetIndexDataSize()
@@ -176,32 +177,40 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
                   pos[j*3]   = vData[j*6];   pos[j*3+1] = vData[j*6+1]; pos[j*3+2] = vData[j*6+2]
                   nor[j*3]   = vData[j*6+3]; nor[j*3+1] = vData[j*6+4]; nor[j*3+2] = vData[j*6+5]
                 }
-                geo = new THREE.BufferGeometry()
+                const geo = new THREE.BufferGeometry()
                 geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
                 geo.setAttribute('normal',   new THREE.BufferAttribute(nor, 3))
                 geo.setIndex(new THREE.BufferAttribute(iData, 1))
+                idx = geoList.length
+                geoList.push(geo)
               } else {
                 ifcGeo.delete?.()
-                geo = null
+                idx = -1
               }
-              geoCache.set(geometryExpressID, geo)
+              geoIndexOf.set(geometryExpressID, idx)
             }
-            if (!geo) continue
+            if (idx < 0) continue
 
             const { x: r, y: g2, z: b, w } = color
-            const mat = new THREE.MeshLambertMaterial({
-              color:       new THREE.Color(r, g2, b),
-              transparent: w < 0.99,
-              opacity:     Math.max(0.12, w),
-              side:        THREE.DoubleSide,
+            placements.push({
+              geoIndex: idx,
+              matrix: new THREE.Matrix4().fromArray(flatTransformation),
+              color: { r, g: g2, b },
+              opacity: w,
             })
-            const mesh = new THREE.Mesh(geo, mat)
-            pm.fromArray(flatTransformation)
-            pm.decompose(mesh.position, mesh.quaternion, mesh.scale)
-            group.add(mesh)
           }
           flatMesh.delete?.()
         })
+
+        // ── 7.2 合批（instancing / merge / LOD 分級）──────────────────
+        onProgressRef.current(88, '合批優化中…')
+        const { group, stats } = buildBatchedGroup(geoList, placements)
+        console.info(
+          '[IFC batch]', stats.placements, '個構件 →', stats.drawObjects, '批',
+          `| 材質 ${stats.materials}`,
+          `| instanced ${stats.instancedBatches} / merged ${stats.mergedBatches}`,
+          `| 細部批次 ${stats.detailBatches}`,
+        )
 
         // ── 7.5. Read storey elevations (model must still be open) ───
         // Compute pre-centering bbox first so we can calibrate the
@@ -229,7 +238,7 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
         const sz2  = box2.getSize(new THREE.Vector3())
 
         console.info(
-          '[IFC] ✓', group.children.length, 'meshes |',
+          '[IFC] ✓', stats.placements, 'placements →', stats.drawObjects, 'batches |',
           `${sz2.x.toFixed(1)} × ${sz2.y.toFixed(1)} × ${sz2.z.toFixed(1)} m |`,
           `Y ${box2.min.y.toFixed(1)} ~ ${box2.max.y.toFixed(1)}`,
           `| raw size ${size.x.toFixed(1)}×${size.y.toFixed(1)}×${size.z.toFixed(1)}`,
@@ -243,7 +252,7 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
         }))
 
         group.userData.debugInfo = {
-          meshCount: group.children.length,
+          meshCount: stats.placements,
           w: +sz2.x.toFixed(1),
           h: +sz2.y.toFixed(1),
           d: +sz2.z.toFixed(1),
@@ -254,9 +263,16 @@ export function IFCBackgroundLoader({ url, onLoaded, onProgress, onError }: Prop
           zHalf: +(sz2.z / 2).toFixed(2),
         }
         group.userData.storeys = storeys
+        group.userData.batchStats = stats
 
         // ── 9. Persist to IndexedDB in background ────────────────────
-        saveToCache(url, fileSize, group).catch(e => console.warn('[IFC cache]', e))
+        // 合批後場景已無逐構件 Mesh，快取改存原始幾何與放置資料
+        saveToCache(url, fileSize, {
+          geoms: geoList,
+          placements,
+          storeys,
+          groupPos: group.position.clone(),
+        }).catch(e => console.warn('[IFC cache]', e))
 
         onProgressRef.current(100, '載入完成')
         onLoadedRef.current(group)

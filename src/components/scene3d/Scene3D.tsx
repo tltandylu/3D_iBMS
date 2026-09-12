@@ -20,6 +20,7 @@ import type { PointMeta, BindingForScene } from '../../hooks/usePointBindings'
 import { CollabAvatars, MOCK_ONLINE_USERS } from '../collaboration/CollabPresenceLayer'
 import { RobotFleetLayer } from './RobotFleet'
 import { RobotRouteLines } from './RobotRouteLines'
+import { DETAIL_HIDE_DIST } from './IFCBatcher'
 import type { RoutesConfig } from '../../hooks/useRobotRoutes'
 import type { RobotCalibrationProfile, RobotViewMode } from '../../types'
 import type { FPPos } from '../walkthrough/WalkthroughMiniMap'
@@ -589,6 +590,64 @@ function IFCBuildingMesh({ data, building }: { data: IFCBuildingGeom; building: 
 }
 
 // ── 主場景內容 ───────────────────────────────────────────────
+// ── IFC 細部 LOD：遠距離時整組隱藏小構件（§8.1 動態 LOD）──────────────
+function IFCLodController({ ifcGroup }: { ifcGroup: THREE.Group | null }) {
+  const centerRef = useRef(new THREE.Vector3())
+  const readyRef  = useRef(false)
+
+  useEffect(() => {
+    readyRef.current = false
+    if (!ifcGroup) return
+    const box = new THREE.Box3().setFromObject(ifcGroup)
+    if (!box.isEmpty()) { box.getCenter(centerRef.current); readyRef.current = true }
+  }, [ifcGroup])
+
+  useFrame(({ camera }) => {
+    const detail = ifcGroup?.getObjectByName('ifc-detail')
+    if (!detail || !readyRef.current) return
+    const d = camera.position.distanceTo(centerRef.current)
+    // 15m 遲滯，避免在門檻附近來回閃爍
+    const want = detail.visible ? d < DETAIL_HIDE_DIST + 15 : d < DETAIL_HIDE_DIST
+    if (detail.visible !== want) detail.visible = want
+  })
+  return null
+}
+
+// ── 效能量測探針（僅開發模式；供 scripts/perf_scene.mjs 讀取）───────────
+function PerfProbe() {
+  const { gl, scene } = useThree()
+  const frames = useRef(0)
+  const t0     = useRef(performance.now())
+  const last   = useRef({ fps: 0, drawCalls: 0, triangles: 0, programs: 0, objects: 0 })
+
+  useFrame(() => {
+    frames.current += 1
+    const now = performance.now()
+    if (now - t0.current >= 1000) {
+      let objects = 0
+      scene.traverse(() => { objects += 1 })
+      last.current = {
+        fps:       Math.round((frames.current * 1000) / (now - t0.current)),
+        drawCalls: gl.info.render.calls,
+        triangles: gl.info.render.triangles,
+        programs:  gl.info.programs?.length ?? 0,
+        objects,
+      }
+      frames.current = 0
+      t0.current = now
+      const w = window as unknown as Record<string, unknown>
+      w.__perfProbe = () => ({
+        ...last.current,
+        geometries: gl.info.memory.geometries,
+        textures:   gl.info.memory.textures,
+      })
+      // 供效能腳本做對照實驗（開關 IFC 主體 / 細部）
+      w.__perfScene = scene
+    }
+  })
+  return null
+}
+
 function SceneContent({
   selectedDeviceId,
   onDeviceClick,
@@ -744,6 +803,10 @@ function SceneContent({
           highlightId={robots.routeHighlightId}
         />
       )}
+
+      <IFCLodController ifcGroup={ifcGroup} />
+
+      {import.meta.env.DEV && <PerfProbe />}
 
       {/* 相機動畫器 */}
       <CameraAnimator flyTarget={flyTarget} controlsRef={controlsRef} onDone={onFlyDone} />
