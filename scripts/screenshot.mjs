@@ -79,5 +79,24 @@ await page.screenshot({
 })
 console.log('✓ 07_sidebar_viewer.png')
 
+// ── 1'. 主畫面重拍：等 BIM 模型載入完成（前面 01 拍到的是下載中的畫面）
+// 清掉 viewer session 後重新載入，回到登入頁再以 Admin 登入
+await page.evaluate(() => {
+  localStorage.removeItem('IBMS_AUTH_V1')
+  localStorage.removeItem('IBMS_JWT_V1')
+})
+await page.reload({ waitUntil: 'domcontentloaded' })
+await page.waitForTimeout(1200)
+await page.getByRole('button', { name: /系統管理員/ }).click()
+
+// 等 IFC 解析 + 合批完成（PerfProbe 在 draw call 上升後回報）
+await page.waitForFunction(
+  () => (window.__perfProbe?.()?.drawCalls ?? 0) > 300,
+  null, { timeout: 150000, polling: 1000 },
+).catch(() => console.warn('  (BIM 模型未在時限內載入，仍照常截圖)'))
+await page.waitForTimeout(6000)
+await page.screenshot({ path: `${OUT}/01_main.png` })
+console.log('✓ 01_main.png（BIM 模型載入後重拍）')
+
 await browser.close()
 console.log('\n所有截圖完成 →', OUT)

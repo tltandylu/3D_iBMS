@@ -16,9 +16,12 @@ await page.setViewportSize({ width: 1440, height: 900 })
 
 // 低幀率（軟體渲染）下 Playwright 的 actionability 檢查會逾時，改以 DOM 事件點擊
 const clickByText = (text, tag = '*') => page.evaluate(([text, tag]) => {
-  const el = Array.from(document.querySelectorAll(tag))
+  const cands = Array.from(document.querySelectorAll(tag))
     .filter(e => e.children.length === 0 || e.tagName === 'BUTTON')
-    .find(e => (e.textContent ?? '').trim() === text)
+  // 先找完全相符，再退回「包含」（分頁按鈕常帶 icon 或計數，如「🧬孿生診斷」「維修歷程 (3)」）
+  const el = cands.find(e => (e.textContent ?? '').trim() === text)
+    ?? cands.filter(e => (e.textContent ?? '').includes(text))
+            .sort((a, b) => (a.textContent?.length ?? 0) - (b.textContent?.length ?? 0))[0]
   if (!el) throw new Error(`找不到元素：${text}`)
   ;(el.closest('button') ?? el).dispatchEvent(new MouseEvent('click', { bubbles: true }))
   return true
@@ -135,11 +138,12 @@ await page.screenshot({ path: `${OUT}/13f_robot_fpv.png` })
 console.log('✓ 13f_robot_fpv.png（第一人稱機載視角）')
 
 await clickByText('›', 'button')                       // 巡看下一台
-await page.waitForTimeout(1500)
+await page.waitForTimeout(2000)
 await page.keyboard.press('Escape')                    // Esc 停止
-await page.waitForTimeout(1000)
-const stopped = await page.evaluate(() => !Array.from(document.querySelectorAll('button'))
-  .some(b => (b.textContent ?? '').trim() === '■ 停止'))
+const stopped = await page.waitForFunction(
+  () => !Array.from(document.querySelectorAll('button')).some(b => (b.textContent ?? '').trim() === '■ 停止'),
+  null, { timeout: 10000, polling: 300 },
+).then(() => true).catch(() => false)
 console.log(stopped ? '✓ Esc 停止即時視角，控制列已收起' : '✗ 控制列未收起')
 
 if (errors.length) {
