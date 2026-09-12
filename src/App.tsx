@@ -41,6 +41,7 @@ const SparePartsManager                = lazy(() => import('./components/ui/Spar
 const PointBindingManager              = lazy(() => import('./components/ui/PointBindingManager').then(m => ({ default: m.PointBindingManager })))
 const FloorPlanSettings                = lazy(() => import('./components/ui/FloorPlanSettings').then(m => ({ default: m.FloorPlanSettings })))
 const RobotFleetPanel                  = lazy(() => import('./components/ui/RobotFleetPanel').then(m => ({ default: m.RobotFleetPanel })))
+const RobotViewControl                 = lazy(() => import('./components/ui/RobotViewControl').then(m => ({ default: m.RobotViewControl })))
 import { AIAssistant } from './components/ui/AIAssistant'
 import { FloorPlanMiniMap } from './components/ui/FloorPlanMiniMap'
 import { useSystemSettings } from './hooks/useSystemSettings'
@@ -140,6 +141,19 @@ export default function App() {
   const [robotTrails,      setRobotTrails]      = useState(true)
   const [robotLabels,      setRobotLabels]      = useState(true)
   const [robotFloorFilter, setRobotFloorFilter] = useState<Set<string> | null>(null)
+
+  /** 啟動即時機器人視角（跟隨 / 機載）；mode='global' 代表停止 */
+  const setRobotView = useCallback((mode: RobotViewMode, targetId: string | null) => {
+    if (mode === 'global' || !targetId) {
+      setRobotViewMode('global')
+      setRobotFollowId(null)
+      return
+    }
+    setRobotViewMode(mode)
+    setRobotFollowId(targetId)
+    setRobotSelectedId(targetId)
+  }, [])
+  const stopRobotView = useCallback(() => setRobotView('global', null), [setRobotView])
   const webhookSentRef = useRef<Map<string, number>>(new Map())
   const [apiKeyConfigured, setApiKeyConfigured] = useState(() => !!getStoredApiKey())
   const [aiRootCauses, setAiRootCauses] = useState<Map<string, string>>(new Map())
@@ -567,6 +581,21 @@ export default function App() {
               floorFilter: robotFloorFilter,
             }}
           />
+          {/* 即時機器人視角控制列（啟動後常駐於 3D 場景上方）*/}
+          <AnimatePresence>
+            {robotViewMode !== 'global' && robotFollowId && (
+              <Suspense fallback={null}>
+                <RobotViewControl
+                  robotId={robotFollowId}
+                  mode={robotViewMode}
+                  onMode={m => setRobotView(m, robotFollowId)}
+                  onSwitchRobot={id => setRobotView(robotViewMode, id)}
+                  onStop={stopRobotView}
+                />
+              </Suspense>
+            )}
+          </AnimatePresence>
+
           {/* 漫遊小地圖 */}
           <WalkthroughMiniMap
             fpPosRef={fpPosRef}
@@ -963,13 +992,10 @@ export default function App() {
             selectedId={robotSelectedId}
             onSelect={setRobotSelectedId}
             viewMode={robotViewMode}
+            followId={robotFollowId}
             onViewMode={(mode, targetId) => {
-              setRobotViewMode(mode)
-              setRobotFollowId(mode === 'global' ? null : targetId)
-              if (mode !== 'global' && targetId) {
-                setRobotSelectedId(targetId)
-                setShowRobots(false)   // 切換視角時收起面板，讓 3D 場景成為主畫面
-              }
+              setRobotView(mode, targetId)
+              if (mode !== 'global' && targetId) setShowRobots(false)   // 收起面板讓 3D 成為主畫面
             }}
             showTrails={robotTrails}
             onToggleTrails={setRobotTrails}

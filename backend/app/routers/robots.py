@@ -1,6 +1,8 @@
 """AMR / AGV 車隊路由 — /api/robots
 
 * GET  /api/robots                      車隊即時快照（REST 補位，WS 中斷時前端可輪詢）
+* GET  /api/robots/routes               動線設定（外部 JSON，熱加載）
+* PUT  /api/robots/routes               更新動線並即時熱套用（admin / operator）
 * GET  /api/robots/calibration          坐標校準設定（§5.3 熱加載）
 * POST /api/robots/calibration/solve    錨點最小平方求解（不寫檔，供現場試算）
 * PUT  /api/robots/calibration          寫入 / 切換校準 profile（admin）
@@ -14,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from app.auth import require_roles
 from app import robot_calibration as calib
+from app import robot_routes
 from app.robot_simulator import MAX_PLAUSIBLE_SPEED, TELEMETRY_HZ
 
 router = APIRouter(prefix="/api/robots", tags=["robots"])
@@ -30,6 +33,31 @@ class SolveRequest(BaseModel):
     anchors: list[Anchor]
     axis_convention: str = "ROS_ZUP"
     fixed_scale: Optional[float] = None
+
+
+class Waypoint(BaseModel):
+    station: str = ""
+    x: float
+    y: float
+    dwell_sec: float = 0.0
+    action: str = "move"
+
+
+class RobotRoute(BaseModel):
+    device_id: str
+    device_name: str = ""
+    model: str = ""
+    floor_id: str = "FL-01"
+    max_speed: float = 1.0
+    loop: bool = True
+    charger: Optional[dict[str, float]] = None
+    waypoints: list[Waypoint]
+
+
+class RoutesPayload(BaseModel):
+    version: str = "1.0"
+    site_id: str = "locus"
+    robots: list[RobotRoute]
 
 
 class ProfilePayload(BaseModel):
@@ -66,6 +94,31 @@ async def list_robots(
         "max_speed_limit": MAX_PLAUSIBLE_SPEED,
         "source": "external" if fleet.external_mode else "simulator",
     }
+
+
+# ── 動線設定（外部配置化 + 熱加載）──────────────────────────────────────────
+@router.get("/routes")
+async def get_routes(
+    _: dict = Depends(require_roles("admin", "operator", "viewer")),
+) -> dict[str, Any]:
+    return robot_routes.load_routes()
+
+
+@router.put("/routes")
+async def put_routes(
+    body: RoutesPayload,
+    request: Request,
+    _: dict = Depends(require_roles("admin", "operator")),
+) -> dict[str, Any]:
+    try:
+        saved = robot_routes.save_routes(body.model_dump(exclude_none=True))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    # 立即熱套用至執行中的車隊（不必等 2 秒輪詢）
+    fleet = getattr(request.app.state, "robot_fleet", None)
+    if fleet is not None:
+        fleet.apply_routes(saved)
+    return saved
 
 
 # ── 校準設定（§5.3）─────────────────────────────────────────────────────────

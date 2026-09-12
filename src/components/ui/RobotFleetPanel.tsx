@@ -23,6 +23,7 @@ interface Props {
   selectedId: string | null
   onSelect: (id: string | null) => void
   viewMode: RobotViewMode
+  followId: string | null
   onViewMode: (mode: RobotViewMode, targetId: string | null) => void
   showTrails: boolean
   onToggleTrails: (v: boolean) => void
@@ -44,9 +45,15 @@ interface SolveResult {
 
 const RMSE_KPI = 0.15   // §2.2 坐標映射精度驗收基準（m）
 
+/** 動線設定（robot_routes.json）的站點動作 */
+const ACTION_LABEL: Record<string, string> = {
+  move: '移動', pick: '取貨', drop: '放貨',
+  inspect: '巡檢', charge: '充電', wait: '等待',
+}
+
 export function RobotFleetPanel({
   restBase, backendConnected, canEdit, profile, onProfileChange,
-  selectedId, onSelect, viewMode, onViewMode,
+  selectedId, onSelect, viewMode, followId, onViewMode,
   showTrails, onToggleTrails, showLabels, onToggleLabels,
   floorFilter, onFloorFilter, onClose,
 }: Props) {
@@ -137,7 +144,7 @@ export function RobotFleetPanel({
           <FleetTab
             robots={robots} floors={floors} floorFilter={floorFilter} toggleFloor={toggleFloor}
             onFloorFilter={onFloorFilter} selectedId={selectedId} onSelect={onSelect}
-            viewMode={viewMode} onViewMode={onViewMode}
+            viewMode={viewMode} followId={followId} onViewMode={onViewMode}
             showTrails={showTrails} onToggleTrails={onToggleTrails}
             showLabels={showLabels} onToggleLabels={onToggleLabels}
             avgLatency={avgLatency} stats={stats} profile={profile}
@@ -156,7 +163,7 @@ export function RobotFleetPanel({
 // ── 車隊監控頁 ──────────────────────────────────────────────────────────
 function FleetTab({
   robots, floors, floorFilter, toggleFloor, onFloorFilter,
-  selectedId, onSelect, viewMode, onViewMode,
+  selectedId, onSelect, viewMode, followId, onViewMode,
   showTrails, onToggleTrails, showLabels, onToggleLabels,
   avgLatency, stats, profile,
 }: {
@@ -164,7 +171,8 @@ function FleetTab({
   floorFilter: Set<string> | null; toggleFloor: (f: string) => void
   onFloorFilter: (f: Set<string> | null) => void
   selectedId: string | null; onSelect: (id: string | null) => void
-  viewMode: RobotViewMode; onViewMode: (m: RobotViewMode, id: string | null) => void
+  viewMode: RobotViewMode; followId: string | null
+  onViewMode: (m: RobotViewMode, id: string | null) => void
   showTrails: boolean; onToggleTrails: (v: boolean) => void
   showLabels: boolean; onToggleLabels: (v: boolean) => void
   avgLatency: number | null
@@ -208,6 +216,19 @@ function FleetTab({
                 <span style={{ marginLeft: 'auto', color, fontSize: 10, fontWeight: 700 }}>
                   {ROBOT_STATE_LABEL[state] ?? state}
                 </span>
+                {followId === r.id && viewMode !== 'global' ? (
+                  <button
+                    onClick={e => { e.stopPropagation(); onViewMode('global', null) }}
+                    title="停止即時視角"
+                    style={{ ...pillStyle(false), padding: '3px 8px', color: '#fca5a5', borderColor: 'rgba(239,68,68,0.4)' }}
+                  >■ 停止</button>
+                ) : (
+                  <button
+                    onClick={e => { e.stopPropagation(); onViewMode('chase', r.id) }}
+                    title="啟動即時視角（鎖定跟隨）"
+                    style={{ ...pillStyle(false), padding: '3px 8px' }}
+                  >▶ 即時視角</button>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 10, color: 'rgba(255,255,255,0.6)' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 92 }}>
@@ -219,7 +240,14 @@ function FleetTab({
                 <span>{r.floorId}</span>
                 <span>{r.linearV.toFixed(2)} m/s</span>
                 <span>({r.pose.x.toFixed(1)}, {r.pose.y.toFixed(1)})</span>
-                {r.targetStation && <span>→ {r.targetStation}</span>}
+                {r.targetStation && (
+                  <span>
+                    → {r.targetStation}
+                    {r.action && ACTION_LABEL[r.action] && (
+                      <span style={{ color: 'rgba(103,232,249,0.75)' }}> · {ACTION_LABEL[r.action]}</span>
+                    )}
+                  </span>
+                )}
                 {r.driftRejects > 0 && <span style={{ color: '#f59e0b' }}>漂移棄幀 {r.driftRejects}</span>}
               </div>
               {sel && (

@@ -1,0 +1,291 @@
+{
+  "version": "1.0",
+  "site_id": "locus",
+  "updated_at": "2026-09-12T20:54:53.992201",
+  "robots": [
+    {
+      "device_id": "AMR-P01",
+      "device_name": "無人物料搬運車 01",
+      "model": "AMR-Lifter-500",
+      "floor_id": "B2",
+      "max_speed": 1.2,
+      "loop": true,
+      "charger": {
+        "x": -10.5,
+        "y": -7.5
+      },
+      "waypoints": [
+        {
+          "station": "ST-B2-01",
+          "x": -9.0,
+          "y": -6.0,
+          "dwell_sec": 2.0,
+          "action": "pick",
+          "seq": 1
+        },
+        {
+          "station": "ST-B2-02",
+          "x": 9.0,
+          "y": -6.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 2
+        },
+        {
+          "station": "ST-B2-03",
+          "x": 9.0,
+          "y": 6.0,
+          "dwell_sec": 2.0,
+          "action": "drop",
+          "seq": 3
+        },
+        {
+          "station": "ST-B2-04",
+          "x": -9.0,
+          "y": 6.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        }
+      ]
+    },
+    {
+      "device_id": "AMR-P02",
+      "device_name": "無人物料搬運車 02",
+      "model": "AMR-Lifter-500",
+      "floor_id": "B1",
+      "max_speed": 1.1,
+      "loop": true,
+      "charger": {
+        "x": -10.0,
+        "y": 6.5
+      },
+      "waypoints": [
+        {
+          "station": "ST-B1-01",
+          "x": -8.0,
+          "y": 5.0,
+          "dwell_sec": 1.5,
+          "action": "pick",
+          "seq": 1
+        },
+        {
+          "station": "ST-B1-02",
+          "x": 8.0,
+          "y": 5.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 2
+        },
+        {
+          "station": "ST-B1-03",
+          "x": 8.0,
+          "y": -5.0,
+          "dwell_sec": 1.5,
+          "action": "drop",
+          "seq": 3
+        },
+        {
+          "station": "ST-B1-04",
+          "x": 0.0,
+          "y": -5.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        },
+        {
+          "station": "ST-B1-05",
+          "x": 0.0,
+          "y": 5.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 5
+        }
+      ]
+    },
+    {
+      "device_id": "AGV-L01",
+      "device_name": "自動導引車 L01",
+      "model": "AGV-Tug-300",
+      "floor_id": "FL-01",
+      "max_speed": 0.9,
+      "loop": true,
+      "charger": {
+        "x": -9.5,
+        "y": -6.0
+      },
+      "waypoints": [
+        {
+          "station": "ST-1F-LOBBY",
+          "x": -7.0,
+          "y": -4.0,
+          "dwell_sec": 3.0,
+          "action": "wait",
+          "seq": 1
+        },
+        {
+          "station": "ST-1F-DOCK",
+          "x": 7.0,
+          "y": -4.0,
+          "dwell_sec": 2.0,
+          "action": "pick",
+          "seq": 2
+        },
+        {
+          "station": "ST-1F-NE",
+          "x": 7.0,
+          "y": 4.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 3
+        },
+        {
+          "station": "ST-1F-NW",
+          "x": -7.0,
+          "y": 4.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        }
+      ]
+    },
+    {
+      "device_id": "INS-R01",
+      "device_name": "自動巡檢機器人 R01",
+      "model": "Inspector-Pro",
+      "floor_id": "FL-03",
+      "max_speed": 0.75,
+      "loop": true,
+      "charger": {
+        "x": -8.5,
+        "y": -7.0
+      },
+      "waypoints": [
+        {
+          "station": "ST-3F-AHU",
+          "x": -6.0,
+          "y": 0.0,
+          "dwell_sec": 4.0,
+          "action": "inspect",
+          "seq": 1
+        },
+        {
+          "station": "ST-3F-N",
+          "x": 0.0,
+          "y": 6.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 2
+        },
+        {
+          "station": "ST-3F-EPS",
+          "x": 6.0,
+          "y": 0.0,
+          "dwell_sec": 4.0,
+          "action": "inspect",
+          "seq": 3
+        },
+        {
+          "station": "ST-3F-S",
+          "x": 0.0,
+          "y": -6.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        }
+      ]
+    },
+    {
+      "device_id": "INS-R02",
+      "device_name": "自動巡檢機器人 R02",
+      "model": "Inspector-Pro",
+      "floor_id": "FL-05",
+      "max_speed": 0.8,
+      "loop": true,
+      "charger": {
+        "x": -9.0,
+        "y": 5.5
+      },
+      "waypoints": [
+        {
+          "station": "ST-5F-N",
+          "x": -7.5,
+          "y": 3.0,
+          "dwell_sec": 3.0,
+          "action": "inspect",
+          "seq": 1
+        },
+        {
+          "station": "ST-5F-NE",
+          "x": 7.5,
+          "y": 3.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 2
+        },
+        {
+          "station": "ST-5F-S",
+          "x": 7.5,
+          "y": -3.0,
+          "dwell_sec": 3.0,
+          "action": "inspect",
+          "seq": 3
+        },
+        {
+          "station": "ST-5F-SW",
+          "x": -7.5,
+          "y": -3.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        }
+      ]
+    },
+    {
+      "device_id": "INS-R03",
+      "device_name": "自動巡檢機器人 R03",
+      "model": "Inspector-Lite",
+      "floor_id": "FL-08",
+      "max_speed": 0.7,
+      "loop": true,
+      "charger": {
+        "x": -8.0,
+        "y": -6.5
+      },
+      "waypoints": [
+        {
+          "station": "ST-8F-01",
+          "x": -5.0,
+          "y": -5.0,
+          "dwell_sec": 2.5,
+          "action": "inspect",
+          "seq": 1
+        },
+        {
+          "station": "ST-8F-02",
+          "x": 5.0,
+          "y": -5.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 2
+        },
+        {
+          "station": "ST-8F-03",
+          "x": 5.0,
+          "y": 5.0,
+          "dwell_sec": 2.5,
+          "action": "inspect",
+          "seq": 3
+        },
+        {
+          "station": "ST-8F-04",
+          "x": -5.0,
+          "y": 5.0,
+          "dwell_sec": 0.0,
+          "action": "move",
+          "seq": 4
+        }
+      ]
+    }
+  ]
+}

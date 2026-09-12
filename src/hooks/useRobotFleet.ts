@@ -141,6 +141,7 @@ export function ingestRobotTelemetry(
       alarmLevel:    st.alarm_level ?? 0,
       taskId:        st.current_task_id ?? null,
       targetStation: st.target_station ?? null,
+      action:        st.current_action ?? '',
       linearV:       p.motion?.linear_velocity ?? 0,
       angularV:      p.motion?.angular_velocity ?? 0,
       mileage:       st.mileage_m ?? prev?.mileage ?? 0,

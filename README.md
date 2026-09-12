@@ -123,10 +123,68 @@
 | §6.2 平滑插值 | 位置 LERP、朝向 SLERP，皆採指數衰減阻尼 `α = 1 − e^(−12Δt)`，幀率浮動下收斂時間一致 |
 | §6.3 HUD | 車體上方 3D 看板（車號 / 電量條 / 狀態 / 速度）＋ 底盤呼吸光環，`alarm_level = 2` 時轉為紅色高頻閃爍 |
 | §6.4 軌跡殘影 | BufferGeometry 動態頂點，位移 ≥ 0.3 m 新增一點、上限 200 點，顏色由尾端漸暗 |
-| §7 視角 | 全局概覽（OrbitControls）／鎖定跟隨（車體後上方彈簧臂）／第一人稱（機載視角）＋ 樓層過濾 |
+| §7 視角 | 全局概覽（OrbitControls）／鎖定跟隨（車體後上方彈簧臂）／第一人稱（機載視角）＋ 樓層過濾；**即時視角可隨時啟動／停止**（見下） |
 | §8.1 效能 | 距離 LOD（>50 m 光點、15~50 m 精簡車體、<15 m 完整細節）＋ 視錐體剔除後才渲染 HUD |
 | §8.2 容錯 | 心跳逾時 3 秒 → `SIGNAL_LOST` 半透明 Ghost；瞬時速度 > 3.5 m/s 判定定位漂移並捨棄該幀（以採樣時間戳計算，避免訊息批次到達誤判） |
 | 告警聯動 | 機器人故障停機（`alarm_level = 2`）自動產生 ALARM 告警，進入既有告警中心 / 跑馬燈 / 通知流程 |
+| 動線設定 | 動線改由 `backend/robot_routes.json` 外部管理，改檔即生效（見下） |
+
+**啟動／停止即時機器人視角**
+
+| 操作 | 位置 |
+|---|---|
+| 啟動 | 車隊清單每列的 `▶ 即時視角`（直接進鎖定跟隨），或雙擊該列 |
+| 切換模式 | 場景上緣控制列的 `🎯 跟隨` / `👁 機載` |
+| 巡看其他車 | 控制列 `‹` `›`（依車號順序切換，視角不中斷） |
+| 停止 | 控制列 `■ 停止`、清單同一顆按鈕，或按 `Esc` |
+
+啟動後控制列常駐於 3D 場景上緣，顯示車號、電量與即時脈動指示（滑鼠停留可看完整狀態）；
+訊號遺失時轉為灰色並提示「畫面停於最後位姿」。停止後自動交還 OrbitControls，
+鏡頭停在原地不跳動。
+
+**機器人動線設定**
+
+動線（巡邏路徑、站點、停留時間、充電樁）由 `backend/robot_routes.json` 管理，
+與坐標校準同一套熱加載機制：**改檔即生效，不必重啟後端、也不用改任何前端程式**。
+座標使用機器人原生導航坐標系（ROS：x 前、y 左，公尺），顯示時自動套用校準矩陣。
+
+```jsonc
+{
+  "robots": [{
+    "device_id": "AMR-P01", "device_name": "無人物料搬運車 01",
+    "model": "AMR-Lifter-500", "floor_id": "B2",
+    "max_speed": 1.2,                       // m/s，上限 3.5（對齊 §8.2）
+    "loop": true,                           // true=循環；false=到端點原路折返
+    "charger": { "x": -10.5, "y": -7.5 },   // 低電量（<20%）自動返回充電
+    "waypoints": [                          // 至少 2 點，上限 200 點
+      { "station": "ST-B2-01", "x": -9.0, "y": -6.0, "dwell_sec": 2, "action": "pick" },
+      { "station": "ST-B2-02", "x":  9.0, "y": -6.0, "dwell_sec": 0, "action": "move" }
+    ]
+  }]
+}
+```
+
+`action` 可用：`move` / `pick` / `drop` / `inspect` / `charge` / `wait`，
+會隨遙測封包送到前端並顯示於車隊清單（如「→ ST-B2-01 · 取貨」）。
+
+三種修改方式，效果相同：
+
+| 方式 | 說明 |
+|---|---|
+| 直接改檔 | 編輯 `backend/robot_routes.json` 存檔，模擬器 2 秒內輪詢熱套用 |
+| REST API | `GET /api/robots/routes` 讀取、`PUT /api/robots/routes` 寫入（admin / operator），寫入後立即熱套用 |
+| 刪檔重建 | 刪除該檔後任一次讀取都會重新產生內建預設動線 |
+
+寫入前一律驗證並回 400 與具體訊息：waypoint 少於 2 點、`max_speed` 超出 0.05~3.5 m/s、
+座標超出 ±500 m（防止誤用公釐）、`action` 不支援、`device_id` 重複等；
+驗證失敗時**不會覆蓋既有檔案**，執行中的車隊也不受影響。
+
+熱套用時會保留車輛當下的位置、電量與狀態，只把路徑索引夾回新動線範圍；
+設定檔中新增／移除的車輛會即時上線／下線。
+
+> 真實場域的派車與避障通常由 AMR 廠商的 RCS/FMS 掌管。此設定檔的定位是
+> **平台端的動線規劃與可視化**；接真車時可由閘道將此設定下發至 RCS，
+> 並改以 `POST /api/robots/telemetry` 回報實際位姿。
 
 樓板高程解析順序：已載入的 IFC 實際樓層 → 校準 profile 的 `floor_elevations` → 內建預設表。
 後端未連線時，前端以相同路線與狀態機在本地模擬 6 台車（後端遙測恢復後自動讓位）。
@@ -138,6 +196,10 @@
 | 鎖定跟隨視角 | 3D 場景 |
 |---|---|
 | ![跟隨視角](docs/screenshots/13c_robot_chase_view.png) | ![場景](docs/screenshots/13d_robot_scene.png) |
+
+| 即時視角控制列 | 第一人稱機載視角 |
+|---|---|
+| ![即時視角](docs/screenshots/13e_robot_live_view.png) | ![機載視角](docs/screenshots/13f_robot_fpv.png) |
 
 ### 設備詳情抽屜（Phase 10 — 數位孿生名片）
 點擊任何設備後，右側滑出強化版詳情抽屜，分三個 Tab：
@@ -253,6 +315,8 @@ start.bat
 | `GET /api/audit` | 操作稽核日誌 |
 | `GET /api/robots` | AMR / AGV 車隊即時快照 |
 | `GET /api/robots/{id}` | 單台機器人快照 |
+| `GET /api/robots/routes` | 機器人動線設定（熱加載） |
+| `PUT /api/robots/routes` | 更新動線並即時熱套用（admin / operator） |
 | `GET /api/robots/calibration` | 坐標校準設定（熱加載） |
 | `POST /api/robots/calibration/solve` | 錨點最小平方求解（回傳矩陣與 RMSE） |
 | `PUT /api/robots/calibration` | 寫入 / 切換校準 profile（admin） |

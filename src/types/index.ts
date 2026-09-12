@@ -154,6 +154,7 @@ export interface RobotTelemetryPacket {
     alarm_level?: number
     current_task_id?: string | null
     target_station?: string | null
+    current_action?: string        // 動線設定的站點動作（move / pick / drop / inspect / charge / wait）
     mileage_m?: number
   }
 }
@@ -170,6 +171,7 @@ export interface RobotRuntimeState {
   alarmLevel: number
   taskId: string | null
   targetStation: string | null
+  action: string
   linearV: number
   angularV: number
   mileage: number

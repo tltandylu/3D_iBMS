@@ -91,6 +91,28 @@ await page.waitForTimeout(3500)
 await page.screenshot({ path: `${OUT}/13c_robot_chase_view.png` })
 console.log('✓ 13c_robot_chase_view.png')
 
+// ── 即時機器人視角：啟動 → 切換機載 → 巡看下一台 → Esc 停止 ──────────
+await clickByText('機器人車隊')
+await waitForText('AMR / AGV 車隊即時追蹤')
+await clickByText('▶ 即時視角', 'button')
+await waitForText('■ 停止')
+await page.waitForTimeout(2500)
+await page.screenshot({ path: `${OUT}/13e_robot_live_view.png` })
+console.log('✓ 13e_robot_live_view.png（啟動即時視角）')
+
+await clickByText('👁 機載', 'button')
+await page.waitForTimeout(2500)
+await page.screenshot({ path: `${OUT}/13f_robot_fpv.png` })
+console.log('✓ 13f_robot_fpv.png（第一人稱機載視角）')
+
+await clickByText('›', 'button')                       // 巡看下一台
+await page.waitForTimeout(1500)
+await page.keyboard.press('Escape')                    // Esc 停止
+await page.waitForTimeout(1000)
+const stopped = await page.evaluate(() => !Array.from(document.querySelectorAll('button'))
+  .some(b => (b.textContent ?? '').trim() === '■ 停止'))
+console.log(stopped ? '✓ Esc 停止即時視角，控制列已收起' : '✗ 控制列未收起')
+
 if (errors.length) {
   console.log('\n⚠ console 錯誤：')
   for (const e of [...new Set(errors)].slice(0, 12)) console.log('  -', e)

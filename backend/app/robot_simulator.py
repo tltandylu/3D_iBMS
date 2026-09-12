@@ -22,6 +22,8 @@ import time
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Optional
 
+from app import robot_routes   # 動線由外部設定檔提供（見該模組說明）
+
 if TYPE_CHECKING:
     from app.ws_manager import ConnectionManager
 
@@ -49,87 +51,69 @@ def _ang_diff(target: float, current: float) -> float:
     return d + 360.0 if d <= -180.0 else d
 
 
-# ── 車隊配置（ROS 原生坐標，單位 m；每層樓共用同一 2D 導航平面）──────────────
-# 樂迦大樓佔地約 24m × 18m，導航路線保留邊界安全距離
-_FLEET_CONFIG: list[dict[str, Any]] = [
-    {
-        "device_id": "AMR-P01", "device_name": "無人物料搬運車 01", "floor_id": "B2",
-        "model": "AMR-Lifter-500", "max_speed": 1.20,
-        "route": [(-9.0, -6.0), (9.0, -6.0), (9.0, 6.0), (-9.0, 6.0)],
-        "charger": (-10.5, -7.5), "stations": ["ST-B2-01", "ST-B2-02", "ST-B2-03", "ST-B2-04"],
-    },
-    {
-        "device_id": "AMR-P02", "device_name": "無人物料搬運車 02", "floor_id": "B1",
-        "model": "AMR-Lifter-500", "max_speed": 1.10,
-        "route": [(-8.0, 5.0), (8.0, 5.0), (8.0, -5.0), (0.0, -5.0), (0.0, 5.0)],
-        "charger": (-10.0, 6.5), "stations": ["ST-B1-01", "ST-B1-02", "ST-B1-03"],
-    },
-    {
-        "device_id": "AGV-L01", "device_name": "自動導引車 L01", "floor_id": "FL-01",
-        "model": "AGV-Tug-300", "max_speed": 0.90,
-        "route": [(-7.0, -4.0), (7.0, -4.0), (7.0, 4.0), (-7.0, 4.0)],
-        "charger": (-9.5, -6.0), "stations": ["ST-1F-LOBBY", "ST-1F-DOCK"],
-    },
-    {
-        "device_id": "INS-R01", "device_name": "自動巡檢機器人 R01", "floor_id": "FL-03",
-        "model": "Inspector-Pro", "max_speed": 0.75,
-        "route": [(-6.0, 0.0), (0.0, 6.0), (6.0, 0.0), (0.0, -6.0)],
-        "charger": (-8.5, -7.0), "stations": ["ST-3F-AHU", "ST-3F-EPS"],
-    },
-    {
-        "device_id": "INS-R02", "device_name": "自動巡檢機器人 R02", "floor_id": "FL-05",
-        "model": "Inspector-Pro", "max_speed": 0.80,
-        "route": [(-7.5, 3.0), (7.5, 3.0), (7.5, -3.0), (-7.5, -3.0)],
-        "charger": (-9.0, 5.5), "stations": ["ST-5F-N", "ST-5F-S"],
-    },
-    {
-        "device_id": "INS-R03", "device_name": "自動巡檢機器人 R03", "floor_id": "FL-08",
-        "model": "Inspector-Lite", "max_speed": 0.70,
-        "route": [(-5.0, -5.0), (5.0, -5.0), (5.0, 5.0), (-5.0, 5.0)],
-        "charger": (-8.0, -6.5), "stations": ["ST-8F-01", "ST-8F-02"],
-    },
-]
-
-
 class RobotRuntime:
     """單台機器人的即時狀態（ROS 原生坐標）"""
 
     def __init__(self, cfg: dict[str, Any]) -> None:
-        self.device_id   = cfg["device_id"]
-        self.device_name = cfg["device_name"]
-        self.floor_id    = cfg["floor_id"]
-        self.model       = cfg["model"]
-        self.max_speed   = float(cfg["max_speed"])
-        self.route: list[tuple[float, float]] = list(cfg["route"])
-        self.charger: tuple[float, float] = tuple(cfg["charger"])  # type: ignore[assignment]
-        self.stations: list[str] = list(cfg["stations"])
-
-        start = self.route[0]
-        self.x, self.y   = float(start[0]), float(start[1])
-        self.yaw         = 0.0          # deg，繞 ROS z 軸（上）
-        self.wp_index    = 1 % len(self.route)
-        self.linear_v    = 0.0
-        self.angular_v   = 0.0
-        self.state       = "RUNNING"
-        self.battery     = random.uniform(55.0, 95.0)
-        self.alarm_level = 0
-        self.task_id: Optional[str] = f"TASK-{datetime.now():%Y%m}-{random.randint(1, 999):03d}"
-        self.target_station = self.stations[0]
-        self.hold_until     = 0.0       # IDLE / BLOCKED 解除時間
-        self.silent_until   = 0.0       # 模擬訊號遺失（停止推播）
-        self.mileage_m      = random.uniform(120.0, 4800.0)
+        self.device_id = cfg["device_id"]
         self.last_pub_pos: Optional[tuple[float, float, float]] = None  # (x, y, t)
+        self.apply_config(cfg, initial=True)
+
+    # ── 套用（或熱更新）動線設定 ───────────────────────────
+    def apply_config(self, cfg: dict[str, Any], initial: bool = False) -> None:
+        self.device_name = cfg.get("device_name", self.device_id)
+        self.floor_id    = cfg.get("floor_id", "FL-01")
+        self.model       = cfg.get("model", "")
+        self.max_speed   = float(cfg.get("max_speed", 1.0))
+        self.loop        = bool(cfg.get("loop", True))
+        self.waypoints: list[dict[str, Any]] = list(cfg["waypoints"])
+        ch = cfg.get("charger") or {}
+        self.charger = (float(ch.get("x", self.waypoints[0]["x"])),
+                        float(ch.get("y", self.waypoints[0]["y"])))
+
+        if initial:
+            self.x, self.y   = float(self.waypoints[0]["x"]), float(self.waypoints[0]["y"])
+            self.yaw         = 0.0          # deg，繞 ROS z 軸（上）
+            self.wp_index    = 1 % len(self.waypoints)
+            self.direction   = 1            # loop=False 時用於原路折返
+            self.linear_v    = 0.0
+            self.angular_v   = 0.0
+            self.state       = "RUNNING"
+            self.battery     = random.uniform(55.0, 95.0)
+            self.alarm_level = 0
+            self.task_id: Optional[str] = f"TASK-{datetime.now():%Y%m}-{random.randint(1, 999):03d}"
+            self.hold_until   = 0.0         # IDLE / BLOCKED 解除時間
+            self.silent_until = 0.0         # 模擬訊號遺失（停止推播）
+            self.mileage_m    = random.uniform(120.0, 4800.0)
+        else:
+            # 熱更新：保留運行狀態，僅把索引夾回新動線範圍
+            self.wp_index = min(self.wp_index, len(self.waypoints) - 1)
+        self.target_station = str(self.waypoints[self.wp_index].get("station", ""))
 
     # ── 目標點 ───────────────────────────────────────────────
     @property
     def goal(self) -> tuple[float, float]:
         if self.state == "CHARGING" or (self.battery < 20.0 and self.state != "ERROR"):
             return self.charger
-        return self.route[self.wp_index]
+        wp = self.waypoints[self.wp_index]
+        return float(wp["x"]), float(wp["y"])
+
+    @property
+    def current_waypoint(self) -> dict[str, Any]:
+        return self.waypoints[self.wp_index]
 
     def _advance_waypoint(self) -> None:
-        self.wp_index = (self.wp_index + 1) % len(self.route)
-        self.target_station = self.stations[self.wp_index % len(self.stations)]
+        n = len(self.waypoints)
+        if self.loop:
+            self.wp_index = (self.wp_index + 1) % n
+        else:
+            # 非循環動線：抵達端點後原路折返
+            nxt = self.wp_index + self.direction
+            if nxt >= n or nxt < 0:
+                self.direction *= -1
+                nxt = self.wp_index + self.direction
+            self.wp_index = max(0, min(n - 1, nxt))
+        self.target_station = str(self.waypoints[self.wp_index].get("station", ""))
 
     # ── 每幀運動積分 ─────────────────────────────────────────
     def step(self, dt: float, now: float) -> None:
@@ -171,11 +155,12 @@ class RobotRuntime:
             if self.battery < 20.0:
                 self.state = "CHARGING"
                 return
+            dwell = float(self.current_waypoint.get("dwell_sec", 0) or 0)
             self._advance_waypoint()
             self.task_id = f"TASK-{datetime.now():%Y%m}-{random.randint(1, 999):03d}"
-            if random.random() < 0.25:           # 站點作業短暫停等
+            if dwell > 0:                        # 站點作業停留（依動線設定）
                 self.state = "IDLE"
-                self.hold_until = now + random.uniform(1.5, 4.0)
+                self.hold_until = now + dwell
             return
 
         # 轉向（先轉再走，模擬差速輪 AMR）
@@ -229,6 +214,7 @@ class RobotRuntime:
                 "alarm_level": self.alarm_level,
                 "current_task_id": self.task_id,
                 "target_station": self.target_station,
+                "current_action": str(self.current_waypoint.get("action", "move")),
                 "mileage_m": round(self.mileage_m, 1),
             },
         }
@@ -270,11 +256,26 @@ class RobotFleet:
         self.manager  = manager
         self.store    = store
         self._running = False
+        cfg = robot_routes.load_routes()
         self._robots: dict[str, RobotRuntime] = {
-            c["device_id"]: RobotRuntime(c) for c in _FLEET_CONFIG
+            c["device_id"]: RobotRuntime(c) for c in cfg["robots"]
         }
         self._last_alert: dict[str, float] = {}
+        self._last_route_check = 0.0
         self._external_mode = False   # 收到外部遙測後停用內建模擬
+
+    # ── 動線熱套用（robot_routes.json 變更時）────────────────
+    def apply_routes(self, cfg: dict[str, Any]) -> None:
+        wanted = {r["device_id"]: r for r in cfg["robots"]}
+        for did in list(self._robots):
+            if did not in wanted:
+                del self._robots[did]           # 設定檔已移除的車輛
+        for did, rcfg in wanted.items():
+            if did in self._robots:
+                self._robots[did].apply_config(rcfg)
+            else:
+                self._robots[did] = RobotRuntime(rcfg)
+        logger.info("[Robot] 動線已熱套用：%d 台", len(self._robots))
 
     # ── 查詢 ────────────────────────────────────────────────
     def snapshot(self) -> list[dict[str, Any]]:
@@ -330,6 +331,12 @@ class RobotFleet:
             now = time.time()
             dt  = min(0.5, now - last)   # 避免排程延遲造成大跳步
             last = now
+            # 每 2 秒檢查動線設定是否被外部修改（外部配置化 / 熱加載）
+            if now - self._last_route_check > 2.0:
+                self._last_route_check = now
+                if robot_routes.routes_changed():
+                    self.apply_routes(robot_routes.load_routes())
+
             if self._external_mode:
                 continue                  # 已由真實資料源接管
 
