@@ -85,6 +85,13 @@ DEVICES: list[Device] = [
            manufacturer='Eaton', model='9395-160',
            install_date='2022-01-01', warranty_expiry='2027-01-01',
            rul_days=720, criticality='CRITICAL', ai_score=0.06),
+    Device(id='dev-012', asset_code='FIRE-A-ALL', name='A棟消防主機',
+           category='Fire', asset_type='FirePanel', status='normal',
+           current_power_kw=0.5, floor=1, building_id='bldg-a',
+           position=[-16, 2, 3], bim_location=BimLocation(x=-16, y=2, z=3),
+           manufacturer='Siemens', model='FS720',
+           install_date='2018-01-01', warranty_expiry='2028-01-01',
+           rul_days=900, criticality='CRITICAL', ai_score=0.01),
 ]
 
 ALERTS: list[Alert] = [
@@ -130,7 +137,7 @@ WORK_ORDERS: list[WorkOrder] = [
 ]
 
 KPI = KPIData(
-    total_devices=11, online_devices=8, warning_devices=2,
+    total_devices=12, online_devices=9, warning_devices=2,
     critical_devices=2, offline_devices=1,
     total_power_kw=668.3, demand_kw=875.0, contract_demand_kw=1000.0,
     demand_ratio_pct=87.5, today_kwh=8254.0,

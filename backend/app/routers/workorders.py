@@ -1,5 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from app.models import WorkOrder
+from app.db.session import get_db
+from app.db.repository import DBRepository
+from app.auth import require_roles
 from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
@@ -21,14 +24,18 @@ class CreateWOBody(BaseModel):
 
 
 @router.post("", response_model=WorkOrder)
-async def create_workorder(body: CreateWOBody, request: Request):
+async def create_workorder(
+    body: CreateWOBody, request: Request,
+    db: DBRepository = Depends(get_db),
+    _auth: dict = Depends(require_roles("admin", "operator")),
+):
     ts = int(datetime.now().timestamp() * 1000)
     new_wo = WorkOrder(
         id=body.id or f"wo-api-{ts}",
         wo_number=body.wo_number or f"WO-{ts % 1_000_000:06d}",
-        wo_type=body.wo_type,  # type: ignore[arg-type]
+        wo_type=body.wo_type,       # type: ignore[arg-type]
         title=body.title,
-        priority=body.priority,  # type: ignore[arg-type]
+        priority=body.priority,     # type: ignore[arg-type]
         status="pending",
         asset_id=body.asset_id,
         asset_name=body.asset_name,
@@ -39,6 +46,7 @@ async def create_workorder(body: CreateWOBody, request: Request):
     )
     request.app.state.store.work_orders.insert(0, new_wo)
     request.app.state.store.kpi.pending_work_orders += 1
+    await db.upsert_workorder(new_wo)
     await request.app.state.manager.broadcast({
         "type": "workorder_new",
         "payload": new_wo.model_dump(),
@@ -64,7 +72,11 @@ async def get_workorder(wo_id: str, request: Request):
 
 
 @router.patch("/{wo_id}/status")
-async def update_wo_status(wo_id: str, status: str, request: Request):
+async def update_wo_status(
+    wo_id: str, status: str, request: Request,
+    db: DBRepository = Depends(get_db),
+    _auth: dict = Depends(require_roles("admin", "operator")),
+):
     wo = next((w for w in request.app.state.store.work_orders if w.id == wo_id), None)
     if not wo:
         raise HTTPException(404, f"WorkOrder {wo_id} not found")
@@ -80,6 +92,7 @@ async def update_wo_status(wo_id: str, status: str, request: Request):
     elif old == "in_progress" and status == "completed":
         kpi.in_progress_work_orders = max(0, kpi.in_progress_work_orders - 1)
         kpi.today_completed_work_orders += 1
+    await db.update_workorder_status(wo_id, status)
     await request.app.state.manager.broadcast({
         "type": "workorder_update",
         "payload": {"id": wo_id, "status": status},
