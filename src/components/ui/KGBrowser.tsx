@@ -36,13 +36,6 @@ const PERSONNEL = [
   { id: 'p-003', name: '王建國', role: '機電工程師' },
 ]
 
-// 告警→工單 對應（依業務邏輯）
-const ALERT_WO: Record<string, string> = {
-  'al-001': 'wo-001',
-  'al-002': 'wo-002',
-  'al-003': 'wo-004',
-}
-
 // ── 自訂節點元件 ──────────────────────────────────────────────
 function DeviceNodeComp({ data }: NodeProps) {
   const d = data as { label: string; category: string; status: string; assetCode: string }
@@ -183,7 +176,6 @@ const WO_SPACING  = 115  // 工單節點最小間距
 const PER_SPACING = 200  // 人員節點最小間距
 
 export function KGBrowser({ devices, alerts, onClose }: Props) {
-  const [hoveredId, setHoveredId]     = useState<string | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [searchTerm, setSearchTerm]   = useState('')
   const [rfInstance, setRfInstance]   = useState<ReactFlowInstance | null>(null)
@@ -567,8 +559,6 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
             onInit={inst => setRfInstance(inst)}
             minZoom={0.25}
             maxZoom={2.5}
-            onNodeMouseEnter={(_, node) => setHoveredId(node.id)}
-            onNodeMouseLeave={() => setHoveredId(null)}
             onNodeClick={(_, node) =>
               setSelectedNodeId(prev => prev === node.id ? null : node.id)
             }

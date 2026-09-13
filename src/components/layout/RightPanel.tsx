@@ -398,20 +398,3 @@ function AlertCard({ alert, onClick, onAcknowledge, onBIM }: { alert: Alert; onC
     </div>
   )
 }
-
-function ActionBtn({ label, color }: { label: string; color: string }) {
-  return (
-    <button style={{
-      padding: '2px 8px',
-      background: `${color}15`,
-      border: `1px solid ${color}30`,
-      borderRadius: 3,
-      color: color,
-      fontSize: 9,
-      cursor: 'pointer',
-      letterSpacing: '0.03em'
-    }}>
-      {label}
-    </button>
-  )
-}

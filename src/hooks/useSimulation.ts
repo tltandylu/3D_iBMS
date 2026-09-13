@@ -99,12 +99,6 @@ export function useSimulation() {
         const d = prev[idx]
         if (d.criticality === 'CRITICAL' && d.status === 'critical') return prev  // 不隨機恢復重要告警
 
-        const transitions: Record<DeviceStatus, { next: DeviceStatus; weight: number[] }[]> = {
-          normal:   [{ next: 'normal', weight: [0, 80, 15, 5] }, { next: 'warning', weight: [] }, { next: 'offline', weight: [] }, { next: 'critical', weight: [] }],
-          warning:  [{ next: 'normal', weight: [0, 50, 40, 10] }, { next: 'warning', weight: [] }, { next: 'critical', weight: [] }, { next: 'offline', weight: [] }],
-          critical: [{ next: 'critical', weight: [0, 10, 60, 30] }, { next: 'warning', weight: [] }, { next: 'offline', weight: [] }, { next: 'normal', weight: [] }],
-          offline:  [{ next: 'offline', weight: [0, 30, 30, 40] }, { next: 'normal', weight: [] }, { next: 'warning', weight: [] }, { next: 'critical', weight: [] }],
-        }
         const weights = [80, 12, 5, 3]
         const statuses: DeviceStatus[] = ['normal', 'warning', 'critical', 'offline']
         const newStatus = weightedRandom(statuses, weights)

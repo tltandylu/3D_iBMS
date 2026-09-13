@@ -30,7 +30,6 @@ interface Props {
 
 type FilterStatus = 'all' | 'pending' | 'in_progress' | 'completed'
 type FilterType   = 'all' | 'EM' | 'PM' | 'CM'
-type FilterPri    = 'all' | 'URGENT' | 'HIGH' | 'MEDIUM' | 'LOW'
 
 const TYPE_COLORS  = { EM: '#ef4444', CM: '#f97316', PM: '#818cf8' }
 const PRI_COLORS   = { URGENT: '#ef4444', HIGH: '#f97316', MEDIUM: '#f59e0b', LOW: '#6b7280' }
@@ -178,7 +177,6 @@ function FieldGroup({ label, children }: { label: string; children: React.ReactN
 export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStatusUpdate, onCreateWO, onOpenBIM, backendConnected }: Props) {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
   const [filterType,   setFilterType]   = useState<FilterType>('all')
-  const [filterPri,    setFilterPri]    = useState<FilterPri>('all')
   const [search,       setSearch]       = useState('')
   const [showCreate,   setShowCreate]   = useState(false)
   // localNewWOs：使用者本次新建的工單（不在外部清單內）
@@ -197,10 +195,9 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
   const filtered = useMemo(() => allWOs.filter(wo => {
     if (filterStatus !== 'all' && wo.status !== filterStatus) return false
     if (filterType   !== 'all' && wo.woType !== filterType)   return false
-    if (filterPri    !== 'all' && wo.priority !== filterPri)  return false
     if (search && !wo.title.includes(search) && !wo.woNumber.includes(search) && !wo.assetName.includes(search)) return false
     return true
-  }), [allWOs, filterStatus, filterType, filterPri, search])
+  }), [allWOs, filterStatus, filterType, search])
 
   const stats = useMemo(() => ({
     pending:     allWOs.filter(w => w.status === 'pending').length,

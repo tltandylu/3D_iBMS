@@ -390,8 +390,6 @@ export function FloorPlanSettings({ canEdit, onClose, ifcGroup }: Props) {
     return { sx: sx1, sy: sy1, sw: sx2 - sx1, sh: sy2 - sy1 }
   }
 
-  const devicesOnFloor = DEVICES.filter(d => d.floor === selIdx + 1 - storeys.filter((s, i) => i < selIdx && /^B/i.test(s.name)).length)
-
   const INP: React.CSSProperties = {
     padding: '6px 10px', background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.12)', borderRadius: 6,

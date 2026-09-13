@@ -36,12 +36,6 @@ const SEV_COLOR: Record<string, string> = {
 const SEV_LABEL: Record<string, string> = {
   CRITICAL: '緊急', ALARM: '告警', WARNING: '警示', INFO: '資訊',
 }
-const STATUS_COLOR: Record<string, string> = {
-  open: '#ef4444', acknowledged: '#f59e0b', resolved: '#10b981',
-}
-const STATUS_LABEL: Record<string, string> = {
-  open: '待處理', acknowledged: '已確認', resolved: '已解除',
-}
 
 // ── SIM data builder ───────────────────────────────────────────────────────
 function buildSimAnalytics(alerts: Alert[]): AnalyticsData {

@@ -3,7 +3,6 @@ import type { WorkOrder, Device } from '../../types'
 import { FullScreenPanel } from '../common/Overlay'
 
 const WO_TYPE_COLORS = { PM: '#818cf8', CM: '#f97316', EM: '#ef4444' }
-const WO_STATUS_COLORS = { pending: '#ef4444', in_progress: '#f59e0b', completed: '#10b981' }
 const WO_TYPE_LABELS = { PM: '預防保養', CM: '矯正維修', EM: '緊急搶修' }
 
 interface CalEvent {
