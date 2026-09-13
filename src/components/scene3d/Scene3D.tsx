@@ -2,6 +2,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, PerspectiveCamera, Html } from '@react-three/drei'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
+import type { CameraView, ViewpointMap } from '../../hooks/useDeviceViewpoints'
 import * as THREE from 'three'
 import { BuildingMesh } from './BuildingMesh'
 import { EquipmentMesh } from './EquipmentMesh'
@@ -830,8 +831,12 @@ function SceneContent({
 
 // ── 公開介面 ─────────────────────────────────────────────────
 export interface Scene3DRef {
+  /** 有自訂視角時飛至自訂視角，否則依預設視角參數 */
   flyToDevice: (device: Device) => void
   flyToOverview: () => void
+  /** 目前軌道相機的位置 / 注視點（漫遊模式時為 null）*/
+  getCameraView: () => CameraView | null
+  flyToView: (view: CameraView) => void
   enterFPMode: () => void
 }
 
@@ -869,16 +874,34 @@ interface Scene3DProps {
   onInteract?: (device: Device) => void
   sceneInFocus?: boolean
   ifcGroup?: THREE.Group | null
+  /** 各設備自訂觀看視角（device_viewpoints.json）*/
+  deviceViewpoints?: ViewpointMap
   ifcLoadPct?: number
   ifcLoadStatus?: string
   robots?: RobotSceneProps
 }
 
+/** 未自訂視角的設備：依距離 / 仰角 / 方位角計算相機位置，注視設備中心 */
+function defaultDeviceView([dx, dy, dz]: [number, number, number], s: SceneSettings): FlyTarget {
+  const el = s.deviceViewElevationDeg * Math.PI / 180
+  const az = s.deviceViewAzimuthDeg * Math.PI / 180
+  const d  = s.deviceViewDistance
+  return {
+    position: new THREE.Vector3(dx + d * Math.cos(el) * Math.sin(az), dy + d * Math.sin(el), dz + d * Math.cos(el) * Math.cos(az)),
+    target:   new THREE.Vector3(dx, dy, dz),
+  }
+}
+
 const OVERVIEW_POS    = new THREE.Vector3(120, 150, 120)
 const OVERVIEW_TARGET = new THREE.Vector3(0, 30, 0)
 
-export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sceneRef, ifcGeoms, sceneSettings, skySettings, bindings = [], points = [], pointValues = {}, fpPosRef, navTarget, onToggleMiniMap, onInteract, sceneInFocus = true, ifcGroup, ifcLoadPct = 0, ifcLoadStatus = '', robots }: Scene3DProps) {
+export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sceneRef, ifcGeoms, sceneSettings, skySettings, bindings = [], points = [], pointValues = {}, fpPosRef, navTarget, onToggleMiniMap, onInteract, sceneInFocus = true, ifcGroup, ifcLoadPct = 0, ifcLoadStatus = '', robots, deviceViewpoints }: Scene3DProps) {
   const resolvedScene = sceneSettings ?? DEFAULT_SYSTEM_SETTINGS.scene
+  // sceneRef 方法僅於掛載時建立，以 ref 讀取最新的視角設定
+  const viewpointsRef    = useRef(deviceViewpoints)
+  viewpointsRef.current  = deviceViewpoints
+  const sceneSettingsRef = useRef(resolvedScene)
+  sceneSettingsRef.current = resolvedScene
   const controlsRef    = useRef<OrbitControlsImpl | null>(null)
   const cameraDistRef  = useRef<number>(50)
   const [flyTarget, setFlyTarget]     = useState<FlyTarget | null>(null)
@@ -1008,16 +1031,28 @@ export function Scene3D({ selectedDeviceId, onDeviceClick, criticalAlertIds, sce
     if (!sceneRef) return
     ;(sceneRef as React.MutableRefObject<Scene3DRef>).current = {
       flyToDevice: (device: Device) => {
-        const [dx, dy, dz] = device.position
-        setFlyTarget({
-          position: new THREE.Vector3(dx + 8, dy + 6, dz + 10),
-          target: new THREE.Vector3(dx, dy, dz),
-        })
+        const saved = viewpointsRef.current?.[device.id]
+        // 以場景實際繪製的設備座標為準（後端設備清單座標可能與場景模型不同）
+        const scenePos = DEVICES.find(d => d.id === device.id)?.position ?? device.position
+        setFlyTarget(saved
+          ? { position: new THREE.Vector3(...saved.position), target: new THREE.Vector3(...saved.target) }
+          : defaultDeviceView(scenePos, sceneSettingsRef.current))
         setActiveView(device.buildingId)
       },
       flyToOverview: () => {
         setFlyTarget({ position: OVERVIEW_POS.clone(), target: OVERVIEW_TARGET.clone() })
         setActiveView('overview')
+      },
+      getCameraView: () => {
+        const controls = controlsRef.current
+        if (!controls) return null
+        const r = (n: number) => Math.round(n * 100) / 100
+        const p = controls.object.position
+        const t = controls.target
+        return { position: [r(p.x), r(p.y), r(p.z)], target: [r(t.x), r(t.y), r(t.z)] }
+      },
+      flyToView: (view: CameraView) => {
+        setFlyTarget({ position: new THREE.Vector3(...view.position), target: new THREE.Vector3(...view.target) })
       },
       enterFPMode: () => setFpMode(true),
     }

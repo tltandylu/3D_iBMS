@@ -583,6 +583,11 @@ interface Props {
   onAcknowledge?: (id: string) => void
   onOpenBIM?: (device: Device) => void
   onFocus3D?: (device: Device) => void
+  /** 此設備是否已有自訂觀看視角 */
+  hasCustomViewpoint?: boolean
+  /** 以目前 3D 相機畫面設為此設備視角（無權限時不傳）*/
+  onSaveViewpoint?: (device: Device) => void
+  onClearViewpoint?: (device: Device) => void
   onPassport?: (device: Device) => void
   onControlDevice?: (id: string, cmd: 'restart' | 'emergency_stop') => Promise<{ok: boolean; message: string}>
   fetchHistory?: (id: string) => Promise<{time: string; power_kw: number; temperature?: number}[]>
@@ -599,7 +604,8 @@ const LIFECYCLE_LABELS: Record<string, string> = { operational: '運行中', mai
 type TabKey = 'overview' | 'twin' | 'history' | 'points'
 
 // ── DeviceDetailDrawer ────────────────────────────────────────
-export function DeviceDetailDrawer({ device, onClose, alert, onAcknowledge, onOpenBIM, onFocus3D, onPassport, onControlDevice, fetchHistory, backendConnected, bindings = [], points = [], pointValues = {} }: Props) {
+export function DeviceDetailDrawer({ device, onClose, alert, onAcknowledge, onOpenBIM, onFocus3D, hasCustomViewpoint = false, onSaveViewpoint, onClearViewpoint, onPassport, onControlDevice, fetchHistory, backendConnected, bindings = [], points = [], pointValues = {} }: Props) {
+  const [viewSaved, setViewSaved] = useState(false)
   const [tab, setTab]               = useState<TabKey>('overview')
   const [showCreateWO, setShowCreateWO] = useState(false)
   const [localWOs, setLocalWOs]     = useState<WorkOrder[]>([])
@@ -847,6 +853,14 @@ export function DeviceDetailDrawer({ device, onClose, alert, onAcknowledge, onOp
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' as const }}>
                       <SmallBtn color="#06b6d4" onClick={() => onFocus3D?.(device)}>📍 3D聚焦</SmallBtn>
+                      {onSaveViewpoint && (
+                        <SmallBtn color="#f59e0b" onClick={() => { onSaveViewpoint(device); setViewSaved(true); setTimeout(() => setViewSaved(false), 1500) }}>
+                          {viewSaved ? '✓ 已儲存視角' : '📷 設為視角'}
+                        </SmallBtn>
+                      )}
+                      {onClearViewpoint && hasCustomViewpoint && (
+                        <SmallBtn color="#94a3b8" onClick={() => onClearViewpoint(device)}>↺ 預設視角</SmallBtn>
+                      )}
                       {onOpenBIM && <SmallBtn color="#10b981" onClick={() => onOpenBIM(device)}>🏗 BIM定位</SmallBtn>}
                       {onPassport && <SmallBtn color="#818cf8" onClick={() => onPassport(device)}>📋 設備履歷</SmallBtn>}
                     </div>

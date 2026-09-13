@@ -12,6 +12,7 @@ export type Feature =
   | 'shiftLog' | 'health'
   | 'pointBinding' | 'floorPlan' | 'floorPlanSettings'
   | 'robotFleet' | 'robotCalibration' | 'robotRoute'
+  | 'deviceViewpoints'
 
 // ── Role permissions ──────────────────────────────────────────
 const ROLE_PERMISSIONS: Record<string, Set<Feature>> = {
@@ -22,14 +23,14 @@ const ROLE_PERMISSIONS: Record<string, Set<Feature>> = {
     'workOrders', 'demand', 'calendar', 'inspection', 'spareParts',
     'customizer', 'auditLog', 'settings', 'userManage', 'shiftLog', 'health',
     'pointBinding', 'floorPlan', 'floorPlanSettings',
-    'robotFleet', 'robotCalibration', 'robotRoute',
+    'robotFleet', 'robotCalibration', 'robotRoute', 'deviceViewpoints',
   ]),
   operator: new Set<Feature>([
     'search', 'inventory', 'alerts', 'rules', 'alertAnalytics',
     'bim', 'bimManager', 'kg', 'heatmap',
     'oee', 'trend', 'energy', 'carbon', 'predictiveMaint',
     'workOrders', 'demand', 'calendar', 'inspection', 'spareParts', 'customizer', 'auditLog', 'shiftLog', 'health',
-    'pointBinding', 'floorPlan', 'robotFleet', 'robotRoute',
+    'pointBinding', 'floorPlan', 'robotFleet', 'robotRoute', 'deviceViewpoints',
   ]),
   viewer: new Set<Feature>([
     'search', 'inventory', 'alerts', 'alertAnalytics',

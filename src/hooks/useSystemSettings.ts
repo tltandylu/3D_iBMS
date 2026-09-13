@@ -8,6 +8,12 @@ export interface SceneSettings {
   showStarField: boolean
   labelDisplayRule: 'all' | 'alert_only' | 'none'
   cameraDamping: number
+  /** 未自訂視角的設備：相機與設備距離（world units）*/
+  deviceViewDistance: number
+  /** 未自訂視角的設備：俯視仰角（度）*/
+  deviceViewElevationDeg: number
+  /** 未自訂視角的設備：水平方位角（度，0 = 從 +Z 方向看）*/
+  deviceViewAzimuthDeg: number
 }
 
 export interface AlertSettings {
@@ -121,6 +127,10 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettingsData = {
     showStarField: true,
     labelDisplayRule: 'alert_only',
     cameraDamping: 0.06,
+    // 換算後 ≈ 舊版固定偏移 (+8, +6, +10)
+    deviceViewDistance: 14,
+    deviceViewElevationDeg: 25,
+    deviceViewAzimuthDeg: 39,
   },
   alert: {
     soundEnabled: false,

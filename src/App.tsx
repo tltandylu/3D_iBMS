@@ -46,6 +46,7 @@ const PointBindingManager              = lazy(() => import('./components/ui/Poin
 const FloorPlanSettings                = lazy(() => import('./components/ui/FloorPlanSettings').then(m => ({ default: m.FloorPlanSettings })))
 const RobotFleetPanel                  = lazy(() => import('./components/ui/RobotFleetPanel').then(m => ({ default: m.RobotFleetPanel })))
 const RobotViewControl                 = lazy(() => import('./components/ui/RobotViewControl').then(m => ({ default: m.RobotViewControl })))
+const DeviceViewpointPanel             = lazy(() => import('./components/ui/DeviceViewpointPanel').then(m => ({ default: m.DeviceViewpointPanel })))
 import { AIAssistant } from './components/ui/AIAssistant'
 import { FloorPlanMiniMap } from './components/ui/FloorPlanMiniMap'
 import { useSystemSettings } from './hooks/useSystemSettings'
@@ -59,6 +60,7 @@ import { useAuth } from './hooks/useAuth'
 import { usePointBindings } from './hooks/usePointBindings'
 import { useRobotCalibration, useRobotFleetSource } from './hooks/useRobotFleet'
 import { useRobotRoutes } from './hooks/useRobotRoutes'
+import { useDeviceViewpoints } from './hooks/useDeviceViewpoints'
 import type { RobotViewMode } from './types'
 import { LoginPage } from './components/ui/LoginPage'
 import { getStoredModel } from './components/ui/ClaudeSettings'
@@ -112,6 +114,12 @@ export default function App() {
     routes: robotRoutes, loading: robotRoutesLoading, error: robotRoutesError,
     save: saveRobotRoutes, reload: reloadRobotRoutes,
   } = useRobotRoutes(restBase, backendConnected, user?.id ?? '')
+  // 設備觀看視角：後端 device_viewpoints.json 共用，離線時暫存本機
+  const {
+    viewpoints: deviceViewpoints, source: viewpointSource, error: viewpointError,
+    save: saveViewpoint, clear: clearViewpoint,
+  } = useDeviceViewpoints(restBase, backendConnected, user?.id ?? '')
+  const canEditViewpoints = user?.role === 'admin' || user?.role === 'operator'
   const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
   const { isOpen, anyOpen: anyPanelOpen, openPanel, closePanel, togglePanel } = usePanels()
   const [passportDevice, setPassportDevice] = useState<Device | null>(null)
@@ -196,6 +204,14 @@ export default function App() {
   const handleFocus3D = useCallback((device: Device) => {
     sceneRef.current?.flyToDevice(device)
   }, [])
+
+  // 以目前 3D 相機畫面作為該設備的觀看視角（漫遊模式下取不到相機時回傳 false）
+  const saveCurrentViewFor = useCallback((device: Device): boolean => {
+    const view = sceneRef.current?.getCameraView()
+    if (!view) return false
+    saveViewpoint(device.id, view)
+    return true
+  }, [saveViewpoint])
 
   // 開啟 BIM 並飛越至指定設備
   const handleOpenBIM = useCallback((device: Device) => {
@@ -514,6 +530,7 @@ export default function App() {
             onToggleMiniMap={() => setShowMiniMap(v => !v)}
             onInteract={dev => setSelectedDevice(dev)}
             sceneInFocus={!anyModalOpen}
+            deviceViewpoints={deviceViewpoints}
             robots={{
               enabled: can('robotFleet'),
               profile: robotProfile,
@@ -600,6 +617,9 @@ export default function App() {
         onAcknowledge={acknowledgeAlert}
         onOpenBIM={handleOpenBIM}
         onFocus3D={handleFocus3D}
+        hasCustomViewpoint={!!selectedDevice && !!deviceViewpoints[selectedDevice.id]}
+        onSaveViewpoint={canEditViewpoints ? saveCurrentViewFor : undefined}
+        onClearViewpoint={canEditViewpoints ? (dev => clearViewpoint(dev.id)) : undefined}
         onPassport={dev => setPassportDevice(dev)}
         onControlDevice={controlDevice}
         fetchHistory={fetchDeviceHistory}
@@ -897,6 +917,26 @@ export default function App() {
             backendConnected={backendConnected}
             canEdit={user?.role === 'admin' || user?.role === 'operator'}
             onClose={() => closePanel('spareParts')}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* 設備視角設定（右側停靠面板，不遮擋 3D 場景）*/}
+      <AnimatePresence>
+        {isOpen('deviceViewpoints') && can('deviceViewpoints') && (
+          <DeviceViewpointPanel
+            devices={devices}
+            alerts={enrichedAlerts}
+            viewpoints={deviceViewpoints}
+            source={viewpointSource}
+            error={viewpointError}
+            canEdit={canEditViewpoints}
+            sceneSettings={settings.scene}
+            onSceneChange={p => updateSettings('scene', p)}
+            onFlyTo={dev => sceneRef.current?.flyToDevice(dev)}
+            onSaveCurrent={saveCurrentViewFor}
+            onClear={clearViewpoint}
+            onClose={() => closePanel('deviceViewpoints')}
           />
         )}
       </AnimatePresence>

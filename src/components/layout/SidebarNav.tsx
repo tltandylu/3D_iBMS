@@ -86,6 +86,7 @@ export function SidebarNav({ criticalCount, enabledRulesCount, bimLoaded, apiKey
       { panel: 'bimManager', feature: 'bimManager', icon: '📐', label: '模型管理',   color: '#6ee7b7', dot: bimLoaded, dotColor: '#10b981' },
       { panel: 'kg',         feature: 'kg',         icon: '🕸', label: 'KG 瀏覽器',  color: '#a78bfa' },
       { panel: 'heatmap',    feature: 'heatmap',    icon: '🗺', label: '樓層熱力圖', color: '#fbbf24' },
+      { panel: 'deviceViewpoints', feature: 'deviceViewpoints', icon: '🎥', label: '設備視角', color: '#f59e0b' },
     ] },
     { title: '📊 數據分析', items: [
       { panel: 'oee',          feature: 'oee',             icon: '📊', label: 'OEE 效率',     color: '#10b981' },

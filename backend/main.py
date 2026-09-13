@@ -35,6 +35,7 @@ from app.routers import inspections as inspections_router
 from app.routers import spare_parts as spare_parts_router
 from app.routers import point_bindings as point_bindings_router
 from app.routers import robots as robots_router
+from app.routers import device_viewpoints as device_viewpoints_router
 from app.push_service import load_or_generate_keys
 from app.db.engine import engine, AsyncSessionLocal
 from app.db.models import Base
@@ -242,6 +243,7 @@ app.include_router(inspections_router.router)
 app.include_router(spare_parts_router.router)
 app.include_router(point_bindings_router.router)
 app.include_router(robots_router.router)
+app.include_router(device_viewpoints_router.router)
 
 
 @app.get("/api/health")
