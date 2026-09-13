@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo, useEffect } from 'react'
 import ReactECharts from 'echarts-for-react'
 import type { Device } from '../../types'
+import { FullScreenPanel } from '../common/Overlay'
 
 function genMockSeries(seed0: number, base: number, points: number, noise: number): number[] {
   let seed = seed0
@@ -138,7 +139,7 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
   }), [selectedDevices, seriesData, xLabels, metricOpt])  // eslint-disable-line
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* Header */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(6,182,212,0.05)', borderBottom: '1px solid rgba(6,182,212,0.15)' }}>
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
@@ -232,6 +233,6 @@ export function DeviceTrendCompare({ devices, fetchHistory, backendConnected, on
           )}
         </div>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }

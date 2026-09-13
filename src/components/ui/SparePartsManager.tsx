@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import ReactECharts from 'echarts-for-react'
 import { authHeaders } from '../../api/http'
 
@@ -184,11 +185,7 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
   ]
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(2,6,18,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={600} background="rgba(2,6,18,0.88)" blur={8} animated onClose={onClose} style={{ padding: 16 }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
         transition={{ duration: 0.28 }}
@@ -514,6 +511,6 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
           </div>
         )}
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }

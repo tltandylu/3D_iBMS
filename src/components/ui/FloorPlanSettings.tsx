@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { motion } from 'framer-motion'
 import * as THREE from 'three'
 import { DEVICES } from '../../data/mockData'
 import type { IFCStorey } from '../scene3d/IFCBackgroundLoader'
+import { FullScreenPanel } from '../common/Overlay'
 
 // ── Persistent data ───────────────────────────────────────────────────────────
 
@@ -402,10 +402,7 @@ export function FloorPlanSettings({ canEdit, onClose, ifcGroup }: Props) {
   const cursor = isPlacing ? 'crosshair' : (rightTab === 'space' && canEdit) ? 'crosshair' : 'default'
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(2,6,18,0.95)', display: 'flex', flexDirection: 'column' }}
-    >
+    <FullScreenPanel animated background="rgba(2,6,18,0.95)">
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 18px', borderBottom: '1px solid rgba(56,189,248,0.15)', background: 'rgba(6,12,26,0.98)', flexShrink: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -697,6 +694,6 @@ export function FloorPlanSettings({ canEdit, onClose, ifcGroup }: Props) {
           </div>
         </div>
       </div>
-    </motion.div>
+    </FullScreenPanel>
   )
 }

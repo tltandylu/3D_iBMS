@@ -1,5 +1,6 @@
 ﻿import { useState, useMemo } from 'react'
 import type { WorkOrder, Device } from '../../types'
+import { FullScreenPanel } from '../common/Overlay'
 
 const WO_TYPE_COLORS = { PM: '#818cf8', CM: '#f97316', EM: '#ef4444' }
 const WO_STATUS_COLORS = { pending: '#ef4444', in_progress: '#f59e0b', completed: '#10b981' }
@@ -117,7 +118,7 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
   }, [eventsByDate])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(129,140,248,0.06)', borderBottom: '1px solid rgba(129,140,248,0.18)' }}>
         <div style={{ width: 3, height: 18, background: '#818cf8', borderRadius: 2 }} />
@@ -234,7 +235,7 @@ export function MaintenanceCalendar({ workOrders, devices, onClose, onCreateWO }
           </div>
         </div>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

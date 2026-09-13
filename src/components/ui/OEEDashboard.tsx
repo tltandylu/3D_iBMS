@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
 import { authHeaders } from '../../api/http'
+import { FullScreenPanel } from '../common/Overlay'
 
 function computeOEE(dev: Device) {
   const base = ({ normal: 0.96, warning: 0.78, critical: 0.52, offline: 0 } as Record<string, number>)[dev.status] ?? 0
@@ -161,7 +162,7 @@ export function OEEDashboard({ devices, onClose, restBase, backendConnected }: P
   }, [enriched])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* Header */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(129,140,248,0.05)', borderBottom: '1px solid rgba(129,140,248,0.18)' }}>
         <div style={{ width: 3, height: 18, background: '#818cf8', borderRadius: 2 }} />
@@ -256,7 +257,7 @@ export function OEEDashboard({ devices, onClose, restBase, backendConnected }: P
           <ReactECharts option={distOption} style={{ flex: 1, height: '100%' }} notMerge />
         </ChartCard>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

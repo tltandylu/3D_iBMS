@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import ReactECharts from 'echarts-for-react'
 import type { Alert } from '../../types'
 import { authHeaders } from '../../api/http'
@@ -247,11 +248,6 @@ export function AlertAnalyticsDashboard({ alerts, restBase, backendConnected, on
   } : {}
 
   // ── Layout ────────────────────────────────────────────────────────────
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 500,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(2,8,23,0.80)', backdropFilter: 'blur(6px)',
-  }
   const boxStyle: React.CSSProperties = {
     width: '92vw', maxWidth: 1040,
     height: '88vh', maxHeight: 720,
@@ -264,14 +260,7 @@ export function AlertAnalyticsDashboard({ alerts, restBase, backendConnected, on
   }
 
   return (
-    <motion.div
-      key="alert-analytics"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={panelStyle}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={500} background="rgba(2,8,23,0.80)" blur={6} animated onClose={onClose}>
       <motion.div
         initial={{ scale: 0.95, y: 20 }}
         animate={{ scale: 1, y: 0 }}
@@ -545,7 +534,7 @@ export function AlertAnalyticsDashboard({ alerts, restBase, backendConnected, on
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }
 

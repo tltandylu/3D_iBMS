@@ -7,6 +7,7 @@ import {
 import '@xyflow/react/dist/style.css'
 import type { Device, Alert, WorkOrder } from '../../types'
 import { WORK_ORDERS } from '../../data/mockData'
+import { FullScreenPanel } from '../common/Overlay'
 
 // ── 節點詳情聯合型別 ─────────────────────────────────────────
 type KGNodeDetail =
@@ -434,12 +435,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
   }, [filteredNodes, rfInstance, searchTerm])
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 500,
-      background: 'rgba(3,7,18,0.9)',
-      backdropFilter: 'blur(24px)',
-      display: 'flex', flexDirection: 'column',
-    }}>
+    <FullScreenPanel zIndex={500} background="rgba(3,7,18,0.9)" blur={24}>
 
       {/* ── 標題列 ── */}
       <div style={{
@@ -612,7 +608,7 @@ export function KGBrowser({ devices, alerts, onClose }: Props) {
           />
         )}
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

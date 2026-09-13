@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import type { Device, Alert } from '../../types'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -220,16 +221,7 @@ export function EquipmentHealthDashboard({ devices, alerts, onDeviceClick, onClo
   ] as const
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 350,
-        background: 'rgba(2,8,20,0.92)', backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '20px 16px',
-      }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={350} background="rgba(2,8,20,0.92)" blur={6} animated onClose={onClose} style={{ padding: '20px 16px' }}>
       <motion.div
         initial={{ scale: 0.96, y: 18 }} animate={{ scale: 1, y: 0 }}
         style={{
@@ -565,6 +557,6 @@ export function EquipmentHealthDashboard({ devices, alerts, onDeviceClick, onClo
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }

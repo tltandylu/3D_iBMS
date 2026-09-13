@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { authHeaders } from '../../api/http'
 import { downloadFromBackend } from '../../utils/csvExport'
+import { FullScreenPanel } from '../common/Overlay'
 
 interface AuditEntry {
   id:          string
@@ -103,7 +104,7 @@ export function AuditLog({ restBase, onClose }: Props) {
   }, {})
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(6,182,212,0.05)', borderBottom: '1px solid rgba(6,182,212,0.18)' }}>
         <div style={{ width: 3, height: 18, background: '#06b6d4', borderRadius: 2 }} />
@@ -225,6 +226,6 @@ export function AuditLog({ restBase, onClose }: Props) {
           </table>
         )}
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }

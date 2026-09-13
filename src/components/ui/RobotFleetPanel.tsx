@@ -7,6 +7,7 @@
  */
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import type { RobotCalibrationProfile, RobotViewMode, RobotRuntimeState } from '../../types'
 import { authHeaders } from '../../api/http'
 import {
@@ -108,16 +109,7 @@ export function RobotFleetPanel({
   }
 
   return (
-    <motion.div
-      key="robot-overlay"
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 500,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(2,8,23,0.80)', backdropFilter: 'blur(6px)',
-      }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={500} background="rgba(2,8,23,0.80)" blur={6} animated onClose={onClose}>
       <motion.div
         initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
         transition={{ type: 'tween', duration: 0.22 }}
@@ -180,7 +172,7 @@ export function RobotFleetPanel({
           />
         )}
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }
 

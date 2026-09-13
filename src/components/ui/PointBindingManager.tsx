@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import * as XLSX from 'xlsx'
 import { authHeaders } from '../../api/http'
 
@@ -381,11 +382,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
   const selectedPoint = points.find(p => p.point_id === selectedPointId)
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(2,6,18,0.88)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={600} background="rgba(2,6,18,0.88)" blur={8} animated onClose={onClose} style={{ padding: 16 }}>
       <motion.div
         initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }}
         transition={{ duration: 0.28 }}
@@ -800,7 +797,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
           </div>
         )}
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }
 

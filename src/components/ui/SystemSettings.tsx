@@ -1,5 +1,6 @@
 ﻿import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import type { SystemSettingsData, SceneSettings, AlertSettings, ConnectionSettings, AppearanceSettings, AISettingsData, EnergySettings, SkySettings, SkyPreset, WebhookSettings } from '../../hooks/useSystemSettings'
 import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
 import { authHeaders, getRestBase } from '../../api/http'
@@ -1164,18 +1165,7 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
     (patch: Partial<SystemSettingsData[K]>) => onUpdate(section, patch)
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{
-        position: 'fixed', inset: 0, zIndex: 500,
-        background: 'rgba(1,4,12,0.82)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={500} background="rgba(1,4,12,0.82)" blur={6} animated onClose={onClose}>
       <motion.div
         initial={{ opacity: 0, y: 20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0,  scale: 1 }}
@@ -1315,6 +1305,6 @@ export function SystemSettings({ settings, onUpdate, onReset, onClose }: Props) 
           </div>
         </div>
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }

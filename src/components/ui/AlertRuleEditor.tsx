@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Device } from '../../types'
 import type { AlertRule, RuleMetric, RuleOperator } from '../../hooks/useAlertRules'
+import { FullScreenPanel } from '../common/Overlay'
 
 const METRIC_LABELS: Record<RuleMetric, string>   = { power: '功率 (kW)', temperature: '溫度 (°C)', aiScore: 'AI異常分 (0–1)', rulDays: '剩餘壽命 (天)' }
 const OPERATOR_LABELS: Record<RuleOperator, string> = { '>': '大於 >', '<': '小於 <', '>=': '≥ 大於等於', '<=': '≤ 小於等於' }
@@ -59,7 +60,7 @@ export function AlertRuleEditor({ rules, devices, backendSynced, onAdd, onUpdate
   })
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(245,158,11,0.06)', borderBottom: '1px solid rgba(245,158,11,0.18)' }}>
         <div style={{ width: 3, height: 18, background: '#f59e0b', borderRadius: 2 }} />
@@ -224,7 +225,7 @@ export function AlertRuleEditor({ rules, devices, backendSynced, onAdd, onUpdate
           )}
         </div>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

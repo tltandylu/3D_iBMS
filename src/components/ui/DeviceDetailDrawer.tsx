@@ -8,6 +8,7 @@ import { WORK_ORDERS } from '../../data/mockData'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { authHeaders, getRestBase } from '../../api/http'
+import { ModalBackdrop } from '../common/Overlay'
 
 // ── 確定性亂數 ────────────────────────────────────────────────
 function seededRng(seed: number) {
@@ -419,8 +420,7 @@ function CreateWOModal({ device, onSubmit, onClose }: {
   const priColors: Record<WOPriority, string>  = { URGENT: '#ef4444', HIGH: '#f97316', MEDIUM: '#f59e0b', LOW: '#6b7280' }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)' }} />
+    <ModalBackdrop zIndex={300} onClose={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -488,7 +488,7 @@ function CreateWOModal({ device, onSubmit, onClose }: {
           <button onClick={() => onSubmit(form)} style={{ flex: 2, padding: '7px 0', background: 'rgba(16,185,129,0.18)', border: '1px solid rgba(16,185,129,0.45)', borderRadius: 5, color: '#10b981', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>✓ 建立工單</button>
         </div>
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }
 
@@ -1157,8 +1157,7 @@ function ConfirmControlDialog({ label, deviceName, isDangerous, onConfirm, onCan
 }) {
   const ac = isDangerous ? '#ef4444' : '#06b6d4'
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 350, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onCancel} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)' }} />
+    <ModalBackdrop zIndex={350} background="rgba(0,0,0,0.7)" onClose={onCancel}>
       <motion.div
         initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.94 }}
         style={{ position: 'relative', zIndex: 1, width: 300, background: 'rgba(7,15,30,0.98)', border: `1px solid ${ac}40`, borderRadius: 10, padding: '20px 22px', backdropFilter: 'blur(24px)', boxShadow: `0 20px 60px rgba(0,0,0,0.6), 0 0 20px ${ac}12` }}
@@ -1176,6 +1175,6 @@ function ConfirmControlDialog({ label, deviceName, isDangerous, onConfirm, onCan
           <button onClick={onConfirm} style={{ flex: 2, padding: '7px 0', background: `${ac}20`, border: `1px solid ${ac}50`, borderRadius: 5, color: ac, fontSize: 11, fontWeight: 700, cursor: 'pointer' }}>確認執行</button>
         </div>
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }

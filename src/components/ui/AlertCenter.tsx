@@ -3,6 +3,7 @@ import { downloadCSV } from '../../utils/csvExport'
 import ReactECharts from 'echarts-for-react'
 import type { Alert, Device } from '../../types'
 import { BUILDINGS, DEVICES } from '../../data/mockData'
+import { FullScreenPanel } from '../common/Overlay'
 
 interface Props {
   alerts: Alert[]
@@ -142,7 +143,7 @@ export function AlertCenter({ alerts, onAcknowledge, onOpenBIM, onClose }: Props
   }), [bldgAlerts])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{
         height: 52, flexShrink: 0, padding: '0 20px',
@@ -302,7 +303,7 @@ export function AlertCenter({ alerts, onAcknowledge, onOpenBIM, onClose }: Props
           ))}
         </div>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

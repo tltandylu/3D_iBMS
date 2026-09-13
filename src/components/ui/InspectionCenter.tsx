@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { ModalBackdrop } from '../common/Overlay'
 import type { Device } from '../../types'
 import { authHeaders } from '../../api/http'
 
@@ -240,11 +241,6 @@ export function InspectionCenter({
     : 0
 
   // ── Styles ─────────────────────────────────────────────────────────────
-  const panelStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0, zIndex: 500,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'rgba(2,8,23,0.80)', backdropFilter: 'blur(6px)',
-  }
   const boxStyle: React.CSSProperties = {
     width: '92vw', maxWidth: 1020,
     height: '88vh', maxHeight: 720,
@@ -263,14 +259,7 @@ export function InspectionCenter({
   }
 
   return (
-    <motion.div
-      key="insp-overlay"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={panelStyle}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop zIndex={500} background="rgba(2,8,23,0.80)" blur={6} animated onClose={onClose}>
       <motion.div
         initial={{ scale: 0.95, y: 20 }}
         animate={{ scale: 1, y: 0 }}
@@ -801,7 +790,7 @@ export function InspectionCenter({
           )}
         </div>
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }
 

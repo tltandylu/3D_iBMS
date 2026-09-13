@@ -5,6 +5,7 @@ import ReactECharts from 'echarts-for-react'
 import QRCode from 'qrcode'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import { ModalBackdrop } from '../common/Overlay'
 
 const STATUS_COLORS = { normal: '#10b981', warning: '#f59e0b', critical: '#ef4444', offline: '#6b7280' }
 const STATUS_LABELS = { normal: '正常運行', warning: '警示狀態', critical: '嚴重故障', offline: '通訊離線' }
@@ -172,8 +173,7 @@ export function EquipmentPassport({ device, workOrders, onClose, onOpenBIM }: Pr
   }, [device.assetCode, exporting])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)' }} />
+    <ModalBackdrop zIndex={620} onClose={onClose}>
       <div
         ref={passportRef}
         style={{
@@ -419,7 +419,7 @@ export function EquipmentPassport({ device, workOrders, onClose, onOpenBIM }: Pr
           </div>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   )
 }
 

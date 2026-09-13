@@ -1,6 +1,7 @@
 ﻿import { useState, useMemo, useCallback } from 'react'
 import type { BIMModelEntry, IFCBuildingGeom } from '../../types'
 import { BUILDINGS, DEVICES } from '../../data/mockData'
+import { ModalBackdrop } from '../common/Overlay'
 
 interface Props {
   models: BIMModelEntry[]
@@ -166,16 +167,8 @@ export function AddEditModal({
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 460,
-        background: 'rgba(0,0,0,0.55)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={onCancel}
-    >
+    <ModalBackdrop zIndex={460} background="rgba(0,0,0,0.55)" onClose={onCancel}>
       <div
-        onClick={e => e.stopPropagation()}
         style={{
           width: 440,
           background: 'rgba(7,16,34,0.98)',
@@ -346,7 +339,7 @@ export function AddEditModal({
           </button>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   )
 }
 
@@ -422,17 +415,8 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 450,
-        background: 'rgba(0,0,0,0.45)',
-        backdropFilter: 'blur(5px)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={onClose}
-    >
+    <ModalBackdrop zIndex={450} background="rgba(0,0,0,0.45)" blur={5} onClose={onClose}>
       <div
-        onClick={e => e.stopPropagation()}
         style={{
           width: 880, maxWidth: '96vw',
           height: 680, maxHeight: '90vh',
@@ -853,7 +837,7 @@ export function BIMModelManager({ models, loadedGeoms, onModelsChange, onOpenBIM
           onCancel={() => setEditEntry(null)}
         />
       )}
-    </div>
+    </ModalBackdrop>
   )
 }
 

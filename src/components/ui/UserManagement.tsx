@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { authHeaders, getRestBase } from '../../api/http'
+import { ModalBackdrop } from '../common/Overlay'
 
 interface UserRecord {
   id:           string
@@ -16,12 +17,6 @@ const ROLE_LABEL: Record<string, string> = { admin: '管理員', operator: '操�
 const ROLE_COLOR: Record<string, string> = { admin: '#ef4444', operator: '#f59e0b', viewer: '#10b981' }
 const AVATAR_COLORS = ['#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#8b5cf6', '#ec4899']
 
-const overlay: React.CSSProperties = {
-  position: 'fixed', inset: 0, zIndex: 1200,
-  background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)',
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  padding: 16,
-}
 const card: React.CSSProperties = {
   background: 'rgba(8,16,40,0.97)',
   border: '1px solid rgba(6,182,212,0.25)',
@@ -208,14 +203,13 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div style={overlay} onClick={onClose}>
+    <ModalBackdrop zIndex={1200} blur={6} onClose={onClose} style={{ padding: 16 }}>
       <motion.div
         style={card}
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.18 }}
-        onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -365,7 +359,7 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </ModalBackdrop>
   )
 }
 
@@ -381,10 +375,7 @@ function EditUserDialog({
   const [newPw, setNewPw] = useState('')
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 1300, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={onClose}
-    >
+    <ModalBackdrop zIndex={1300} background="rgba(0,0,0,0.5)" onClose={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.93 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.93 }}
         style={{
@@ -392,7 +383,6 @@ function EditUserDialog({
           borderRadius: 12, padding: 24, width: 360,
           boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
         }}
-        onClick={e => e.stopPropagation()}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
           <Avatar name={user.name} color={user.avatar_color} size={36} />
@@ -457,6 +447,6 @@ function EditUserDialog({
           </div>
         </div>
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }

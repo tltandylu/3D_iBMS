@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { KPIData } from '../../types'
 import { authHeaders } from '../../api/http'
+import { FullScreenPanel } from '../common/Overlay'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Incident {
@@ -149,7 +150,7 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
   })
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* Header */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 12, background: 'rgba(251,191,36,0.05)', borderBottom: '1px solid rgba(251,191,36,0.18)' }}>
         <div style={{ width: 3, height: 16, background: '#fbbf24', borderRadius: 2 }} />
@@ -403,6 +404,6 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
           </div>
         )}
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }

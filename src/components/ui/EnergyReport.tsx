@@ -5,6 +5,7 @@ import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import type { KPIData, Device } from '../../types'
 import { DEVICES, BUILDINGS, ENERGY_TREND } from '../../data/mockData'
+import { FullScreenPanel } from '../common/Overlay'
 
 interface DailyEnergy {
   date: string; total_kwh: number; peak_kw: number; avg_kw: number; samples: number
@@ -400,7 +401,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, restBa
   }), [monthlyDays, electricityCostPerKwh])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{
         height: 52, flexShrink: 0, padding: '0 20px',
@@ -554,7 +555,7 @@ export function EnergyReport({ kpi, devices, electricityCostPerKwh = 3.5, restBa
           </div>
         </ChartCard>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

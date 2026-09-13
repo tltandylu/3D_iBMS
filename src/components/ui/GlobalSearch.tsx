@@ -2,6 +2,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Alert, Device, WorkOrder } from '../../types'
 import { DEVICES, WORK_ORDERS } from '../../data/mockData'
+import { ModalBackdrop } from '../common/Overlay'
 
 interface Props {
   alerts: Alert[]
@@ -156,14 +157,7 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick, onW
   const pendingWOCount = WORK_ORDERS.filter(w => w.status === 'pending').length
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 800, display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 80 }}
-    >
-      <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
-        onClick={onClose}
-      />
-
+    <ModalBackdrop zIndex={800} background="rgba(0,0,0,0.72)" blur={8} onClose={onClose} style={{ flexDirection: 'column', justifyContent: 'flex-start', paddingTop: 80 }}>
       <motion.div
         initial={{ opacity: 0, y: -20, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -348,6 +342,6 @@ export function GlobalSearch({ alerts, onClose, onDeviceClick, onAlertClick, onW
           </div>
         )}
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }

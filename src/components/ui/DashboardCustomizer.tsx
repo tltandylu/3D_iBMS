@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion'
 import type { DashboardSettings } from '../../hooks/useSystemSettings'
 import { authHeaders } from '../../api/http'
+import { ModalBackdrop } from '../common/Overlay'
 
 interface Props {
   settings: DashboardSettings
@@ -81,13 +82,7 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose, restBase, 
   const kpiVisible   = KPI_SECTIONS.filter(d => s[d.key] as boolean).length
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      style={{ position: 'fixed', inset: 0, zIndex: 650, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-    >
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.65)' }} />
+    <ModalBackdrop zIndex={650} animated onClose={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1,    y: 0 }}
@@ -193,7 +188,7 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose, restBase, 
           </button>
         </div>
       </motion.div>
-    </motion.div>
+    </ModalBackdrop>
   )
 }
 

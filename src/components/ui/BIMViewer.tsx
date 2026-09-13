@@ -7,6 +7,7 @@ import type { IFCBuildingGeom } from '../../types'
 import { AddEditModal } from './BIMModelManager'
 import type { SkySettings } from '../../hooks/useSystemSettings'
 import type { IFCStorey } from '../scene3d/IFCBackgroundLoader'
+import { FullScreenPanel } from '../common/Overlay'
 
 const IFC_FILES: BIMModelEntry[] = [
   { id: 'builtin-locus', label: '樂迦大樓 BIM', url: '/ifc/樂迦BIM_1130117.ifc', buildingId: 'locus', visible: true, loadState: 'unloaded', meshCount: 0 },
@@ -1194,11 +1195,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
   ]
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 500,
-      background: '#070d16',
-      display: 'flex', flexDirection: 'column',
-    }}>
+    <FullScreenPanel zIndex={500} background="#070d16">
       {/* ── 標題列 ── */}
       <div style={{
         height: 52, flexShrink: 0,
@@ -1971,7 +1968,7 @@ export function BIMViewer({ devices, onClose, flyToDevice, onIFCLoaded, modelsLi
           {loadState === 'idle'    && '請選擇要載入的模型'}
         </span>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

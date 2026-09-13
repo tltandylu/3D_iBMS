@@ -1,6 +1,7 @@
 ﻿import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { postClaudeMessages } from '../../api/claude'
+import { ModalBackdrop } from '../common/Overlay'
 
 export const LS_API_KEY    = 'CLAUDE_API_KEY'
 export const LS_MODEL      = 'CLAUDE_MODEL'
@@ -80,17 +81,12 @@ export function ClaudeSettings({ onClose }: Props) {
   }, [key, model])
 
   return (
-    <div
-      style={{ position: 'fixed', inset: 0, zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={onClose}
-    >
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.62)', backdropFilter: 'blur(6px)' }} />
+    <ModalBackdrop zIndex={500} background="rgba(0,0,0,0.62)" blur={6} onClose={onClose}>
       <motion.div
         initial={{ opacity: 0, scale: 0.96, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.96 }}
         transition={{ duration: 0.18 }}
-        onClick={e => e.stopPropagation()}
         style={{
           position: 'relative', zIndex: 1,
           width: 468,
@@ -238,7 +234,7 @@ export function ClaudeSettings({ onClose }: Props) {
           </button>
         </div>
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }
 

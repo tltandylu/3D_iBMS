@@ -2,6 +2,7 @@
 import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
 import { DEVICES, BUILDINGS } from '../../data/mockData'
+import { FullScreenPanel } from '../common/Overlay'
 
 function exportCSV(filename: string, headers: string[], rows: string[][]) {
   const bom = '﻿'
@@ -108,7 +109,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onOpenBIM,
   )
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{
         height: 52, flexShrink: 0, padding: '0 20px',
@@ -368,7 +369,7 @@ export function DeviceInventory({ devices, onDeviceClick, onPassport, onOpenBIM,
           )
         })}
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }
 

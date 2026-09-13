@@ -4,6 +4,7 @@ import { OrbitControls, Html, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import type { Device, Alert } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
+import { FullScreenPanel } from '../common/Overlay'
 
 type HeatMode = 'temperature' | 'humidity' | 'power' | 'rul'
 
@@ -271,7 +272,7 @@ export function FloorHeatmap({ devices, onDeviceClick, onClose }: Props) {
   const hovUnit = modeInfo.unit
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.98)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel background="rgba(3,8,20,0.98)">
 
       {/* ── Header ── */}
       <div style={{ height: 52, flexShrink: 0, padding: '0 20px', display: 'flex', alignItems: 'center', gap: 14, background: 'rgba(6,182,212,0.05)', borderBottom: '1px solid rgba(6,182,212,0.15)' }}>
@@ -463,6 +464,6 @@ export function FloorHeatmap({ devices, onDeviceClick, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </FullScreenPanel>
   )
 }

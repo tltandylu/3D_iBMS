@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import * as XLSX from 'xlsx'
 import type { WorkOrder, Device } from '../../types'
 import { WORK_ORDERS, DEVICES, BUILDINGS } from '../../data/mockData'
+import { FullScreenPanel, ModalBackdrop } from '../common/Overlay'
 
 function exportCSV(filename: string, headers: string[], rows: string[][]) {
   const bom = '﻿'
@@ -79,8 +80,7 @@ function CreateModal({ onSubmit, onClose }: { onSubmit: (f: CreateWOForm) => voi
   const valid = form.title.trim().length > 0
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 620, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)' }} />
+    <ModalBackdrop zIndex={620} background="rgba(0,0,0,0.6)" onClose={onClose}>
       <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         style={{
           position: 'relative', width: 400,
@@ -154,7 +154,7 @@ function CreateModal({ onSubmit, onClose }: { onSubmit: (f: CreateWOForm) => voi
             fontSize: 11, fontWeight: 700, cursor: valid ? 'pointer' : 'not-allowed' }}>✓ 建立工單</button>
         </div>
       </motion.div>
-    </div>
+    </ModalBackdrop>
   )
 }
 
@@ -254,7 +254,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
   }), [])
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 600, background: 'rgba(3,8,20,0.97)', display: 'flex', flexDirection: 'column' }}>
+    <FullScreenPanel>
       {/* 標題列 */}
       <div style={{
         height: 52, flexShrink: 0, padding: '0 20px',
@@ -451,7 +451,7 @@ export function WorkOrderCenter({ onClose, externalWOs = [], onWOsChange, onStat
       <AnimatePresence>
         {showCreate && <CreateModal onSubmit={handleCreate} onClose={() => setShowCreate(false)} />}
       </AnimatePresence>
-    </div>
+    </FullScreenPanel>
   )
 }
 
