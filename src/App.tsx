@@ -325,10 +325,12 @@ export default function App() {
     } catch { /* AudioContext blocked */ }
   }, [lastEvent, settings.alert.soundEnabled])
 
-  // 桌面推播：CRITICAL 新告警
+  // 桌面推播：CRITICAL 新告警（獨立 ref，避免被音效 effect 先寫入而略過）
+  const prevNotifiedEvent = useRef<string | null>(null)
   useEffect(() => {
     if (!settings.alert.desktopNotify) return
-    if (!lastEvent || lastEvent === prevLastEvent.current) return
+    if (!lastEvent || lastEvent === prevNotifiedEvent.current) return
+    prevNotifiedEvent.current = lastEvent
     if (!lastEvent.startsWith('🔴')) return
     if (Notification.permission === 'granted') {
       new Notification('⚠ CRITICAL 告警', { body: lastEvent.replace('🔴 新告警：', ''), icon: '/favicon.ico' })
