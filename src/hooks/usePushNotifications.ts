@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { getJwtToken } from './useAuth'
+import { authHeaders } from '../api/http'
 
 function urlB64ToUint8Array(b64: string): Uint8Array {
   const padding = '='.repeat((4 - (b64.length % 4)) % 4)
@@ -48,13 +48,9 @@ export function usePushNotifications(restBase: string) {
         applicationServerKey: urlB64ToUint8Array(publicKey).buffer as ArrayBuffer,
       })
 
-      const token = getJwtToken()
       const postRes = await fetch(`${restBase}/api/push/subscribe`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: authHeaders(true),
         body: JSON.stringify(sub.toJSON()),
       })
       if (!postRes.ok) throw new Error('訂閱儲存失敗')
@@ -77,13 +73,9 @@ export function usePushNotifications(restBase: string) {
       const sub = await reg.pushManager.getSubscription()
       if (!sub) { setIsSubscribed(false); return }
 
-      const token = getJwtToken()
       await fetch(`${restBase}/api/push/unsubscribe`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: authHeaders(true),
         body: JSON.stringify(sub.toJSON()),
       }).catch(() => {/* ignore network errors on unsubscribe */})
 

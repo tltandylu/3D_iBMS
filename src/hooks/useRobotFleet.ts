@@ -11,7 +11,7 @@
  * React 只在低頻（預設 2 Hz）取快照供清單 UI 使用。
  */
 import { useEffect, useState } from 'react'
-import { getJwtToken } from './useAuth'
+import { authHeaders } from '../api/http'
 import type {
   RobotTelemetryPacket, RobotRuntimeState, RobotCalibrationProfile, RobotState,
 } from '../types'
@@ -190,9 +190,8 @@ export function useRobotCalibration(restBase: string, backendConnected: boolean,
   useEffect(() => {
     if (!backendConnected) { setProfile(DEFAULT_CALIBRATION); setLoaded(false); return }
     let cancelled = false
-    const token = getJwtToken() ?? ''
     fetch(`${restBase}/api/robots/calibration`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     })
       .then(r => r.ok ? r.json() as Promise<{ active: RobotCalibrationProfile }> : null)
       .then(data => {

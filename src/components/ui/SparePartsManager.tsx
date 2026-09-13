@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 interface SparePart {
   id: string
@@ -50,11 +50,6 @@ const SIM_PARTS: SparePart[] = [
   { id: 'p10', part_number: 'SEC-001',  name: 'IP攝影機鏡頭',  category: 'Security', unit: '個', quantity:  4, min_stock_level:  2, unit_cost:  2800, location: 'B4-F01', supplier_name: '安防設備商',     description: '', updated_at: '2026-05-23', stock_status: 'ok'  },
 ]
 
-function authHeader(): Record<string, string> {
-  const t = getJwtToken()
-  return t ? { Authorization: `Bearer ${t}` } : {}
-}
-
 const INP: React.CSSProperties = {
   padding: '5px 8px', background: 'rgba(255,255,255,0.06)',
   border: '1px solid rgba(255,255,255,0.12)', borderRadius: 4,
@@ -82,7 +77,7 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
   const fetchParts = useCallback(async () => {
     if (!backendConnected) { setParts(SIM_PARTS); setLoading(false); return }
     try {
-      const r = await fetch(`${restBase}/api/spare-parts`, { headers: authHeader() })
+      const r = await fetch(`${restBase}/api/spare-parts`, { headers: authHeaders() })
       if (r.ok) setParts(await r.json() as SparePart[])
     } catch { /* ignore */ } finally { setLoading(false) }
   }, [restBase, backendConnected])
@@ -101,7 +96,7 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
     setSaving(true)
     try {
       await fetch(`${restBase}/api/spare-parts/${partId}/adjust`, {
-        method: 'POST', headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        method: 'POST', headers: authHeaders(true),
         body: JSON.stringify({ delta }),
       })
       await fetchParts()
@@ -118,7 +113,7 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
     setDeleteConfirmId(null)
     if (!backendConnected) { setParts(prev => prev.filter(p => p.id !== id)); return }
     try {
-      await fetch(`${restBase}/api/spare-parts/${id}`, { method: 'DELETE', headers: authHeader() })
+      await fetch(`${restBase}/api/spare-parts/${id}`, { method: 'DELETE', headers: authHeaders() })
       await fetchParts()
     } catch { /* ignore */ }
   }, [deleteConfirmId, backendConnected, restBase, fetchParts])
@@ -136,7 +131,7 @@ export function SparePartsManager({ restBase, backendConnected, canEdit, onClose
     }
     try {
       await fetch(`${restBase}/api/spare-parts`, {
-        method: 'POST', headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        method: 'POST', headers: authHeaders(true),
         body: JSON.stringify(newPart),
       })
       await fetchParts(); setShowAddForm(false); setNewPart(BLANK)

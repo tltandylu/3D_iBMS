@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getJwtToken } from './useAuth'
+import { authHeaders } from '../api/http'
 import { DEVICES } from '../data/mockData'
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -110,8 +110,7 @@ export function usePointBindings(restBase: string, backendConnected: boolean) {
       setBindings(toScene(SIM_BINDINGS_RAW))
       return
     }
-    const token = getJwtToken()
-    const h: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+    const h = authHeaders()
     Promise.all([
       fetch(`${restBase}/api/monitoring-points`, { headers: h }).then(r => r.ok ? r.json() as Promise<PointMeta[]> : []),
       fetch(`${restBase}/api/model-point-bindings`, { headers: h }).then(r => r.ok ? r.json() as Promise<RawBinding[]> : []),

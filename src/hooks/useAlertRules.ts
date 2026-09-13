@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import type { Device, Alert } from '../types'
-import { getSystemSettings } from './useSystemSettings'
-import { getJwtToken } from './useAuth'
+import { authHeaders, getRestBase } from '../api/http'
 
 export type RuleMetric   = 'power' | 'temperature' | 'aiScore' | 'rulDays'
 export type RuleOperator = '>' | '<' | '>=' | '<='
@@ -64,16 +63,6 @@ function toApiBody(rule: Omit<AlertRule, 'id' | 'createdAt'>) {
   }
 }
 
-function getRestBase(): string {
-  const wsUrl = getSystemSettings().connection.wsUrl
-  return wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
-}
-
-function authHeaders(): Record<string, string> {
-  const token = getJwtToken()
-  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
-}
-
 function evalRule(rule: AlertRule, device: Device): boolean {
   if (rule.deviceId !== '*' && rule.deviceId !== device.id) return false
   if (device.status === 'offline') return false
@@ -100,7 +89,7 @@ export function useAlertRules(devices: Device[]) {
 
   // ── Mount: 從後端載入規則（覆蓋 localStorage）────────────────────────────
   useEffect(() => {
-    fetch(`${getRestBase()}/api/alert-rules`, { headers: authHeaders() })
+    fetch(`${getRestBase()}/api/alert-rules`, { headers: authHeaders(true) })
       .then(r => r.ok ? r.json() : null)
       .then((data: Record<string, unknown>[] | null) => {
         if (!data || !Array.isArray(data)) return
@@ -123,7 +112,7 @@ export function useAlertRules(devices: Device[]) {
     for (const rule of current) {
       await fetch(`${getRestBase()}/api/alert-rules`, {
         method: 'POST',
-        headers: authHeaders(),
+        headers: authHeaders(true),
         body: JSON.stringify({
           ...toApiBody(rule),
           // Pass id hint via custom field (backend generates its own id)
@@ -146,7 +135,7 @@ export function useAlertRules(devices: Device[]) {
     // Backend
     try {
       const res  = await fetch(`${getRestBase()}/api/alert-rules`, {
-        method: 'POST', headers: authHeaders(), body: JSON.stringify(toApiBody(rule)),
+        method: 'POST', headers: authHeaders(true), body: JSON.stringify(toApiBody(rule)),
       })
       if (res.ok) {
         const created = fromApi(await res.json() as Record<string, unknown>)
@@ -171,7 +160,7 @@ export function useAlertRules(devices: Device[]) {
       if (patch.severity  !== undefined) apiPatch['severity']  = patch.severity
       if (patch.enabled   !== undefined) apiPatch['enabled']   = patch.enabled
       await fetch(`${getRestBase()}/api/alert-rules/${id}`, {
-        method: 'PATCH', headers: authHeaders(), body: JSON.stringify(apiPatch),
+        method: 'PATCH', headers: authHeaders(true), body: JSON.stringify(apiPatch),
       })
     } catch { /* offline: local only */ }
   }, [rules, persist])
@@ -181,7 +170,7 @@ export function useAlertRules(devices: Device[]) {
     persist(rules.filter(r => r.id !== id))
     try {
       await fetch(`${getRestBase()}/api/alert-rules/${id}`, {
-        method: 'DELETE', headers: authHeaders(),
+        method: 'DELETE', headers: authHeaders(true),
       })
     } catch { /* offline */ }
   }, [rules, persist])
@@ -191,7 +180,7 @@ export function useAlertRules(devices: Device[]) {
     persist(rules.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r))
     try {
       await fetch(`${getRestBase()}/api/alert-rules/${id}/toggle`, {
-        method: 'PATCH', headers: authHeaders(),
+        method: 'PATCH', headers: authHeaders(true),
       })
     } catch { /* offline */ }
   }, [rules, persist])

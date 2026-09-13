@@ -1,5 +1,6 @@
 ﻿import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { postClaudeMessages } from '../../api/claude'
 
 export const LS_API_KEY    = 'CLAUDE_API_KEY'
 export const LS_MODEL      = 'CLAUDE_MODEL'
@@ -58,19 +59,10 @@ export function ClaudeSettings({ onClose }: Props) {
     setTesting(true)
     setTestResult(null)
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': k,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-allow-browser': 'true',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 16,
-          messages: [{ role: 'user', content: 'hi' }],
-        }),
+      const resp = await postClaudeMessages(k, {
+        model,
+        max_tokens: 16,
+        messages: [{ role: 'user', content: 'hi' }],
       })
       if (resp.ok) {
         setTestResult({ ok: true, msg: '連接成功，API Key 有效' })

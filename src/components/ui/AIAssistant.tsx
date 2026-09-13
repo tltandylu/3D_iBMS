@@ -14,6 +14,7 @@ interface Props {
 }
 
 import { getStoredApiKey, getStoredModel } from './ClaudeSettings'
+import { postClaudeMessages, extractClaudeText, type ClaudeResponse } from '../../api/claude'
 
 // 組合系統背景上下文（傳入 Claude）
 function buildSystemPrompt(devices: Device[], alerts: Alert[], kpi: KPIData): string {
@@ -49,20 +50,11 @@ async function callClaude(messages: Message[], systemPrompt: string, devices: De
     return await mockResponse(messages[messages.length - 1]?.content ?? '', devices, alerts, kpi)
   }
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-allow-browser': 'true',
-    },
-    body: JSON.stringify({
-      model: getStoredModel(),
-      max_tokens: 800,
-      system: systemPrompt,
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
-    }),
+  const resp = await postClaudeMessages(apiKey, {
+    model: getStoredModel(),
+    max_tokens: 800,
+    system: systemPrompt,
+    messages: messages.map(m => ({ role: m.role, content: m.content })),
   })
 
   if (!resp.ok) {
@@ -70,8 +62,8 @@ async function callClaude(messages: Message[], systemPrompt: string, devices: De
     throw new Error(`Claude API ${resp.status}: ${err}`)
   }
 
-  const data = await resp.json() as { content: Array<{ type: string; text: string }> }
-  return data.content.find(c => c.type === 'text')?.text ?? '（無回應）'
+  const data = await resp.json() as ClaudeResponse
+  return extractClaudeText(data) ?? '（無回應）'
 }
 
 // Mock 回應（未設定 API Key 時）

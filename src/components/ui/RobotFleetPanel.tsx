@@ -5,10 +5,10 @@
  *   §5.3 現場標定：錨點編輯 → 最小平方求解（RMSE ≤ 0.15m 驗收）→ 寫入 profile
  *   §2.2 KPI 監看：端到端延遲、遙測頻率、漂移捨棄幀數
  */
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import type { RobotCalibrationProfile, RobotViewMode, RobotRuntimeState } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 import {
   useRobotSnapshot, isSignalLost, getFleetStats, getFleetMap, backendTelemetryFresh, HEARTBEAT_TIMEOUT_MS,
 } from '../../hooks/useRobotFleet'
@@ -386,11 +386,6 @@ function CalibrationTab({
     setResult(null)
   }, [profile.profile_id, profile.updated_at])
 
-  const authHeaders = useCallback((): Record<string, string> => {
-    const token = getJwtToken()
-    return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) }
-  }, [])
-
   const setCell = (i: number, key: 'robot' | 'world', axis: number, v: string) => {
     setAnchors(prev => prev.map((a, idx) => {
       if (idx !== i) return a
@@ -405,7 +400,7 @@ function CalibrationTab({
     setBusy(true); setMsg(null)
     try {
       const res = await fetch(`${restBase}/api/robots/calibration/solve`, {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: authHeaders(true),
         body: JSON.stringify({ anchors, axis_convention: profile.axis_convention }),
       })
       if (!res.ok) {
@@ -424,7 +419,7 @@ function CalibrationTab({
     setBusy(true); setMsg(null)
     try {
       const res = await fetch(`${restBase}/api/robots/calibration`, {
-        method: 'PUT', headers: authHeaders(),
+        method: 'PUT', headers: authHeaders(true),
         body: JSON.stringify({
           profile_id: profile.profile_id, name: profile.name, site_id: profile.site_id,
           axis_convention: profile.axis_convention,

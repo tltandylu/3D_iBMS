@@ -1,3 +1,5 @@
+import { authHeaders } from '../api/http'
+
 /**
  * Client-side CSV export utility.
  * Generates a UTF-8 BOM CSV and triggers a browser download.
@@ -31,10 +33,9 @@ export function downloadCSV(
 export async function downloadFromBackend(
   url:      string,
   filename: string,
-  token:    string | null,
 ): Promise<void> {
   const res = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    headers: authHeaders(),
   })
   if (!res.ok) throw new Error(`Export failed: HTTP ${res.status}`)
   const blob = await res.blob()

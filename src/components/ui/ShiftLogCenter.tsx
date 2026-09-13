@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { KPIData } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface Incident {
@@ -82,22 +82,17 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
   const [incDesc, setIncDesc] = useState('')
   const [showIncForm, setShowIncForm] = useState(false)
 
-  const authHeader = useCallback((): Record<string, string> => {
-    const t = getJwtToken()
-    return t ? { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' }
-  }, [])
-
   const flash = (text: string, ok = true) => { setMsg({ text, ok }); setTimeout(() => setMsg(null), 3000) }
 
   const loadActive = useCallback(async () => {
-    const r = await fetch(`${restBase}/api/shift-logs/active`, { headers: authHeader() })
+    const r = await fetch(`${restBase}/api/shift-logs/active`, { headers: authHeaders(true) })
     if (r.ok) { const d = await r.json(); setActiveShift(Object.keys(d).length ? d as ShiftLog : null) }
-  }, [restBase, authHeader])
+  }, [restBase])
 
   const loadHistory = useCallback(async () => {
-    const r = await fetch(`${restBase}/api/shift-logs?limit=20`, { headers: authHeader() })
+    const r = await fetch(`${restBase}/api/shift-logs?limit=20`, { headers: authHeaders(true) })
     if (r.ok) setHistory(await r.json())
-  }, [restBase, authHeader])
+  }, [restBase])
 
   useEffect(() => { loadActive(); loadHistory() }, [loadActive, loadHistory])
 
@@ -106,7 +101,7 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
     const snap = { critical: kpi.criticalDevices, warning: kpi.warningDevices, offline: kpi.offlineDevices, open_alerts: kpi.openAlerts }
     const r = await fetch(`${restBase}/api/shift-logs`, {
       method: 'POST',
-      headers: authHeader(),
+      headers: authHeaders(true),
       body: JSON.stringify({ shift_type: newShiftType, summary: newSummary, device_snapshot: snap }),
     })
     setLoading(false)
@@ -119,7 +114,7 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
     setLoading(true)
     const r = await fetch(`${restBase}/api/shift-logs/${activeShift.id}/close`, {
       method: 'PATCH',
-      headers: authHeader(),
+      headers: authHeaders(true),
       body: JSON.stringify({ handover_notes: closeNotes, summary: closeSummary || activeShift.summary }),
     })
     setLoading(false)
@@ -132,7 +127,7 @@ export function ShiftLogCenter({ restBase, kpi, userName, canEdit, onClose }: Pr
     setLoading(true)
     const r = await fetch(`${restBase}/api/shift-logs/${activeShift.id}/incidents`, {
       method: 'POST',
-      headers: authHeader(),
+      headers: authHeaders(true),
       body: JSON.stringify({ severity: incSev, description: incDesc }),
     })
     setLoading(false)

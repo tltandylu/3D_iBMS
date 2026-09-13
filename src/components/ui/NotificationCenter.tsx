@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { InboxNotification } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 interface Props {
   notifications: InboxNotification[]
@@ -56,19 +56,17 @@ export function NotificationCenter({ notifications, unreadCount, restBase, onMar
   }, [onClose])
 
   const handleMarkRead = (id: string) => {
-    const token = getJwtToken()
     fetch(`${restBase}/api/notifications/inbox/${id}/read`, {
       method: 'PATCH',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     }).catch(() => {})
     onMarkRead(id)
   }
 
   const handleMarkAllRead = () => {
-    const token = getJwtToken()
     fetch(`${restBase}/api/notifications/inbox/read-all`, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     }).catch(() => {})
     onMarkAllRead()
   }

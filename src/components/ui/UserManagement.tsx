@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getSystemSettings } from '../../hooks/useSystemSettings'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders, getRestBase } from '../../api/http'
 
 interface UserRecord {
   id:           string
@@ -90,8 +89,7 @@ function InputField({ label, value, onChange, type = 'text', placeholder = '' }:
 }
 
 export function UserManagement({ onClose }: { onClose: () => void }) {
-  const wsUrl    = getSystemSettings().connection.wsUrl
-  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const restBase = getRestBase()
 
   const [users,    setUsers]    = useState<UserRecord[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -112,11 +110,6 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
   const [pNew,        setPNew]        = useState('')
   const [pConfirm,    setPConfirm]    = useState('')
 
-  const authHeaders = useCallback(() => {
-    const t = getJwtToken()
-    return { 'Content-Type': 'application/json', ...(t ? { Authorization: `Bearer ${t}` } : {}) }
-  }, [])
-
   const showToast = useCallback((msg: string) => {
     setToast(msg)
     setTimeout(() => setToast(null), 3000)
@@ -125,13 +118,13 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
   const loadUsers = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const res = await fetch(`${restBase}/api/users`, { headers: authHeaders() })
+      const res = await fetch(`${restBase}/api/users`, { headers: authHeaders(true) })
       if (!res.ok) throw new Error(await res.text())
       setUsers(await res.json() as UserRecord[])
     } catch (e) {
       setError(e instanceof Error ? e.message : '載入失敗')
     } finally { setLoading(false) }
-  }, [restBase, authHeaders])
+  }, [restBase])
 
   useEffect(() => { loadUsers() }, [loadUsers])
 
@@ -140,7 +133,7 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
     if (!cUsername || !cName || !cPassword) { showToast('請填入所有欄位'); return }
     try {
       const res = await fetch(`${restBase}/api/users`, {
-        method: 'POST', headers: authHeaders(),
+        method: 'POST', headers: authHeaders(true),
         body: JSON.stringify({ username: cUsername, name: cName, password: cPassword, role: cRole, avatar_color: cColor }),
       })
       if (!res.ok) { const d = await res.json() as {detail:string}; showToast(d.detail ?? '建立失敗'); return }
@@ -156,11 +149,11 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
     const newActive = u.is_active === 0
     try {
       if (!newActive) {
-        const res = await fetch(`${restBase}/api/users/${u.id}`, { method: 'DELETE', headers: authHeaders() })
+        const res = await fetch(`${restBase}/api/users/${u.id}`, { method: 'DELETE', headers: authHeaders(true) })
         if (!res.ok) { const d = await res.json() as {detail:string}; showToast(d.detail ?? '操作失敗'); return }
       } else {
         const res = await fetch(`${restBase}/api/users/${u.id}`, {
-          method: 'PATCH', headers: authHeaders(),
+          method: 'PATCH', headers: authHeaders(true),
           body: JSON.stringify({ is_active: true }),
         })
         if (!res.ok) { showToast('操作失敗'); return }
@@ -175,7 +168,7 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
     if (!editUser) return
     try {
       const res = await fetch(`${restBase}/api/users/${editUser.id}`, {
-        method: 'PATCH', headers: authHeaders(),
+        method: 'PATCH', headers: authHeaders(true),
         body: JSON.stringify({ name: editUser.name, role: editUser.role, avatar_color: editUser.avatar_color }),
       })
       if (!res.ok) { showToast('更新失敗'); return }
@@ -190,7 +183,7 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
     if (newPw.length < 6) { showToast('密碼至少需 6 個字元'); return }
     try {
       const res = await fetch(`${restBase}/api/users/${userId}/reset-password`, {
-        method: 'PATCH', headers: authHeaders(),
+        method: 'PATCH', headers: authHeaders(true),
         body: JSON.stringify({ new_password: newPw }),
       })
       if (!res.ok) { showToast('重設失敗'); return }
@@ -205,7 +198,7 @@ export function UserManagement({ onClose }: { onClose: () => void }) {
     if (pNew.length < 6)    { showToast('密碼至少需 6 個字元'); return }
     try {
       const res = await fetch(`${restBase}/api/users/me/password`, {
-        method: 'PATCH', headers: authHeaders(),
+        method: 'PATCH', headers: authHeaders(true),
         body: JSON.stringify({ current_password: pCurrent, new_password: pNew }),
       })
       if (!res.ok) { const d = await res.json() as {detail:string}; showToast(d.detail ?? '失敗'); return }

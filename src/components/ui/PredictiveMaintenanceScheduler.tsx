@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
 import type { Device } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface PredictedItem {
@@ -106,22 +106,17 @@ export function PredictiveMaintenanceScheduler({ devices, restBase, backendConne
   const [sortBy, setSortBy] = useState<'rul' | 'ai' | 'name'>('rul')
   const [creatingWO, setCreatingWO] = useState<string | null>(null)
 
-  const authHeader = useCallback((): Record<string, string> => {
-    const t = getJwtToken()
-    return t ? { Authorization: `Bearer ${t}` } : {}
-  }, [])
-
   useEffect(() => {
     const sim = buildSimData(devices)
     if (!backendConnected) { setItems(sim); setLoading(false); return }
-    fetch(`${restBase}/api/ems/predictive-maintenance`, { headers: authHeader() })
+    fetch(`${restBase}/api/ems/predictive-maintenance`, { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then((data: PredictedItem[] | null) => {
         setItems(data && data.length >= 3 ? data : sim)
       })
       .catch(() => setItems(sim))
       .finally(() => setLoading(false))
-  }, [devices, restBase, backendConnected, authHeader])
+  }, [devices, restBase, backendConnected])
 
   // ── Derived stats ──────────────────────────────────────────────────────
   const counts = {

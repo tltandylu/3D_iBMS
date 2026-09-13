@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 import { downloadFromBackend } from '../../utils/csvExport'
 
 interface AuditEntry {
@@ -59,10 +59,7 @@ export function AuditLog({ restBase, onClose }: Props) {
     const params = new URLSearchParams({ limit: '100' })
     if (filterOp     !== 'all') params.set('operation', filterOp)
     if (filterResult !== 'all') params.set('result',    filterResult)
-    const token = getJwtToken()
-    const headers: Record<string, string> = {}
-    if (token) headers['Authorization'] = `Bearer ${token}`
-    fetch(`${restBase}/api/audit?${params}`, { headers })
+    fetch(`${restBase}/api/audit?${params}`, { headers: authHeaders() })
       .then(r => { if (!r.ok) throw new Error('fetch failed'); return r.json() })
       .then((data: AuditEntry[]) => { setEntries(data); setIsMock(false); setLoading(false); setCountdown(30) })
       .catch(() => {
@@ -78,11 +75,9 @@ export function AuditLog({ restBase, onClose }: Props) {
       const params = new URLSearchParams({ limit: '500' })
       if (filterOp     !== 'all') params.set('operation', filterOp)
       if (filterResult !== 'all') params.set('result',    filterResult)
-      const token = getJwtToken()
       await downloadFromBackend(
         `${restBase}/api/export/audit?${params}`,
         `audit_log_${new Date().toISOString().slice(0,10)}.csv`,
-        token,
       )
     } catch (e) { console.error('export failed', e) }
     finally { setExporting(false) }

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as XLSX from 'xlsx'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ─── Types ────────────────────────────────────────────────────────────────
 interface Device {
@@ -73,10 +73,6 @@ const SIM_BINDINGS: Binding[] = [
   { id:'b5', model_uuid:'lgt-01', model_name:'照明設備 LGT-01', point_id:'DO-LIGHT-001',point_type:'DO', display_mode:'color',       normal_color:'#FDE68A', alarm_color:'#9CA3AF', offline_color:'#6B7280', control_enabled:true,  value_position:'auto', is_active:true, created_at:'2026-05-23' },
   { id:'b6', model_uuid:'ups-01', model_name:'UPS UPS-01',       point_id:'AI-POWER-001',point_type:'AI', display_mode:'value_panel', normal_color:'#22C55E', alarm_color:'#EF4444', offline_color:'#9CA3AF', control_enabled:false, value_position:'right', is_active:true, created_at:'2026-05-23' },
 ]
-
-function authHeader(): Record<string, string> {
-  const t = getJwtToken(); return t ? { Authorization: `Bearer ${t}` } : {}
-}
 
 function MiniSparkline({ values, minVal, maxVal, color }: { values: number[]; minVal: number; maxVal: number; color: string }) {
   if (values.length < 2) return <span style={{ display: 'inline-block', width: 60, height: 18 }} />
@@ -156,8 +152,8 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
     }
     try {
       const [pr, br] = await Promise.all([
-        fetch(`${restBase}/api/monitoring-points`, { headers: authHeader() }),
-        fetch(`${restBase}/api/model-point-bindings`, { headers: authHeader() }),
+        fetch(`${restBase}/api/monitoring-points`, { headers: authHeaders() }),
+        fetch(`${restBase}/api/model-point-bindings`, { headers: authHeaders() }),
       ])
       if (pr.ok) setPoints(await pr.json())
       if (br.ok) setBindings(await br.json())
@@ -201,7 +197,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
         setBindings(prev => [...prev, { ...body, id: `sim-${Date.now()}-${device.id}`, is_active: true, created_at: new Date().toISOString() }])
       } else {
         try {
-          await fetch(`${restBase}/api/model-point-bindings`, { method: 'POST', headers: { ...authHeader(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+          await fetch(`${restBase}/api/model-point-bindings`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify(body) })
         } catch { /* ignore */ }
       }
     }
@@ -303,7 +299,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
     if (backendConnected) {
       for (const p of importPreview.points) {
         try {
-          const r = await fetch(`${restBase}/api/monitoring-points`, { method: 'POST', headers: { ...authHeader(), 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
+          const r = await fetch(`${restBase}/api/monitoring-points`, { method: 'POST', headers: authHeaders(true), body: JSON.stringify(p) })
           if (!r.ok) errors.push({ pid: p.point_id, reason: `HTTP ${r.status}` })
         } catch (err: unknown) {
           errors.push({ pid: p.point_id, reason: err instanceof Error ? err.message : '網路錯誤' })
@@ -333,7 +329,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
       return
     }
     try {
-      const r = await fetch(`${restBase}/api/control-logs?limit=100`, { headers: authHeader() })
+      const r = await fetch(`${restBase}/api/control-logs?limit=100`, { headers: authHeaders() })
       if (r.ok) setControlLogs(await r.json())
     } catch { /* ignore */ } finally { setLogsLoading(false) }
   }, [backendConnected, restBase])
@@ -348,7 +344,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
     }
     try {
       await fetch(`${restBase}/api/control`, {
-        method: 'POST', headers: { ...authHeader(), 'Content-Type': 'application/json' },
+        method: 'POST', headers: authHeaders(true),
         body: JSON.stringify({ point_id: controlTarget.point_id, model_uuid: controlTarget.model_uuid, value }),
       })
     } catch { /* ignore */ }
@@ -366,7 +362,7 @@ export function PointBindingManager({ devices, restBase, backendConnected, canEd
     setDeleteConfirmId(null)
     if (!backendConnected) { setBindings(prev => prev.filter(b => b.id !== id)); return }
     try {
-      await fetch(`${restBase}/api/model-point-bindings/${id}`, { method: 'DELETE', headers: authHeader() })
+      await fetch(`${restBase}/api/model-point-bindings/${id}`, { method: 'DELETE', headers: authHeaders() })
       await fetchData()
     } catch { /* ignore */ }
   }, [deleteConfirmId, backendConnected, restBase, fetchData])

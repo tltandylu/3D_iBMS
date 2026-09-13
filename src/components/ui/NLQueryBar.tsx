@@ -72,6 +72,7 @@ function fuzzyMockResponse(question: string): string {
 }
 
 import { getStoredApiKey, getStoredModel } from './ClaudeSettings'
+import { postClaudeMessages, extractClaudeText, type ClaudeResponse } from '../../api/claude'
 import { getSystemSettings } from '../../hooks/useSystemSettings'
 import { DEVICES } from '../../data/mockData'
 import type { Device } from '../../types'
@@ -82,25 +83,16 @@ async function callClaudeNL(question: string): Promise<string> {
 
   const { maxTokens, systemPrompt } = getSystemSettings().ai
 
-  const resp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
-      'anthropic-dangerous-allow-browser': 'true',
-    },
-    body: JSON.stringify({
-      model: getStoredModel(),
-      max_tokens: maxTokens,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: question }],
-    }),
+  const resp = await postClaudeMessages(apiKey, {
+    model: getStoredModel(),
+    max_tokens: maxTokens,
+    system: systemPrompt,
+    messages: [{ role: 'user', content: question }],
   })
 
   if (!resp.ok) throw new Error(`API ${resp.status}`)
-  const data = await resp.json() as { content: Array<{ type: string; text: string }> }
-  return data.content.find(c => c.type === 'text')?.text ?? '（無回應）'
+  const data = await resp.json() as ClaudeResponse
+  return extractClaudeText(data) ?? '（無回應）'
 }
 
 export function NLQueryBar({ onBIMClick }: { onBIMClick?: (device: Device) => void }) {

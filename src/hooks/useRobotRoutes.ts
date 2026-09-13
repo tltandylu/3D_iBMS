@@ -7,7 +7,7 @@
  * 前端在送出前先做一次與後端相同的驗證，讓錯誤在編輯當下就顯示。
  */
 import { useCallback, useEffect, useState } from 'react'
-import { getJwtToken } from './useAuth'
+import { authHeaders } from '../api/http'
 
 export interface RouteWaypoint {
   station: string
@@ -107,9 +107,8 @@ export function useRobotRoutes(restBase: string, backendConnected: boolean, auth
     if (!backendConnected) { setRoutes(null); setError(null); return }
     let cancelled = false
     setLoading(true)
-    const token = getJwtToken()
     fetch(`${restBase}/api/robots/routes`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     })
       .then(async r => {
         if (!r.ok) throw new Error(r.status === 401 ? '未授權（請以帳號密碼登入）' : `HTTP ${r.status}`)
@@ -124,14 +123,10 @@ export function useRobotRoutes(restBase: string, backendConnected: boolean, auth
   const save = useCallback(async (cfg: RoutesConfig): Promise<{ ok: boolean; error?: string }> => {
     const problem = validateRoutes(cfg)
     if (problem) return { ok: false, error: problem }
-    const token = getJwtToken()
     try {
       const res = await fetch(`${restBase}/api/robots/routes`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
+        headers: authHeaders(true),
         body: JSON.stringify(cfg),
       })
       if (!res.ok) {

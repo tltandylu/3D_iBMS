@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import type { DashboardSettings } from '../../hooks/useSystemSettings'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 interface Props {
   settings: DashboardSettings
@@ -49,9 +49,8 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose, restBase, 
   // On mount: load preferences from backend
   useEffect(() => {
     if (!restBase || !backendConnected) { readyToSync.current = true; return }
-    const token = getJwtToken()
     fetch(`${restBase}/api/users/me/preferences`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     })
       .then(r => r.ok ? r.json() as Promise<Record<string, unknown>> : null)
       .then(data => { if (data && Object.keys(data).length > 0) onUpdate(data as Partial<DashboardSettings>) })
@@ -64,10 +63,9 @@ export function DashboardCustomizer({ settings: s, onUpdate, onClose, restBase, 
     if (!restBase || !backendConnected || !readyToSync.current) return
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      const token = getJwtToken()
       fetch(`${restBase}/api/users/me/preferences`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        headers: authHeaders(true),
         body: JSON.stringify({ data: s }),
       }).catch(() => {})
     }, 800)

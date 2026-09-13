@@ -7,8 +7,7 @@ import type { Alert, Device, WorkOrder } from '../../types'
 import { WORK_ORDERS } from '../../data/mockData'
 import { Canvas, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
-import { getSystemSettings } from '../../hooks/useSystemSettings'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders, getRestBase } from '../../api/http'
 
 // ── 確定性亂數 ────────────────────────────────────────────────
 function seededRng(seed: number) {
@@ -639,10 +638,9 @@ export function DeviceDetailDrawer({ device, onClose, alert, onAcknowledge, onOp
 
   useEffect(() => {
     if (!device || !backendConnected) return
-    const restBase = getSystemSettings().connection.wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
-    const token = getJwtToken()
+    const restBase = getRestBase()
     fetch(`${restBase}/api/devices/${device.id}/analytics?hours=24`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     })
       .then(r => r.ok ? r.json() as Promise<AnalyticsData> : null)
       .then(d => setAnalyticsData(d))

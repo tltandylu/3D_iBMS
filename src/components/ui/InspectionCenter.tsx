@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Device } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface InspectionRoute {
@@ -98,22 +98,11 @@ function buildSimRecords(): InspectionRecord[] {
   return records
 }
 
-// ── Auth header ────────────────────────────────────────────────────────────
-function useAuthHeader() {
-  return useCallback((): Record<string, string> => {
-    const t = getJwtToken()
-    return t
-      ? { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' }
-      : { 'Content-Type': 'application/json' }
-  }, [])
-}
-
 // ── Main ───────────────────────────────────────────────────────────────────
 export function InspectionCenter({
   devices, restBase, backendConnected, canEdit, userName, onClose,
 }: Props) {
   const [tab, setTab] = useState<'routes' | 'execute' | 'history'>('routes')
-  const authHeader = useAuthHeader()
 
   // ── Routes state ───────────────────────────────────────────────────────
   const [routes, setRoutes] = useState<InspectionRoute[]>([])
@@ -145,8 +134,8 @@ export function InspectionCenter({
       }
       try {
         const [rRes, recRes] = await Promise.all([
-          fetch(`${restBase}/api/inspections/routes`, { headers: authHeader() }),
-          fetch(`${restBase}/api/inspections/records?limit=30`, { headers: authHeader() }),
+          fetch(`${restBase}/api/inspections/routes`, { headers: authHeaders(true) }),
+          fetch(`${restBase}/api/inspections/records?limit=30`, { headers: authHeaders(true) }),
         ])
         const [rData, recData] = await Promise.all([rRes.json(), recRes.json()])
         setRoutes(Array.isArray(rData) ? rData : SIM_ROUTES)
@@ -158,7 +147,7 @@ export function InspectionCenter({
       setLoading(false)
     }
     loadData()
-  }, [restBase, backendConnected, authHeader])
+  }, [restBase, backendConnected])
 
   // ── Create route ───────────────────────────────────────────────────────
   const handleCreateRoute = async () => {
@@ -168,7 +157,7 @@ export function InspectionCenter({
     if (backendConnected) {
       try {
         const res = await fetch(`${restBase}/api/inspections/routes`, {
-          method: 'POST', headers: authHeader(), body: JSON.stringify(body),
+          method: 'POST', headers: authHeaders(true), body: JSON.stringify(body),
         })
         if (res.ok) {
           const created = await res.json() as { id: string }
@@ -187,7 +176,7 @@ export function InspectionCenter({
   // ── Delete route ───────────────────────────────────────────────────────
   const handleDeleteRoute = async (routeId: string) => {
     if (backendConnected) {
-      await fetch(`${restBase}/api/inspections/routes/${routeId}`, { method: 'DELETE', headers: authHeader() })
+      await fetch(`${restBase}/api/inspections/routes/${routeId}`, { method: 'DELETE', headers: authHeaders(true) })
     }
     setRoutes(prev => prev.filter(r => r.id !== routeId))
   }
@@ -230,7 +219,7 @@ export function InspectionCenter({
     if (backendConnected) {
       try {
         const res = await fetch(`${restBase}/api/inspections/records`, {
-          method: 'POST', headers: authHeader(), body: JSON.stringify(body),
+          method: 'POST', headers: authHeaders(true), body: JSON.stringify(body),
         })
         if (res.ok) {
           const created = await res.json() as { id: string }

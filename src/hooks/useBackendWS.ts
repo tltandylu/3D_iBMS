@@ -8,6 +8,7 @@ import type { Device, Alert, WorkOrder, KPIData, InboxNotification } from '../ty
 import { useSimulation } from './useSimulation'
 import { getSystemSettings } from './useSystemSettings'
 import { getJwtToken } from './useAuth'
+import { authHeaders, toRestBase } from '../api/http'
 import { SIM_POINT_VALUES } from './usePointBindings'
 import { ingestRobotTelemetry } from './useRobotFleet'
 import type { RobotTelemetryPacket } from '../types'
@@ -24,7 +25,7 @@ const RECONNECT_MS  = _conn.reconnectIntervalSec * 1000
 const FORCE_MOCK    = _conn.forceMode === 'mock'
 
 // REST base URL (same host, port 8001)
-const REST_BASE = WS_URL.replace(/^ws/, 'http').replace('/ws', '')
+const REST_BASE = toRestBase(WS_URL)
 
 // ── snake_case → camelCase converters ─────────────────────────────────────
 
@@ -148,8 +149,7 @@ export function useBackendWS() {
       setBackendAvailable(true)
       setIsReconnecting(false)
       hadSuccessRef.current = true
-      const token = getJwtToken()
-      const h: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {}
+      const h = authHeaders()
       // 載入最近 50 則站內通知
       fetch(`${REST_BASE}/api/notifications/inbox?limit=50`, { headers: h })
         .then(r => r.ok ? r.json() as Promise<InboxNotification[]> : [])
@@ -324,12 +324,10 @@ export function useBackendWS() {
 
   // ── 帶 JWT token 的 fetch helper ─────────────────────────────────────
   const authFetch = useCallback((url: string, init: RequestInit = {}) => {
-    const token = getJwtToken()
     return fetch(url, {
       ...init,
       headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...authHeaders(true),
         ...(init.headers ?? {}),
       },
     })

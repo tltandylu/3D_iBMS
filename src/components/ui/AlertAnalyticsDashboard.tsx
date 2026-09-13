@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
 import type { Alert } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface AnalyticsData {
@@ -98,25 +98,20 @@ export function AlertAnalyticsDashboard({ alerts, restBase, backendConnected, on
   const [data, setData] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
 
-  const authHeader = useCallback((): Record<string, string> => {
-    const t = getJwtToken()
-    return t ? { Authorization: `Bearer ${t}` } : {}
-  }, [])
-
   useEffect(() => {
     if (!backendConnected) {
       setData(buildSimAnalytics(alerts))
       setLoading(false)
       return
     }
-    fetch(`${restBase}/api/alerts/analytics`, { headers: authHeader() })
+    fetch(`${restBase}/api/alerts/analytics`, { headers: authHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then((d: AnalyticsData | null) => {
         setData(d && d.total >= 0 ? d : buildSimAnalytics(alerts))
       })
       .catch(() => setData(buildSimAnalytics(alerts)))
       .finally(() => setLoading(false))
-  }, [alerts, restBase, backendConnected, authHeader])
+  }, [alerts, restBase, backendConnected])
 
   // ── Charts ────────────────────────────────────────────────────────────
   const severityDonut = data ? {

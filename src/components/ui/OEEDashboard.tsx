@@ -3,7 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import * as XLSX from 'xlsx'
 import type { Device } from '../../types'
 import { BUILDINGS } from '../../data/mockData'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 function computeOEE(dev: Device) {
   const base = ({ normal: 0.96, warning: 0.78, critical: 0.52, offline: 0 } as Record<string, number>)[dev.status] ?? 0
@@ -28,9 +28,8 @@ export function OEEDashboard({ devices, onClose, restBase, backendConnected }: P
 
   useEffect(() => {
     if (!restBase || !backendConnected) return
-    const token = getJwtToken()
     fetch(`${restBase}/api/ems/oee-history?days=30`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: authHeaders(),
     })
       .then(r => r.ok ? r.json() as Promise<OEEHistoryPoint[]> : null)
       .then(d => { if (d && d.length > 0) setOeeHistory(d) })

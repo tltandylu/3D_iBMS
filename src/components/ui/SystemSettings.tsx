@@ -1,10 +1,11 @@
 ﻿import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { SystemSettingsData, SceneSettings, AlertSettings, ConnectionSettings, AppearanceSettings, AISettingsData, EnergySettings, SkySettings, SkyPreset, WebhookSettings } from '../../hooks/useSystemSettings'
-import { DEFAULT_SYSTEM_SETTINGS, getSystemSettings } from '../../hooks/useSystemSettings'
-import { getJwtToken } from '../../hooks/useAuth'
+import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
+import { authHeaders, getRestBase } from '../../api/http'
 import { LS_API_KEY, LS_MODEL, DEFAULT_MODEL, getStoredApiKey } from './ClaudeSettings'
 import { usePushNotifications } from '../../hooks/usePushNotifications'
+import { postClaudeMessages } from '../../api/claude'
 
 const MODELS = [
   { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5  (快速 · 低成本)' },
@@ -207,8 +208,7 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
     update({ desktopNotify: perm === 'granted' })
   }
 
-  const wsUrl = getSystemSettings().connection.wsUrl
-  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const restBase = getRestBase()
   const push = usePushNotifications(restBase)
 
   // Email SMTP 狀態
@@ -217,9 +217,7 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
   const [emailMsg, setEmailMsg] = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
-    const token = getJwtToken()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
+    const headers = authHeaders(true)
     fetch(`${restBase}/api/notifications/email-status`, { headers })
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setEmailStatus(d as { configured: boolean; smtp_host: string | null; recipients: string[] }))
@@ -230,9 +228,7 @@ function AlertPage({ s, update }: { s: AlertSettings; update: (p: Partial<AlertS
     setEmailTesting(true)
     setEmailMsg(null)
     try {
-      const token = getJwtToken()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = authHeaders(true)
       const res = await fetch(`${restBase}/api/notifications/test-email`, { method: 'POST', headers })
       const data = await res.json() as { ok: boolean; message: string }
       setEmailMsg({ ok: data.ok, text: data.message })
@@ -465,19 +461,10 @@ function AIPage({ s, update }: { s: AISettingsData; update: (p: Partial<AISettin
     if (!key) { setTestMsg('請先輸入 API Key'); setTestState('fail'); return }
     setTestState('testing')
     try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': key,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-allow-browser': 'true',
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: 16,
-          messages: [{ role: 'user', content: 'hi' }],
-        }),
+      const resp = await postClaudeMessages(key, {
+        model,
+        max_tokens: 16,
+        messages: [{ role: 'user', content: 'hi' }],
       })
       if (resp.ok) { setTestState('ok'); setTestMsg('連線成功') }
       else         { setTestState('fail'); setTestMsg(`HTTP ${resp.status}`) }
@@ -850,14 +837,11 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'ok' | 'fail'>('idle')
   const [lastStatus, setLastStatus] = useState<{ at: string | null; status: string | null }>({ at: null, status: null })
 
-  const wsUrl    = getSystemSettings().connection.wsUrl
-  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const restBase = getRestBase()
 
   // 載入後端 Webhook 設定
   useEffect(() => {
-    const token = getJwtToken()
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
+    const headers = authHeaders(true)
     fetch(`${restBase}/api/webhook/config`, { headers })
       .then(r => r.ok ? r.json() : null)
       .then((d: { enabled: boolean; url: string; min_severity: string; cooldown_minutes: number; last_triggered_at: string | null; last_status: string | null } | null) => {
@@ -876,9 +860,7 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
   const saveToBackend = async () => {
     setSaveState('saving')
     try {
-      const token = getJwtToken()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = authHeaders(true)
       const res = await fetch(`${restBase}/api/webhook/config`, {
         method: 'PUT',
         headers,
@@ -898,9 +880,7 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
     if (!s.url) { setTestMsg('請先填入 Webhook URL'); setTestState('fail'); return }
     setTestState('sending')
     try {
-      const token = getJwtToken()
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) headers['Authorization'] = `Bearer ${token}`
+      const headers = authHeaders(true)
       const res  = await fetch(`${restBase}/api/webhook/test`, { method: 'POST', headers })
       const data = await res.json() as { ok: boolean; message: string }
       setTestState(data.ok ? 'ok' : 'fail')
@@ -1019,8 +999,7 @@ function WebhookPage({ s, update }: { s: WebhookSettings; update: (p: Partial<We
 const WEEKDAY_LABELS = ['週一','週二','週三','週四','週五','週六','週日']
 
 function ReportPage() {
-  const wsUrl    = getSystemSettings().connection.wsUrl
-  const restBase = wsUrl.replace(/^ws/, 'http').replace(/\/ws$/, '')
+  const restBase = getRestBase()
 
   const [cfg, setCfg] = useState<{
     enabled: boolean; frequency: 'daily' | 'weekly'; weekday: number
@@ -1033,9 +1012,7 @@ function ReportPage() {
   const [msg,      setMsg]      = useState<{ ok: boolean; text: string } | null>(null)
 
   useEffect(() => {
-    const token = getJwtToken()
-    const h: Record<string, string> = {}
-    if (token) h['Authorization'] = `Bearer ${token}`
+    const h = authHeaders()
     fetch(`${restBase}/api/reports/schedule`, { headers: h })
       .then(r => r.ok ? r.json() : null)
       .then(d => d && setCfg(d as typeof cfg))
@@ -1049,9 +1026,7 @@ function ReportPage() {
     if (!cfg) return
     setSaving(true); setMsg(null)
     try {
-      const token = getJwtToken()
-      const h: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) h['Authorization'] = `Bearer ${token}`
+      const h = authHeaders(true)
       const res = await fetch(`${restBase}/api/reports/schedule`, {
         method: 'PUT', headers: h,
         body: JSON.stringify({
@@ -1067,9 +1042,7 @@ function ReportPage() {
   const sendNow = async () => {
     setSending(true); setMsg(null)
     try {
-      const token = getJwtToken()
-      const h: Record<string, string> = { 'Content-Type': 'application/json' }
-      if (token) h['Authorization'] = `Bearer ${token}`
+      const h = authHeaders(true)
       const res  = await fetch(`${restBase}/api/reports/send-now`, { method: 'POST', headers: h })
       const data = await res.json() as { ok: boolean; message: string }
       setMsg({ ok: data.ok, text: data.message })

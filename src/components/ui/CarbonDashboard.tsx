@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import ReactECharts from 'echarts-for-react'
 import type { Device, KPIData } from '../../types'
-import { getJwtToken } from '../../hooks/useAuth'
+import { authHeaders } from '../../api/http'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface MonthlyCarbon {
@@ -70,15 +70,10 @@ export function CarbonDashboard({
   const [loading, setLoading]   = useState(false)
   const [dataSource, setSource] = useState<'db' | 'sim'>('sim')
 
-  const authHeader = useCallback((): Record<string, string> => {
-    const t = getJwtToken()
-    return t ? { Authorization: `Bearer ${t}` } : {}
-  }, [])
-
   useEffect(() => {
     if (backendConnected) {
       setLoading(true)
-      fetch(`${restBase}/api/ems/carbon?months=13`, { headers: authHeader() })
+      fetch(`${restBase}/api/ems/carbon?months=13`, { headers: authHeaders() })
         .then(r => r.ok ? r.json() : Promise.reject())
         .then((rows: MonthlyCarbon[]) => {
           if (rows.length >= 3) { setData(rows); setSource('db') }
@@ -90,7 +85,7 @@ export function CarbonDashboard({
       setData(generateSimData(kpi.totalPowerKw * 0.5))
       setSource('sim')
     }
-  }, [backendConnected, restBase, kpi.totalPowerKw, authHeader])
+  }, [backendConnected, restBase, kpi.totalPowerKw])
 
   // ── Derived values ──────────────────────────────────────────────────────
   const currentYear  = new Date().getFullYear()

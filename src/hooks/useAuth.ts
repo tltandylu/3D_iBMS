@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
 import { getSystemSettings } from './useSystemSettings'
+import { toRestBase } from '../api/http'
 
 // ── Feature union ─────────────────────────────────────────────
 export type Feature =
@@ -105,7 +106,7 @@ export function useAuth(): AuthState {
     // 1. 嘗試後端 JWT 登入
     const { connection } = getSystemSettings()
     if (connection.forceMode !== 'mock') {
-      const restBase = connection.wsUrl.replace(/^ws/, 'http').replace('/ws', '')
+      const restBase = toRestBase(connection.wsUrl)
       try {
         const res = await fetch(`${restBase}/api/auth/login`, {
           method: 'POST',
