@@ -2,7 +2,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ModalBackdrop } from '../common/Overlay'
 import type { SystemSettingsData, SceneSettings, AlertSettings, ConnectionSettings, AppearanceSettings, AISettingsData, EnergySettings, SkySettings, SkyPreset, WebhookSettings } from '../../hooks/useSystemSettings'
-import { DEFAULT_SYSTEM_SETTINGS } from '../../hooks/useSystemSettings'
 import { authHeaders, getRestBase } from '../../api/http'
 import { LS_API_KEY, LS_MODEL, DEFAULT_MODEL, getStoredApiKey } from './ClaudeSettings'
 import { usePushNotifications } from '../../hooks/usePushNotifications'

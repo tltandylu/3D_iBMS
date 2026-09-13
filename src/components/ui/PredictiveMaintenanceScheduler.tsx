@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ModalBackdrop } from '../common/Overlay'
 import ReactECharts from 'echarts-for-react'
 import type { Device } from '../../types'

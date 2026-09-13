@@ -1,5 +1,5 @@
 ﻿import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import type { Alert, Device, WorkOrder } from '../../types'
 import { DEVICES, WORK_ORDERS } from '../../data/mockData'
 import { ModalBackdrop } from '../common/Overlay'

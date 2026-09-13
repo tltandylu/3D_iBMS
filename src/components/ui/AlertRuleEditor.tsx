@@ -1,5 +1,4 @@
 ﻿import { useState, type ReactNode } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import type { Device } from '../../types'
 import type { AlertRule, RuleMetric, RuleOperator } from '../../hooks/useAlertRules'
 import { FullScreenPanel } from '../common/Overlay'

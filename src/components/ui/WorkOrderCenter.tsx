@@ -3,7 +3,7 @@ import ReactECharts from 'echarts-for-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import * as XLSX from 'xlsx'
 import type { WorkOrder, Device } from '../../types'
-import { WORK_ORDERS, DEVICES, BUILDINGS } from '../../data/mockData'
+import { WORK_ORDERS, DEVICES } from '../../data/mockData'
 import { FullScreenPanel, ModalBackdrop } from '../common/Overlay'
 
 function exportCSV(filename: string, headers: string[], rows: string[][]) {
